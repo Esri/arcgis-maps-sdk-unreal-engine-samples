@@ -13,4 +13,3 @@
 **ArcGIS Maps SDK Version**
 
 <!-- Mention what version of the Maps SDK was used to test/develop this code -->
-<!-- Test -->
