@@ -8,7 +8,7 @@ void Asample_projectGameModeBase::StartPlay()
 	Super::StartPlay();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &Asample_projectGameModeBase::OnResponseRecieved);
-	Request->SetURL("https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0/query?f=pjson&where=1=1&outfields=TEAM,NAME,LEAGUE");
+	Request->SetURL("https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0/query?f=geojson&where=1=1&outfields=TEAM,NAME,LEAGUE");
 	Request->SetVerb("Get");
 	Request->ProcessRequest();
 
@@ -19,61 +19,34 @@ void Asample_projectGameModeBase::OnResponseRecieved(FHttpRequestPtr Request, FH
 	TSharedPtr<FJsonObject> ResponseObj;
 	const FString ResponseBody = Response->GetContentAsString();
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
-	Feature features;
-	FeatureCollection collection;
-	BaseballProperties PropertyData;
-	Geometry geometry;
-	if (FJsonSerializer::Deserialize(Reader, ResponseObj)) 
+	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 	{
+		UE_LOG(LogTemp, Display, TEXT("Name: %s"), *Response->GetContentAsString());
 		TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
+		UE_LOG(LogTemp, Display, TEXT("Number of Features: %d"), Features.Num());
 		for (int i = 0; i != Features.Num(); i++)
 		{
-			TSharedPtr<FJsonObject> test = Features[i]->AsObject();
-			TSharedPtr<FJsonObject> properties = test->GetObjectField("attributes");
-			TArray <TSharedPtr<FJsonObject>> attributes;
-			attributes.Add(properties);
-			for (int j = 0; j != attributes.Num(); j++) 
-			{
-				TSharedPtr<FJsonObject> Name = attributes[j];
-				PropertyData.NAME = Name->GetStringField("NAME");
-				PropertyData.LEAGUE = Name->GetStringField("LEAGUE");
-				PropertyData.TEAM = Name->GetStringField("TEAM");
-			}
-		}
-		for (int i = 0; i != Features.Num(); i++)
-		{
+			TArray<double> geoCoordinates = {};
 			TSharedPtr<FJsonObject> feature = Features[i]->AsObject();
+			TSharedPtr<FJsonObject> properties = feature->GetObjectField("properties");
 			TSharedPtr<FJsonObject> Geometry = feature->GetObjectField("geometry");
-			TArray <TSharedPtr<FJsonObject>> GeoAttributes;
-			GeoAttributes.Add(Geometry);
-			for (int j = 0; j != GeoAttributes.Num(); j++) 
-			{
-				TSharedPtr<FJsonObject> longitude = GeoAttributes[j];
-				TSharedPtr<FJsonObject> latitude = GeoAttributes[j];
-				double xCoordinate = longitude->GetIntegerField("x");
-				double yCoordinate = latitude->GetIntegerField("y");
-				geometry.coordinates.Add(xCoordinate);
-				geometry.coordinates.Add(yCoordinate);
-			}
+			TArray<TSharedPtr<FJsonValue>> coordinates = Geometry->GetArrayField("coordinates");
+			data->NAME.Add(properties->GetStringField("NAME"));
+			data->LEAGUE.Add(properties->GetStringField("LEAGUE"));
+			data->TEAM.Add(properties->GetStringField("TEAM"));
+			data->longitude.Add(coordinates[0]->AsNumber());
+			data->latitude.Add(coordinates[1]->AsNumber());
+			//UE_LOG(LogTemp, Display, TEXT("Name: %s, Team: %s, League: %s, X Value: %f, Y Value %f"), *data->NAME, *data->TEAM, *data->LEAGUE, data->longitude, data->latitude);
+			UE_LOG(LogTemp, Display, TEXT("Name: %s, Team: %s, League: %s, X Value: %f, Y Value %f"), *data->NAME[i], *data->TEAM[i], *data->LEAGUE[i], data->longitude[i], data->latitude[i]);
 		}
-		if (PropertyData.NAME.IsEmpty())
-		{
-			UE_LOG(LogTemp, Display, TEXT("Empty %s"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Display, TEXT("You have features :) %s"));
-			features.properties = PropertyData;
-			features.geometry = geometry;
-			collection.features.Add(features);
-		}
-	}
-	for (int i = 0; i != collection.features.Num(); i++) 
-	{
-
+		UE_LOG(LogTemp, Display, TEXT("Name: %s, Team: %s, League: %s, X Value: %f, Y Value %f"), *data->NAME[5], *data->TEAM[5], *data->LEAGUE[5], data->longitude[5], data->latitude[5]);
 	}
 }
-void Asample_projectGameModeBase::GetFeatures(FString Response)
-{
-
-}
+//UBaseballProperties& UBaseballProperties::operator=(const UBaseballProperties& BaseballProperties) 
+//{
+//	UBaseballProperties baseballProperties;
+//	baseballProperties.NAME = BaseballProperties.NAME;
+//	baseballProperties.LEAGUE = BaseballProperties.LEAGUE;
+//	baseballProperties.TEAM = BaseballProperties.TEAM;
+//	return baseballProperties;
+//}
