@@ -6,10 +6,10 @@ Allows users to explore a city/map from the perspective of a Third Person Charac
 
 ## How it works
 
-1. Check the box for **Mesh Colliers Enabled** on the `ArcGIS Map View` component.
+1. Check the box for **Mesh Colliers Enabled** on the `ArcGIS Map` component.
 2. Create a parent object with an `ArcGIS Location` component.
 3. Create child game objects in the scene that use `Transform` components.
-4. Using the `ArcGIS Map View`, change the latitude and logitude of where you would like to explore.
+4. Using the `ArcGIS Map`, change the latitude and longitude of where you would like to explore.
 5. Add your third person character controller to the level and position it slightly above the ground.
 
 ## About the data
