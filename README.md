@@ -6,7 +6,7 @@ Here is a Unreal Engine 5 project containing a set of samples showing you how to
 
 ## Features
 * [Line of sight](https://github.com/ArcGIS/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/LineOfSight) - See how to check line of sight between two object in Unreal Engine.
-* [Third Person Camera Controller](https://github.com/ArcGIS/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/ThirdPersonCharacter) - See how to run around a virtual city in Unreal Engine.
+* [Third Person Character Controller](https://github.com/ArcGIS/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/ThirdPersonCharacter) - See how to run around a virtual city in Unreal Engine.
 
 ## Instructions
 
