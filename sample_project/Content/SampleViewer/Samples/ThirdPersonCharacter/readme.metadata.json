@@ -1,0 +1,15 @@
+{
+    "category": "Exploration",
+    "description": "Explore a 3D object scene layer using a third person character controller.",
+    "formal_name": "ThirdPersonController",
+    "ignore": false,
+    "images": [
+        "3rdPersonDemo.png"
+    ],
+    "keywords": [
+        "ThirdPersonCharacter",
+        "controller",
+        "explortation"
+    ],
+    "title": "Third Person Character Controller"
+}

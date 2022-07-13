@@ -1,23 +1,52 @@
-# This repo is currently private
-
 # arcgis-maps-sdk-unreal-engine-samples
 
-Get the most recent build of the plugin from here https://runtime-zip.esri.com/userContent/runtime/setups/gameengine/
+![image](arcgis-maps-sdk-unreal-engine-samples.png)
 
-After downloading the most recent `ArcGISMapsSDK.zip` open `samples_project` in Unreal Engine 5.0. Extract the Zip file into `arcgis-maps-sdk-unreal-engine-samples\sample_project\Plugins` folder.
+Here is a Unreal Engine 5 project containing a set of samples showing you how to accomplish various things using the combined features of Unreal Engine 5 and the ArcGIS Maps SDK for Unreal Engine.
 
-Then launch Unreal Engine and open the Sample Viewer level.
+## Features
+* [Line of sight](https://github.com/ArcGIS/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/LineOfSight) - See how to check line of sight between two object in Unreal Engine.
+* [Third Person Character Controller](https://github.com/ArcGIS/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/ThirdPersonCharacter) - See how to run around a virtual city in Unreal Engine.
 
-To add a new level add a new entry to the SamplesDataTable.
+## Instructions
 
+1. Clone this repo.
+2. Refer to the [ArcGIS Maps SDK for Unreal Engine's documentation on getting started](https://developers.arcgis.com/unreal-engine/get-started/) on how to download `Unreal Engine 5` and the `ArcGIS Maps SDK for Unreal Engine`.
+3. Launch the Unreal Engine project.
+3. Import the Plugin into this project.
+4. Launch the `SampleViewer` level. You will be prompted to enter an API Key for the samples to work. To avoid entering it each time you push play you can enter it in the SampleViewer level blueprint.
 
-- [Unreal C++ Coding Style](coding-style-c++.md)
-- [List of sample ideas](https://esriis.sharepoint.com/:x:/r/teams/GameEngine/_layouts/15/Doc.aspx?sourcedoc=%7B0dcb8b4d-f1ab-406c-9286-8a79ab2f7bc8%7D&action=editnew)
+## Requirements
 
-## PR Process
+* Refer to the [ArcGIS Maps SDK for Unreal Engine's documentation on system requirements](https://developers.arcgis.com/unreal-engine/reference/system-requirements/)
 
-Especially as we begin the process of figuring out how we structure our new samples the more the merrier on your PRs. Also while this is private PRs can be created against main. Testing on as many devices as possible and stating what testing has been done is also a good idea.
+## Resources
 
-## Issue management
+* [ArcGIS Maps SDK for Unreal Engine's documentation](https://developers.arcgis.com/unreal-engine/)
+* [Unreal Engine's documentation](https://docs.unrealengine.com/5.0/en-US/)
+* [Esri Community forum](https://community.esri.com/t5/arcgis-maps-sdks-for-unreal-engine-questions/bd-p/arcgis-maps-sdks-unreal-engine-questions)
 
-If you find a bug with the ArcGIS Maps SDK for Unreal Engine or with this sample viewer you can create an issue here. Same goes for a feature request on the sample viewer.
+## Issues
+
+Find a bug or want to request a new feature?  Please let us know by submitting an issue.
+
+## Contributing
+
+Esri welcomes contributions from anyone and everyone. Please see our [guidelines for contributing](https://github.com/esri/contributing).
+
+## Licensing
+Copyright 2022 Esri
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+A copy of the license is available in the repository's [license.txt](license.txt?raw=true) file.
