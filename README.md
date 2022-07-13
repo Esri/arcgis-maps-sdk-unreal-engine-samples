@@ -24,7 +24,7 @@ Here is a Unreal Engine 5 project containing a set of samples showing you how to
 
 * [ArcGIS Maps SDK for Unreal Engine's documentation](https://developers.arcgis.com/unreal-engine/)
 * [Unreal Engine's documentation](https://docs.unrealengine.com/5.0/en-US/)
-* [Esri Communreal-engine forum](https://communreal-engine.esri.com/t5/arcgis-maps-sdks-for-unreal-engine-questions/bd-p/arcgis-maps-sdks-unreal-engine-questions)
+* [Esri Community forum](https://community.esri.com/t5/arcgis-maps-sdks-for-unreal-engine-questions/bd-p/arcgis-maps-sdks-unreal-engine-questions)
 
 ## Issues
 
@@ -49,4 +49,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/master/license.txt) file.
+A copy of the license is available in the repository's [license.txt](license.txt?raw=true) file.
