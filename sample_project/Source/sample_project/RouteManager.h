@@ -9,10 +9,18 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshActor.h"
 #include "UObject/UObjectGlobals.h"
+#include "Containers/List.h"
+//#include "Containers/Queue.h"
+//#include "Containers/CircularQueue.h"
+#include "Json.h"
+#include "Http.h"
+#include "RouteMarker.h"
 //#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
-
+//#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISSpatialReference.h"
+ #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+ #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "RouteManager.generated.h"
-
 UCLASS()
 class SAMPLE_PROJECT_API ARouteManager : public AActor
 {
@@ -31,10 +39,16 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	
+	void PostRoutingRequest();
+	void ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	//AActor* CreateMarker(FVector3d InEnginePosition);
 
-	AActor* CreateMarker(FVector3d InEnginePosition);
-
-
+	//TQueue<ARouteMarker*> RouteStops;
+	UArcGISMapComponent* MapComponent;
+	TDoubleLinkedList<ARouteMarker*> Stops;
+	bool bIsRouting = false;
+	int StopCount = 2;
 	void SetupInput();
 	void AddStop();
 };
