@@ -36,6 +36,62 @@ void ARouteManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bShouldPlaceBreadcrums) {
+		//UE_LOG(LogTemp, Warning, TEXT("################ manager ticked"));
+
+		FHitResult TraceHit;
+		float TraceLength = 100000.;
+		FVector3d WorldLocation;
+		bool bTraceSuccess = false;
+		
+		for (auto BC : Breadcrumbs) {
+			RemoveTickPrerequisiteComponent(BC->ArcGISLocation);
+
+
+
+
+			WorldLocation = FVector3d(
+				BC->GetActorLocation().X, BC->GetActorLocation().Y, TraceLength / 2.f);
+
+			//////////// geographic to engine transformation
+			//WorldLocation = MapComponent->GeographicToEngine(FGeoPosition(
+			//	(*coordinates)[0]->AsNumber(),
+			//	(*coordinates)[1]->AsNumber(), 0,
+			//	UArcGISSpatialReference::CreateArcGISSpatialReference(4326)
+			//));
+
+			//UE_LOG(LogTemp, Warning, TEXT("new World Location++++++++++++++++++%f  %f  %f"),
+			//	WorldLocation.X,
+			//	WorldLocation.Y,
+			//	WorldLocation.Z
+			//	);
+			
+
+
+			bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
+				WorldLocation + TraceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
+
+			
+
+			//UE_LOG(LogTemp, Warning, TEXT("hit object++++++++++++++++++%s"),
+			//	*(TraceHit.GetActor()->GetActorLabel()));
+
+
+			WorldLocation.Z = bTraceSuccess ? TraceHit.ImpactPoint.Z : 0.;
+
+			BC->SetActorLocation(WorldLocation);
+			//BC->ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+			//	WorldLocation.X, WorldLocation.Y, WorldLocation.Z,
+			//	UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+
+
+			DrawDebugLine(GetWorld(), WorldLocation, WorldLocation + TraceLength * FVector3d::DownVector, FColor::Green, false, 1000, 0, 5);
+
+
+		}
+		bShouldPlaceBreadcrums = false;
+	}
+
 }
 
 //AActor* ARouteManager::CreateMarker(FVector3d InEnginePosition)
@@ -205,7 +261,6 @@ void ARouteManager::AddStop()
 
 void ARouteManager::PostRoutingRequest()
 {
-					/////////////////////////////////////////// TODO replace token
 
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 
@@ -240,8 +295,6 @@ void ARouteManager::PostRoutingRequest()
 
 		//Point = UArcGISPoint::CreateArcGISPointWithXYSpatialReference(5065036.83, 7284618.10, UArcGISSpatialReference::UArcGISSpatialReference::CreateArcGISSpatialReference(3857));
 		
-		UE_LOG(LogTemp, Display, TEXT("%f"), Point->GetX());
-
 		if (Point->GetSpatialReference()->GetWKID() != 4326) {
 			auto geometry = UArcGISGeometryEngine::Project(Point, UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
 			if (geometry != nullptr)
@@ -279,11 +332,16 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 {
 	TSharedPtr<FJsonObject> JsonObj;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
-	if (FJsonSerializer::Deserialize(Reader, JsonObj)) {
+	// Process the response if the quesry was successful
+	if (FJsonSerializer::Deserialize(Reader, JsonObj) && Response->GetResponseCode()>199 && Response->GetResponseCode() < 300) {
 
+		for (auto BC : Breadcrumbs) {
+			BC->Destroy();
+		}
+		Breadcrumbs.Empty();
 
-		UE_LOG(LogTemp, Warning, TEXT("Response Code %d"), Response->GetResponseCode());
-		UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
+//		UE_LOG(LogTemp, Warning, TEXT("Response Code %d"), Response->GetResponseCode());
+//		UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
 
 		//FJsonSerializableArray arr;
 		//if (ResponseObj->TryGetStringArrayField("routes", arr)) {
@@ -309,7 +367,11 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 		const TArray<TSharedPtr<FJsonValue>>* coordinates;
 
 
-
+		ABreadcrumb* BC;
+		FHitResult TraceHit;
+		float TraceLength = 100000.;
+		//bool bTraceSuccess;
+		FVector3d WorldLocation;
 		if (routes = JsonObj->TryGetField(TEXT("routes"))) {
 			JsonObj = routes->AsObject();
 			if (JsonObj->TryGetArrayField(TEXT("features"), features)) {
@@ -324,7 +386,58 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 								points = &path->AsArray();
 								for (auto point : *points) {
 									coordinates = &point->AsArray();
-									UE_LOG(LogTemp, Display, TEXT("+++++++++++++++[%f , %f]"), (*coordinates)[0]->AsNumber(), (*coordinates)[1]->AsNumber());
+									//WorldLocation = FVector3d(
+									//	(*coordinates)[0]->AsNumber(), 
+									//	(*coordinates)[1]->AsNumber(),
+									//	TraceLength/2.f);
+									
+									//UE_LOG(LogTemp, Display, TEXT("+++++++++++++++[%f , %f]"), (*coordinates)[0]->AsNumber(), (*coordinates)[1]->AsNumber());
+									BC = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FTransform(FRotator(0.), FVector3d(0.), FVector3d(10.)));
+									
+									BC->ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(
+										(*coordinates)[0]->AsNumber(), 
+										(*coordinates)[1]->AsNumber(), 
+										UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+									
+									//WorldLocation = FVector3d(
+									//	BC->GetActorLocation().X, BC->GetActorLocation().Y, TraceLength/2.f);
+
+									//////////// geographic to engine transformation
+									//WorldLocation = MapComponent->GeographicToEngine(FGeoPosition(
+									//	(*coordinates)[0]->AsNumber(),
+									//	(*coordinates)[1]->AsNumber(), 0,
+									//	UArcGISSpatialReference::CreateArcGISSpatialReference(4326)
+									//));
+
+									//UE_LOG(LogTemp, Warning, TEXT("hit trace++++++++++++++++++%f  %f  %f"),
+									//	WorldLocation.X,
+									//	WorldLocation.Y,
+									//	WorldLocation.Z
+									//	);
+									//
+										
+									AddTickPrerequisiteComponent(BC->ArcGISLocation);
+									
+									//bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
+									//	WorldLocation + TraceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
+
+									//
+
+									//UE_LOG(LogTemp, Warning, TEXT("hit object++++++++++++++++++%s"),
+									//	*(TraceHit.GetActor()->GetActorLabel()));
+
+
+									//WorldLocation.Z = bTraceSuccess ? TraceHit.ImpactPoint.Z : 0.;
+
+									//BC->SetActorLocation(WorldLocation);
+									////BC->ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+									////	WorldLocation.X, WorldLocation.Y, WorldLocation.Z,
+									////	UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+
+									Breadcrumbs.AddHead(BC);
+
+									//DrawDebugLine(GetWorld(), WorldLocation, WorldLocation + TraceLength * FVector3d::DownVector, FColor::Green, false, 100, 0, 5);
+										
 								}
 							}
 						}
@@ -346,6 +459,7 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 
 					}
 				}
+				bShouldPlaceBreadcrums = true;
 
 			}
 			else {

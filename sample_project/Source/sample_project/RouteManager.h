@@ -15,6 +15,7 @@
 #include "Json.h"
 #include "Http.h"
 #include "RouteMarker.h"
+#include "Breadcrumb.h"
 //#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 //#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISSpatialReference.h"
  #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
@@ -46,8 +47,11 @@ private:
 
 	//TQueue<ARouteMarker*> RouteStops;
 	UArcGISMapComponent* MapComponent;
+	TDoubleLinkedList < UArcGISMapComponent*> SplineMeshComponents;
 	TDoubleLinkedList<ARouteMarker*> Stops;
+	TDoubleLinkedList<ABreadcrumb*> Breadcrumbs;
 	bool bIsRouting = false;
+	bool bShouldPlaceBreadcrums = false;
 	int StopCount = 2;
 	void SetupInput();
 	void AddStop();
