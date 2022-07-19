@@ -10,9 +10,9 @@ Here is a Unreal Engine 5 project containing a set of samples showing you how to
 
 ## Instructions
 
-1. Clone this repo.
+1. Clone this repo. **Note** On Windows there is a 260 character limit in your file path. The ArcGISMapsSDK for Unreal Engine Plugin is ~160 characters at the longest point. This samples repo by default adds `arcgis-maps-sdk-unreal-engine-samples\sample_project` for a total of ~215 characters. You can use `git clone <git_repo_url> <your_custom_directory_name>` to remove the lengthy `arcgis-maps-sdk-unreal-engine-samples` to give you more freedom for where it can be cloned.
 2. Refer to the [ArcGIS Maps SDK for Unreal Engine's documentation on getting started](https://developers.arcgis.com/unreal-engine/get-started/) on how to download `Unreal Engine 5` and the `ArcGIS Maps SDK for Unreal Engine`.
-3. Launch the Unreal Engine project.
+3. Launch the Unreal Engine project. **Note** if you are prompted that there is a version mismatch that can be ignored, but if the project needs to be re-compiled you will need to [launch it thru Visual Studio](https://docs.unrealengine.com/5.0/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/). 
 3. Import the Plugin into this project.
 4. Launch the `SampleViewer` level. You will be prompted to enter an API Key for the samples to work. To avoid entering it each time you push play you can enter it in the SampleViewer level blueprint.
 
