@@ -10,6 +10,11 @@ ARouteManager::ARouteManager()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Cube.Cube"));
+	if (MeshAsset.Succeeded()) {
+		RouteMesh = MeshAsset.Object;
+	}
+
 }
 
 // Called when the game starts or when spawned
@@ -36,17 +41,26 @@ void ARouteManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bShouldPlaceBreadcrums) {
+	if (bShouldUpdateBreadcrums) {
 		//UE_LOG(LogTemp, Warning, TEXT("################ manager ticked"));
+
+
+		FVector3d* BCLocations = new FVector3d[Breadcrumbs.Num()];
 
 		FHitResult TraceHit;
 		float TraceLength = 100000.;
+		float HeightOffset = 100.;
 		FVector3d WorldLocation;
 		bool bTraceSuccess = false;
+		uint16 Counter = 0;
+		FVector3d Tangent;
+		USplineMeshComponent* SplineMesh;
+		//ABreadcrumb BC;
 		
-		for (auto BC : Breadcrumbs) {
+		//for (int i =0; i < Breadcrumbs.Num(); i++){
+		for (auto BC: Breadcrumbs){
+			
 			RemoveTickPrerequisiteComponent(BC->ArcGISLocation);
-
 
 
 
@@ -77,7 +91,7 @@ void ARouteManager::Tick(float DeltaTime)
 			//	*(TraceHit.GetActor()->GetActorLabel()));
 
 
-			WorldLocation.Z = bTraceSuccess ? TraceHit.ImpactPoint.Z : 0.;
+			WorldLocation.Z = bTraceSuccess ? TraceHit.ImpactPoint.Z + HeightOffset : 0.;
 
 			BC->SetActorLocation(WorldLocation);
 			//BC->ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
@@ -85,11 +99,43 @@ void ARouteManager::Tick(float DeltaTime)
 			//	UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 
 
-			DrawDebugLine(GetWorld(), WorldLocation, WorldLocation + TraceLength * FVector3d::DownVector, FColor::Green, false, 1000, 0, 5);
-
+			BCLocations[Counter] = WorldLocation;
+			Counter++;
 
 		}
-		bShouldPlaceBreadcrums = false;
+
+		for (auto SPC : SplineMeshComponents) {
+			SPC->UnregisterComponent();
+			SPC->DestroyComponent();
+		}
+		SplineMeshComponents.Empty();
+
+		for (int i = 0; i < Counter; i++) {
+			if (i > 0) {
+				SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
+				SplineMesh->AttachToComponent(RootComponent,FAttachmentTransformRules::KeepWorldTransform);
+				SplineMesh->RegisterComponent();
+				SplineMesh->SetMobility(EComponentMobility::Movable);
+
+				Tangent = BCLocations[i] - BCLocations[i - 1];
+				Tangent.Normalize();
+				Tangent = Tangent * 100.;
+				//SplineMesh->SetStartPosition(BCLocations[i-1]);
+				//SplineMesh->SetEndPosition(BCLocations[i]);
+				SplineMesh->SetStartAndEnd(
+					BCLocations[i - 1], Tangent, BCLocations[i], Tangent);
+				SplineMesh->SetStaticMesh(RouteMesh);
+
+
+
+				SplineMeshComponents.AddHead(SplineMesh);
+
+
+
+			}
+		}
+		delete[] BCLocations;
+		bShouldUpdateBreadcrums = false;
 	}
 
 }
@@ -459,7 +505,7 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 
 					}
 				}
-				bShouldPlaceBreadcrums = true;
+				bShouldUpdateBreadcrums = true;
 
 			}
 			else {

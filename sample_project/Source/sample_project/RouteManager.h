@@ -10,6 +10,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "UObject/UObjectGlobals.h"
 #include "Containers/List.h"
+#include "Components/SplineMeshComponent.h"
 //#include "Containers/Queue.h"
 //#include "Containers/CircularQueue.h"
 #include "Json.h"
@@ -47,11 +48,12 @@ private:
 
 	//TQueue<ARouteMarker*> RouteStops;
 	UArcGISMapComponent* MapComponent;
-	TDoubleLinkedList < UArcGISMapComponent*> SplineMeshComponents;
+	TDoubleLinkedList < USplineMeshComponent*> SplineMeshComponents;
+	UStaticMesh* RouteMesh;
 	TDoubleLinkedList<ARouteMarker*> Stops;
 	TDoubleLinkedList<ABreadcrumb*> Breadcrumbs;
 	bool bIsRouting = false;
-	bool bShouldPlaceBreadcrums = false;
+	bool bShouldUpdateBreadcrums = false;
 	int StopCount = 2;
 	void SetupInput();
 	void AddStop();
