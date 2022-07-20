@@ -24,6 +24,9 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* MeshComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	FVector3d MeshScale = FVector3d(15.);
+
 
 protected:
 	// Called when the game starts or when spawned
