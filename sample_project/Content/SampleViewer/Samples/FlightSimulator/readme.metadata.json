@@ -1,0 +1,16 @@
+{
+    "category": "Exploration",
+    "description": "Explore an ArcGIS world using a third person controller Flight Simulator.",
+    "formal_name": "FlightSimulator",
+    "ignore": false,
+    "images": [
+        "FlightSim.jpg"
+    ],
+    "keywords": [
+        "ThirdPerson",
+        "controller",
+        "explortation",
+        "Flight Simulator"
+    ],
+    "title": "Flight Simulator"
+}
