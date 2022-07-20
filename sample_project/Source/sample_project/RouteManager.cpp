@@ -47,6 +47,11 @@ void ARouteManager::BeginPlay()
 		}
 	}
 }
+// Needed to remove the UI when switching to another level using the LevelSelector
+void ARouteManager::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+	UIWidget->RemoveFromViewport();
+}
+
 
 // Called every frame
 void ARouteManager::Tick(float DeltaTime)
@@ -151,7 +156,9 @@ void ARouteManager::AddStop()
 	{
 		if (TraceHit.bBlockingHit)
 		{
-			Stops.AddHead(GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), TraceHit.ImpactPoint, FRotator(0.f)));
+			FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+			SpawnParam.Owner = this;
+			Stops.AddHead(GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), TraceHit.ImpactPoint, FRotator(0.f), SpawnParam));
 
 			// Update the list of stops
 			if (Stops.Num() > StopCount) {
@@ -257,7 +264,10 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 									StopCoordinates = &point->AsArray();
 									
 									// Create a breadcrumb for each path point and set its location from the query response
-									BC = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FTransform(FRotator(0.), FVector3d(0.), FVector3d(10.)));
+									FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+									SpawnParam.Owner = this;
+									BC = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(),FVector3d(0.), FRotator3d(0.), SpawnParam);
+									
 									BC->ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(
 										(*StopCoordinates)[0]->AsNumber(), 
 										(*StopCoordinates)[1]->AsNumber(), 
