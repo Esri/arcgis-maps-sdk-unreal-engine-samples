@@ -21,7 +21,9 @@ public class sample_project : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HTTP", "Json", "JsonUtilities" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG",
+			"HTTP", "Json", "ArcGISMapsSDK"
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
