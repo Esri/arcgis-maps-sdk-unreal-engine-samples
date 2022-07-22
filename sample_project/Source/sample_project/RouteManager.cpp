@@ -47,11 +47,6 @@ void ARouteManager::BeginPlay()
 		}
 	}
 }
-// Needed to remove the UI when switching to another level using the LevelSelector
-void ARouteManager::EndPlay(const EEndPlayReason::Type EndPlayReason) {
-	UIWidget->RemoveFromViewport();
-}
-
 
 // Called every frame
 void ARouteManager::Tick(float DeltaTime)
