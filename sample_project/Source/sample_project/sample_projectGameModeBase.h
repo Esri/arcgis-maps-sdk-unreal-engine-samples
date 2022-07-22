@@ -17,8 +17,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "editor.h"
-#include "Http.h"
 #include "sample_projectGameModeBase.generated.h"
 
 
@@ -26,10 +24,4 @@ UCLASS(Blueprintable)
 class SAMPLE_PROJECT_API Asample_projectGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-public:
-	virtual void StartPlay() override;
-private:
-
 };
-
-
