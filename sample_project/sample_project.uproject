@@ -6,7 +6,6 @@
 	"Modules": [
 		{
 			"Name": "sample_project",
-			"Type": "Runtime"
 		}
 	]
 }
