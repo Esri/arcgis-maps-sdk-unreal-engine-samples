@@ -15,10 +15,4 @@
 
 
 #include "sample_projectGameModeBase.h"
-#include "Json.h"
-void Asample_projectGameModeBase::StartPlay()
-{
-	Super::StartPlay();
-
-}
 
