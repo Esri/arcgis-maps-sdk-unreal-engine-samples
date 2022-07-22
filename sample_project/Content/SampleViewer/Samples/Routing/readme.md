@@ -10,7 +10,7 @@ Show a route between two points on a map using Esri's routing service REST API.
 4. Based on the query response, breadcrumbs are placed along the route. Raycasts are used to determine the height at each breadcrumb's position to account for elevation.
 5. Spline meshes are used to visualize the route segments between pairs of breadcrumbs.
 6. This sample is only set up to work with mouse and keyboard.
-7. This service uses routing operations associated with your API Key. You can learn more about [API keys](https://developers.arcgis.com/documentation/mapping-apis-and-services/security/api-keys/) and [Accounts](https://developers.arcgis.com/documentation/mapping-apis-and-services/deployment/accounts/) in the _Mapping APIs and location services_ guide.
+7. This service uses routing operations associated with your API Key. You can learn more about [API keys](https://developers.arcgis.com/documentation/mapping-apis-and-services/security/api-keys/) and [Accounts](https://developers.arcgis.com/documentation/mapping-apis-and-services/deployment/accounts/) in the _Mapping APIs and location services_ guide. [Configure your API key](https://developers.arcgis.com/documentation/mapping-apis-and-services/security/tutorials/create-and-manage-an-api-key/#set-service-scopes) to support routing capabilities. 
 
 ## Tags
 
