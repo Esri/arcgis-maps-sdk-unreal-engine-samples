@@ -32,7 +32,6 @@ public:
 		UFeature* data = NewObject<UFeature>();
 private:
 	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -40,6 +39,18 @@ protected:
 public:	
 	// Called every frame
 
+};
+UCLASS(Blueprintable)
+class SAMPLE_PROJECT_API UWebLink : public UObject
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+		FString link;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+		FString requestHeaders;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+		FString outFieldHeader;
 };
 
 UCLASS(Blueprintable)
