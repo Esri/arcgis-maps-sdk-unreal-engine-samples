@@ -20,7 +20,7 @@
 #include "sample_projectGameModeBase.generated.h"
 
 
-UCLASS(Blueprintable)
+UCLASS()
 class SAMPLE_PROJECT_API Asample_projectGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
