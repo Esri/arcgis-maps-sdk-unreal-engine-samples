@@ -52,6 +52,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 // Called when the game starts or when spawned
 void AFeatureLayer::BeginPlay()
 {
+	Super::BeginPlay();
 	UWebLink* url = NewObject<UWebLink>();
 	url->link = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0";
 	url->requestHeaders = "f=geojson&where=1=1";
@@ -59,7 +60,6 @@ void AFeatureLayer::BeginPlay()
 
 	url->requestHeaders += "&" + url->outFieldHeader;
 	url->link += "/Query?" + url->requestHeaders;
-	Super::BeginPlay();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AFeatureLayer::OnResponseRecieved);
 	Request->SetURL(url->link);
