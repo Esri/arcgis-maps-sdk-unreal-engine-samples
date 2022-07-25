@@ -1,0 +1,14 @@
+{
+    "category": "Data Collection",
+    "description": "Collect Data from online and visualize it in an ArcGIS World",
+    "formal_name": "Feature Layer",
+    "ignore": false,
+    "images": [
+        "FeatureLayer.jpg"
+    ],
+    "keywords": [
+        "Feature Layer",
+        "Data Collection"
+    ],
+    "title": "Feature Layer"
+}
