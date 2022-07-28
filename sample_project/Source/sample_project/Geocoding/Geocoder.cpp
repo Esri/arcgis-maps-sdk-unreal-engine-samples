@@ -13,7 +13,18 @@ AGeocoder::AGeocoder()
 
 void AGeocoder::SendRequest()
 {
-	QueryRequest(TEXT("1600 Pennsylvania Ave NW,DC"));
+	//if (InAddress.IsEmpty()) {
+
+	//	SendAddressQuery(TEXT("1600 Pennsylvania Ave NW,DC"));
+	//}
+	//else {
+	//	SendAddressQuery(InAddress);
+
+	//}
+
+
+
+
 }
 
 // Called when the game starts or when spawned
@@ -21,17 +32,86 @@ void AGeocoder::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//QueryRequest(TEXT("1600 Pennsylvania Ave NW,DC"));
+	
+	// Make sure mouse cursor remains visible
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PC)
+	{
+		PC->bShowMouseCursor = true;
+		PC->bEnableClickEvents = true;
+	}
+
+
 }
 
 // Called every frame
 void AGeocoder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+
+
 }
 
+//// Bind the handler for selecting a stop point
+//void AGeocoder::SetupInput()
+//{
+//	InputComponent = NewObject<UInputComponent>(this);
+//	InputComponent->RegisterComponent();
+//
+//	if (InputComponent)
+//	{
+//		InputComponent->BindAction("LeftClick", IE_Pressed, this, &AGeocoder::SendLocationQuery);
+//		EnableInput(GetWorld()->GetFirstPlayerController());
+//	}
+//}
+//// Identify the location clicked on and make a line trace from there to find the point for placing the stop 
+//void ARouteManager::AddStop()
+//{
+//	float DistanceAboveGround = 50000.0f;
+//	float TraceLength = 10000000.f;
+//	FVector WorldLocation;
+//	FVector WorldDirection;
+//	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+//	PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+//
+//	FVector PlaneOrigin(0.0f, 0.0f, DistanceAboveGround);
+//	FVector ActorWorldLocation = FMath::LinePlaneIntersection(
+//		WorldLocation,
+//		WorldLocation + WorldDirection,
+//		PlaneOrigin,
+//		FVector::UpVector);
+//
+//	FHitResult TraceHit;
+//	if (!bIsRouting && GetWorld()->LineTraceSingleByChannel(TraceHit,
+//		WorldLocation, WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams()))
+//	{
+//		if (TraceHit.bBlockingHit)
+//		{
+//			FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+//			SpawnParam.Owner = this;
+//			Stops.AddHead(GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), TraceHit.ImpactPoint, FRotator(0.f), SpawnParam));
+//
+//			// Update the list of stops
+//			if (Stops.Num() > StopCount) {
+//				auto OldStop = Stops.GetTail();
+//
+//				OldStop->GetValue()->Destroy();
+//				Stops.RemoveNode(OldStop);
+//			}
+//
+//			// Make a routing query if enough stops added 
+//			if (Stops.Num() == StopCount) {
+//				bIsRouting = true;
+//				PostRoutingRequest();
+//
+//			}
+//		}
+//	}
+//}
+
 // Make a query for routing between the selected stops 
-void AGeocoder::QueryRequest(FString Address)
+void AGeocoder::SendAddressQuery(FString Address)
 {
 	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
 
@@ -39,7 +119,6 @@ void AGeocoder::QueryRequest(FString Address)
 	FString APIToken = MapComponent ? MapComponent->GetAPIkey() : "";
 	FString Query;
 
-	UE_LOG(LogTemp, Warning, TEXT("--------query"));
 	//"GET geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=pjson&singleLine=1600PennsylvaniaAveNW,DC&token=<ACCESS_TOKEN>HTTP/1.1"
 
 	// Set up the query 
@@ -91,13 +170,15 @@ void AGeocoder::QueryRequest(FString Address)
 	Request->ProcessRequest();
 }
 
+//void AGeocoder::SendLocationQuery(UArcGISPoint Point)
+//{
+//}
+
 void AGeocoder::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
-	UE_LOG(LogTemp, Warning, TEXT("-----------response"));
-
+	FString ResponseAddress = "";
 	TSharedPtr<FJsonObject> JsonObj;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
-
 
 	UE_LOG(LogTemp, Warning, TEXT("response code %d"), Response->GetResponseCode());
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *Response->GetContentAsString());
@@ -106,36 +187,39 @@ void AGeocoder::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr R
 		const TArray<TSharedPtr<FJsonValue>>* Candidates;
 		TSharedPtr<FJsonValue> Location;
 		double PointX, PointY;
-		AQueryLocation* LocationActor;
+		//AQueryLocation* LocationActor;
 
 		if (JsonObj->TryGetArrayField(TEXT("candidates"), Candidates)) {
 
 			//for (auto address : *Candidates) {
-			TSharedPtr<FJsonValue> address = (*Candidates)[0];
+			TSharedPtr<FJsonValue> candidate = (*Candidates)[0];
 
-			JsonObj = address->AsObject();
+
+			JsonObj = candidate->AsObject();
+
+			if (JsonObj->TryGetStringField(TEXT("Address"), ResponseAddress)) {
+
+				UE_LOG(LogTemp, Warning, TEXT("Address: %s"), *ResponseAddress);
+			}
 
 			if (Location = JsonObj->TryGetField(TEXT("location"))) {
 				JsonObj = Location->AsObject();
 				JsonObj->TryGetNumberField("x", PointX);
 				JsonObj->TryGetNumberField("y", PointY);
-				UE_LOG(LogTemp, Warning, TEXT("x: %f   y:%f"), PointX, PointY);
 
-				// Create a breadcrumb for each path point and set its location from the query response
-				FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-				SpawnParam.Owner = this;
-				LocationActor = GetWorld()->SpawnActor<AQueryLocation>(AQueryLocation::StaticClass(), FVector3d(0.), FRotator3d(0.), SpawnParam);
 
-				LocationActor->SetGeographicLocationXY(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(
-					PointX, PointY,
-					UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+				if (QueryLocation == nullptr) {
+					// Create a breadcrumb for each path point and set its location from the query response
+					FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+					SpawnParam.Owner = this;
+					QueryLocation = GetWorld()->SpawnActor<AQueryLocation>(AQueryLocation::StaticClass(), FVector3d(0.), FRotator3d(0.), SpawnParam);
+
+				}
+
+				QueryLocation->ApplyQueryResults(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+					PointX, PointY, 10000,
+					UArcGISSpatialReference::CreateArcGISSpatialReference(4326)), ResponseAddress);
 			}
-
-
-
-			//}
-
-
 		}
 
 	}

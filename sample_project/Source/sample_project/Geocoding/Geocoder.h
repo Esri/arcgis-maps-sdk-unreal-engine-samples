@@ -19,16 +19,25 @@ class SAMPLE_PROJECT_API AGeocoder : public AActor
 public:	
 	virtual void Tick(float DeltaTime) override;
 	AGeocoder();
+	
+	UFUNCTION(BlueprintCallable)
+	void SendAddressQuery(FString Address);
 
-	UFUNCTION(Category = "Debug", CallInEditor)
+	//UFUNCTION(BlueprintCallable)
+	//void SendLocationQuery(UArcGISPoint Point);
+
+	UFUNCTION(Category = "Debug", CallInEditor, BlueprintCallable)
 	void SendRequest();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
+	FString InAddress;
 
 protected:
 	virtual void BeginPlay() override;
 
 private: 
-	void QueryRequest(FString Address);
 	void ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 
-
+	AQueryLocation* QueryLocation;
+	UInputComponent* InputComponent;
 };
