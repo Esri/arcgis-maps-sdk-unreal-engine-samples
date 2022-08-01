@@ -23,8 +23,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SendAddressQuery(FString Address);
 
-	//UFUNCTION(BlueprintCallable)
-	//void SendLocationQuery(UArcGISPoint Point);
 
 	UFUNCTION(Category = "Debug", CallInEditor, BlueprintCallable)
 	void SendRequest();
@@ -32,12 +30,21 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
 	FString InAddress;
 
+
+
+
 protected:
 	virtual void BeginPlay() override;
 
 private: 
-	void ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	void SetupInput();
+	void ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	void ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	void SendLocationQuery(UArcGISPoint* InPoint);
+	void SelectLocation();
 
 	AQueryLocation* QueryLocation;
-	UInputComponent* InputComponent;
+	//UInputComponent* InputComponent;
+	bool bWaitingForResponse = false;
+	bool bShouldSendLocationQuery = false;
 };

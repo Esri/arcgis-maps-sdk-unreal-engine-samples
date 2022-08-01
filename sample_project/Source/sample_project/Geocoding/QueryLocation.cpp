@@ -17,20 +17,27 @@ AQueryLocation::AQueryLocation()
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MarkerMesh"));
 	MeshComponent->SetupAttachment(Root);
 	MeshComponent->SetWorldScale3D(MeshScale);
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Marker.Marker"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAssetPin(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Marker.Marker"));
 
-	if (MeshAsset.Succeeded()) {
-		MeshComponent->SetStaticMesh(MeshAsset.Object);
+	if (MeshAssetPin.Succeeded()) {
+		PinMesh = MeshAssetPin.Object;
+		//MeshComponent->SetStaticMesh(MeshAsset.Object);
 	}
 
-
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAssetPoint(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+	if (MeshAssetPoint.Succeeded()) {
+		PointMesh = MeshAssetPoint.Object;
+	}
 	TextComponent = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextComponent"));
 	TextComponent->SetupAttachment(Root);
-	TextComponent->SetWorldScale3D(FVector3d(200.));
-	TextComponent->SetRelativeLocation(FVector3d(2000, 0, GetActorScale3D().Z * 9000));
+
 	TextComponent->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	TextComponent->SetTextRenderColor(FColor::Black);
 	
+	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAssetPoint(TEXT("Material'/Game/SampleViewer/Samples/Routing/Materials/M_MarkerHead.M_MarkerHead'"));
+	if (MaterialAssetPoint.Succeeded()) {
+		PointMaterial = MaterialAssetPoint.Object;
+	}	
 	static ConstructorHelpers::FObjectFinder<UMaterial> TextMaterialAsset(TEXT("Material'/Game/SampleViewer/SharedResources/Materials/TextMaterialWithBackground.TextMaterialWithBackground'"));
 	if (TextMaterialAsset.Succeeded()) {
 		TextComponent->SetMaterial(0, TextMaterialAsset.Object);
@@ -42,10 +49,7 @@ AQueryLocation::AQueryLocation()
 
 
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAssetxxx(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Cube.Cube"));
-	if (MeshAssetxxx.Succeeded()) {
-		RouteMesh = MeshAssetxxx.Object;
-	}
+
 }
 
 // Called when the game starts or when spawned
@@ -55,7 +59,6 @@ void AQueryLocation::BeginPlay()
 
 	PawnActor = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 
-	FrameCounter = FramesToWait;
 
 
 
@@ -77,116 +80,57 @@ void AQueryLocation::Tick(float DeltaTime)
 
 
 
-
-
-
 	if (bShouldUpdateElevation) {
 
-		float TraceLength = 1000000.;
-		FVector3d TraceDirection;
-		FHitResult TraceHit;
-		FVector3d WorldLocation;
+		if (RaycastCounter >= MaxRaycastAttemts) {
+			bShouldUpdateElevation = false;
+			UE_LOG(LogTemp, Warning, TEXT("no raycast hit detected after %d attempts"), MaxRaycastAttemts);
+			return;
+		}
+
 		bool bTraceSuccess = false;
+		float TraceLength = 1000000.;
+		FVector3d TraceDirection = GetActorUpVector()*-1.;
+		FVector3d WorldLocation = PawnActor->GetActorLocation();
+		FHitResult TraceHit;
+		RaycastCounter++;
 
-	//	if (PawnActor->GetActorLocation().Equals(GetActorLocation())) {
-
-	//UE_LOG(LogTemp, Warning, TEXT("/*/*/*/*/*/*/*/*/*/*/*/*/*: %s"), *(PawnActor->GetActorLocation().ToString()));
-	//	}
-
-		WorldLocation =  PawnActor->GetActorLocation();
-		//WorldLocation = GetActorLocation() + GetActorUpVector() * (TraceLength / 2.);
-			
-			//FVector3d(GetActorLocation().X, GetActorLocation().Y, TraceLength / 2.f);
-		TraceDirection =  GetActorUpVector()*-1.;
 		bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
 			WorldLocation + TraceDirection*TraceLength, ECC_Visibility, FCollisionQueryParams());
-		
-//UE_LOG(LogTemp, Warning, TEXT("start: %s"),*WorldLocation.ToString());
-//UE_LOG(LogTemp, Warning, TEXT("down: %s"),*TraceDirection.ToString());
 
-
-
-////////////////////////////////////////////////////////
-//FVector3d TraceDirection2;
-//FHitResult TraceHit2;
-//FVector3d WorldLocation2;
-//bool bTraceSuccess2 = false;
-//
-//
-//WorldLocation2 = GetActorLocation() - GetActorUpVector() * (TraceLength / 2.);
-//
-////FVector3d(GetActorLocation().X, GetActorLocation().Y, TraceLength / 2.f);
-//TraceDirection2 = GetActorUpVector() ;
-//bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit2, WorldLocation2,
-//	WorldLocation2 + TraceDirection2 * TraceLength, ECC_Visibility, FCollisionQueryParams());
-//
-//float dist = FVector3d::Distance(WorldLocation, TraceHit.ImpactPoint);
-//float dist2 = FVector3d::Distance(WorldLocation2, TraceHit2.ImpactPoint);
-//
-//if (dist > dist2) {
-//
-//UE_LOG(LogTemp, Warning, TEXT("**************upside down: %f  %f"),dist, dist2);
-//WorldLocation = WorldLocation2;
-//TraceDirection = TraceDirection2;
-//TraceHit = TraceHit2;
-//bTraceSuccess = bTraceSuccess2;
-//}
-////////////////////////////
-
-
-		if (bTraceSuccess) {
-			//WorldLocation.Z =  TraceHit.ImpactPoint.Z;
+		if (bTraceSuccess && TraceHit.GetActor()->GetClass()==AArcGISMapActor::StaticClass()) {
 UE_LOG(LogTemp, Warning, TEXT("hit : %s    impact point:  %s  elevation: %f"),
 	*TraceHit.GetActor()->GetActorLabel(),*TraceHit.ImpactPoint.ToString(),  ArcGISLocation->GetPosition()->GetZ() - TraceHit.Distance/100.);
 		
 
-if (FrameCounter>0 && TraceHit.ImpactPoint != GetActorLocation() ) {
+		if (StableFramesCounter < FramesToWaitForLoading && TraceHit.ImpactPoint != GetActorLocation() ) {
 
-	UE_LOG(LogTemp, Warning, TEXT("updating the hit %d: %s   vs %s "), FrameCounter, *TraceHit.ImpactPoint.ToString(), *GetActorLocation().ToString());
+UE_LOG(LogTemp, Warning, TEXT("updating the hit %d: %s   vs %s "), StableFramesCounter, *TraceHit.ImpactPoint.ToString(), *GetActorLocation().ToString());
 
+			StableFramesCounter = 0;
+					SetActorLocation(TraceHit.ImpactPoint);
+		}
+		else if (StableFramesCounter >= FramesToWaitForLoading) {
+UE_LOG(LogTemp, Warning, TEXT("is stable. finishing up "));
 
-	FrameCounter = FramesToWait;
-			SetActorLocation(TraceHit.ImpactPoint);
+					SetActorLocation(TraceHit.ImpactPoint);
 
-
-
-
-}
-else if (FrameCounter<=0) {
-	UE_LOG(LogTemp, Warning, TEXT("is stable. finishing up "));
-
-			SetActorLocation(TraceHit.ImpactPoint);
-
-			RemoveTickPrerequisiteComponent(ArcGISLocation);
-			RemoveTickPrerequisiteActor(PawnActor);
-			bShouldUpdateElevation = false;		
+					RemoveTickPrerequisiteComponent(ArcGISLocation);
+					RemoveTickPrerequisiteActor(PawnActor);
+					bShouldUpdateElevation = false;		
 		
 		
-			PawnActor->SetActorLocation(TraceHit.ImpactPoint - TraceDirection * 100000);
-			PawnActor->SetActorRotation(TraceDirection.Rotation());
+					PawnActor->SetActorLocation(TraceHit.ImpactPoint - TraceDirection * 100000);
+					PawnActor->SetActorRotation(TraceDirection.Rotation());
 
-			TextComponent->SetText(FText::FromString(Address));
-			TextComponent->SetWorldRotation(PawnActor->GetActorRotation() + FRotator3d(180, 0, 180));
+					TextComponent->SetText(FText::FromString(Address));
+					TextComponent->SetWorldRotation(PawnActor->GetActorRotation() + FRotator3d(180, 0, 180));
 
-
-
-			
-}
-else {
-	UE_LOG(LogTemp, Warning, TEXT("ok %d "), FrameCounter);
-
-	FrameCounter--;
-
-}
-
-
-
-
-
-
-
-
-
+		}
+		else {
+			UE_LOG(LogTemp, Warning, TEXT("ok %d "), StableFramesCounter);
+			StableFramesCounter++;
+		}
 
 
 			//DrawDebugDirectionalArrow
@@ -202,14 +146,11 @@ else {
 			//	1
 			//);
 
-
 			//USplineMeshComponent* SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
 			//SplineMesh->SetMobility(EComponentMobility::Movable);
 			//SplineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
 			//SplineMesh->RegisterComponent();
 			//SplineMesh->SetMobility(EComponentMobility::Movable);
-
-
 
 			//SplineMesh->SetStartAndEnd(
 			//	WorldLocation,
@@ -221,102 +162,90 @@ else {
 			//SplineMesh->SetEndScale(FVector2d(1.));
 
 			//SplineMesh->SetStaticMesh(RouteMesh);
-
-
-
-
-
-
 		}
-		else {
-			UE_LOG(LogTemp, Warning, TEXT("no hit detected"));
-
-		}
-
-		//SetActorLocation(WorldLocation);
-
-
-
-		//FTransform t = MapComp->GetENUAtLocationToViewENUTransform(WorldLocation);
-		//UE_LOG(LogTemp, Warning, TEXT("%f   %f   %f"), t.Rotator().Pitch, t.Rotator().Yaw, t.Rotator().Roll);
-		//PawnActor->SetActorLocationAndRotation(WorldLocation+FVector3d(0,0,50000), FRotator3d( - 90, 0, 0));
-		//PawnActor->SetActorLocationAndRotation(WorldLocation + FVector3d(0, 0, 50000), GetActorRotation()+t.Rotator()+ FRotator3d(-90, 0, 0));
-		
-		
-
-		//UArcGISLocationComponent* PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
-		//if (PawnLocation == nullptr) {
-		//	UE_LOG(LogTemp, Warning, TEXT("############# pawn location is null") );
-
-		//	return;
-		//}
-
-		
-		
-
-		//UE_LOG(LogTemp, Warning, TEXT("before: %f"), PawnActor->GetActorLocation().Z);
-		//PawnLocation->SetPosition(
-		//	UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		//		PawnLocation->GetPosition()->GetX(),
-		//		PawnLocation->GetPosition()->GetY(),
-		//		PawnLocation->GetPosition()->GetZ() + 50000,
-		//		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
-		//UE_LOG(LogTemp, Warning, TEXT("after: %f"), PawnActor->GetActorLocation().Z);
-		///////////////////
-		//UE_LOG(LogTemp, Warning, TEXT("before: %f"), PawnLocation->GetPosition()->GetZ());
-		//PawnActor->SetActorLocation(PawnActor->GetActorLocation() + FVector3d(0., 0., 1000.));
-		//UE_LOG(LogTemp, Warning, TEXT("after: %f"), PawnLocation->GetPosition()->GetZ());
-
-
-
-		//PawnLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		//	ArcGISLocation->GetPosition()->GetX(),
-		//	ArcGISLocation->GetPosition()->GetY(),
-		//	ArcGISLocation->GetPosition()->GetZ() + 1000,
-		//	UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
-
-
-		//PawnLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(0.,0.,0.));
-
-		//UE_LOG(LogTemp, Warning, TEXT("new rotation %f  %f  %f"), 
-		//	PawnActor->GetActorRotation().Yaw,
-		//	PawnActor->GetActorRotation().Pitch,
-		//	PawnActor->GetActorRotation().Roll
-		//);
-
-		
-
-		//UArcGISLocationComponent* ArcGISLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
-
-
-		//if (ArcGISLocation != nullptr) {
-		//	ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		//		
-		//		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
-		//}
-		//else {
-		//	UE_LOG(LogTemp, Warning, TEXT("component not found"));
-		//}
-
-
 	}
 }
 
-void AQueryLocation::ApplyQueryResults(UArcGISPoint* Point, FString InAddress)
+void AQueryLocation::SetupAddressQuery(UArcGISPoint* InPoint, FString InAddress)
 {
-	ArcGISLocation->SetPosition(Point);
+	ArcGISLocation->SetPosition(InPoint);
 	ArcGISLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(90., 0., 0.));
 
 	UArcGISLocationComponent* PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
 	
-	PawnLocation->SetPosition(Point);
+	PawnLocation->SetPosition(InPoint);
 	PawnLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(0.,0.,0.));
 
 	AddTickPrerequisiteActor(PawnActor);
 	AddTickPrerequisiteComponent(ArcGISLocation);
+	bIsAddressQuery = true;
 	Address = InAddress;
-	FrameCounter = FramesToWait;
+
+	StableFramesCounter = 0;
+	RaycastCounter = 0;
 	bShouldUpdateElevation = true;
+
+	MeshComponent->SetStaticMesh(PinMesh);
+
+	TextComponent->SetWorldScale3D(FVector3d(200.));
+	TextComponent->SetRelativeLocation(FVector3d(2000, 0, GetActorScale3D().Z * 9000));
 }
 
-//https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&featureTypes=&location=-74,40.7
+void AQueryLocation::SetupLocationQuery(FVector3d InLocation)
+{
+	
+	
+	
+	SetActorLocation(InLocation);
+	//ArcGISLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(90., 0., 0.));
+	UArcGISRotation* PawnRotation = PawnActor->FindComponentByClass<UArcGISLocationComponent>()->GetRotation();
+
+	ArcGISLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(
+		PawnRotation->GetPitch(), PawnRotation->GetRoll(), PawnRotation->GetHeading()));
+	
+
+
+
+	AddTickPrerequisiteComponent(ArcGISLocation);
+	bIsAddressQuery = false;
+	Address = TEXT("");
+
+	StableFramesCounter = 0;
+	RaycastCounter = 0;
+	bShouldUpdateElevation = false;
+
+	MeshComponent->SetStaticMesh(PointMesh);
+	MeshComponent->SetMaterial(0, PointMaterial);
+	TextComponent->SetWorldScale3D(FVector3d(100.));
+	TextComponent->SetRelativeLocation(FVector3d(-1000, 0, GetActorScale3D().Z * 1000));
+	TextComponent->SetRelativeRotation(FRotator3d(0, 0, 0));
+
+}
+
+void AQueryLocation::UpdateAddressCue(FString InAddress)
+{
+	//TextComponent->SetWorldRotation(FRotator3d(
+	//	-PawnActor->GetActorRotation().Pitch,
+	//	180.+ PawnActor->GetActorRotation().Yaw,
+	//	-90+ PawnActor->GetActorRotation().Roll));
+	//RemoveTickPrerequisiteComponent(ArcGISLocation);
+
+	TextComponent->SetRelativeRotation(FRotator3d(0, 180, 0));
+//TextComponent->SetRelativeRotation( PawnActor->GetActorRotation()+
+	//MapComp->GetENUAtLocationToViewENUTransform(GetActorLocation()).Rotator()* FRotator3d(0));
+	RemoveTickPrerequisiteComponent(ArcGISLocation);
+		
+	
+
+
+	UE_LOG(LogTemp, Warning, TEXT("pawn: %s    soll: %s    ist: %s  "),
+		*PawnActor->GetActorRotation().ToString(),
+		*FRotator3d(-PawnActor->GetActorRotation().Pitch,180. + PawnActor->GetActorRotation().Yaw,PawnActor->GetActorRotation().Roll).ToString(),
+		*(TextComponent->GetRelativeRotation() + GetActorRotation()).ToString()
+	);
+		
+
+
+
+	TextComponent->SetText(FText::FromString(InAddress));
+}

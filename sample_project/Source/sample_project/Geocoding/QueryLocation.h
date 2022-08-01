@@ -26,8 +26,12 @@ public:
 	
 	virtual void Tick(float DeltaTime) override;
 
-	void ApplyQueryResults(UArcGISPoint* Point, FString InAddress);
-
+	void SetupAddressQuery(UArcGISPoint* InPoint, FString InAddress);
+	void SetupLocationQuery(FVector3d InPoint);
+	void UpdateAddressCue(FString inAddress);
+	
+	bool bIsAddressQuery = false;
+	
 	UPROPERTY(VisibleAnywhere, Category = "ArcGISMapsSDK|SampleDefaultPawn")
 	UArcGISLocationComponent* ArcGISLocation;
 
@@ -35,15 +39,12 @@ public:
 	UStaticMeshComponent* MeshComponent;
 
 	UPROPERTY(VisibleAnywhere)
-	FVector3d MeshScale = FVector3d(17.);
+	FVector3d MeshScale = FVector3d(12.);
 
 	UPROPERTY(VisibleAnywhere)
 	UTextRenderComponent* TextComponent;
 
 
-
-
-	UStaticMesh* RouteMesh;
 
 	AArcGISMapActor* Map;
 
@@ -59,6 +60,12 @@ private:
 	bool bShouldUpdateElevation = false;
 	FString Address;
 	APawn* PawnActor;
-	UINT16 FrameCounter;
-	UINT16 FramesToWait = 10;
+	UINT16 StableFramesCounter; // Counting the frames during which the raycast has returned the same hit result
+	UINT16 FramesToWaitForLoading = 30; // Threshold for comparing the StableFramesCounter against
+	UINT16 RaycastCounter; // Counting the total number of raycasts performed for this location
+	UINT16 MaxRaycastAttemts = 200; // Threshold for comparing the RaycastCounter against
+
+	UStaticMesh* PinMesh;
+	UStaticMesh* PointMesh;
+	UMaterial* PointMaterial;
 };

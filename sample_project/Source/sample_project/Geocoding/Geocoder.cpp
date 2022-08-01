@@ -22,7 +22,8 @@ void AGeocoder::SendRequest()
 
 	//}
 
-
+	//SendLocationQuery(UArcGISPoint::CreateArcGISPointWithXY(-79.99,40.69));
+	SendLocationQuery(UArcGISPoint::CreateArcGISPointWithXY(-76, 40));
 
 
 }
@@ -32,14 +33,17 @@ void AGeocoder::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+	SetupInput();
+
 	// Make sure mouse cursor remains visible
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (PC)
 	{
 		PC->bShowMouseCursor = true;
-		PC->bEnableClickEvents = true;
+		//PC->bEnableClickEvents = true;
+
 	}
+	GetWorld()->GetGameViewport()->SetMouseCaptureMode(EMouseCaptureMode::CaptureDuringMouseDown);
 
 
 }
@@ -49,132 +53,50 @@ void AGeocoder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
-
+	if (bShouldSendLocationQuery) {
+		SendLocationQuery(QueryLocation->ArcGISLocation->GetPosition());
+		RemoveTickPrerequisiteComponent(QueryLocation->ArcGISLocation);
+		bShouldSendLocationQuery = false;
+	}
 }
 
-//// Bind the handler for selecting a stop point
-//void AGeocoder::SetupInput()
-//{
-//	InputComponent = NewObject<UInputComponent>(this);
-//	InputComponent->RegisterComponent();
-//
-//	if (InputComponent)
-//	{
-//		InputComponent->BindAction("LeftClick", IE_Pressed, this, &AGeocoder::SendLocationQuery);
-//		EnableInput(GetWorld()->GetFirstPlayerController());
-//	}
-//}
-//// Identify the location clicked on and make a line trace from there to find the point for placing the stop 
-//void ARouteManager::AddStop()
-//{
-//	float DistanceAboveGround = 50000.0f;
-//	float TraceLength = 10000000.f;
-//	FVector WorldLocation;
-//	FVector WorldDirection;
-//	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-//	PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
-//
-//	FVector PlaneOrigin(0.0f, 0.0f, DistanceAboveGround);
-//	FVector ActorWorldLocation = FMath::LinePlaneIntersection(
-//		WorldLocation,
-//		WorldLocation + WorldDirection,
-//		PlaneOrigin,
-//		FVector::UpVector);
-//
-//	FHitResult TraceHit;
-//	if (!bIsRouting && GetWorld()->LineTraceSingleByChannel(TraceHit,
-//		WorldLocation, WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams()))
-//	{
-//		if (TraceHit.bBlockingHit)
-//		{
-//			FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-//			SpawnParam.Owner = this;
-//			Stops.AddHead(GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), TraceHit.ImpactPoint, FRotator(0.f), SpawnParam));
-//
-//			// Update the list of stops
-//			if (Stops.Num() > StopCount) {
-//				auto OldStop = Stops.GetTail();
-//
-//				OldStop->GetValue()->Destroy();
-//				Stops.RemoveNode(OldStop);
-//			}
-//
-//			// Make a routing query if enough stops added 
-//			if (Stops.Num() == StopCount) {
-//				bIsRouting = true;
-//				PostRoutingRequest();
-//
-//			}
-//		}
-//	}
-//}
+// Bind the handler for selecting a stop point
+void AGeocoder::SetupInput()
+{
+	if (!InputComponent) {
+		InputComponent = NewObject<UInputComponent>(this);
+	}
+
+	InputComponent->RegisterComponent();
+	InputComponent->BindAction("PlaceRoutePoint", IE_Pressed, this, &AGeocoder::SelectLocation);
+	EnableInput(GetWorld()->GetFirstPlayerController());
+}
 
 // Make a query for routing between the selected stops 
 void AGeocoder::SendAddressQuery(FString Address)
 {
+	if (bWaitingForResponse) {
+		return;
+	}
+
 	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
 
 	FString Url = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
 	FString APIToken = MapComponent ? MapComponent->GetAPIkey() : "";
 	FString Query;
 
-	//"GET geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=pjson&singleLine=1600PennsylvaniaAveNW,DC&token=<ACCESS_TOKEN>HTTP/1.1"
-
 	// Set up the query 
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &AGeocoder::ProcessQueryResponse);
-
+	Request->OnProcessRequestComplete().BindUObject(this, &AGeocoder::ProcessAddressQueryResponse);
 	Query = FString::Printf(TEXT("%s/?f=json&token=%s&address=%s"), *Url, *APIToken, *Address);
-
-
-
-	//Request->SetURL("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates/?f=json&&token=AAPKd92e3919a64e4758ae48061d88d35ee49rXW5paRxGMNDnw3m2hBpZXAElRU7MszfXmiCooHvKGW-vwB4patDMQdu72nTYiL&address=123%201st%20st,NYC");
-	//Request->SetURL("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates");
 	Request->SetURL(Query.Replace(TEXT(" "), TEXT("%20")));
 	Request->SetVerb("GET");
 	Request->SetHeader("Content-Type", "x-www-form-urlencoded"); //application/json  ---  application/x-www-form-urlencoded
-	//Request->SetHeader("User-Agent", "X-UnrealEngine-Agent");
-
-	//Request->SetTimeout(3);
-
-	//// Make a string of the coordinates of the stops
-	//for (auto Stop : Stops) {
-	//	Point = Stop->ArcGISLocation->GetPosition();
-
-	//	// If the geographic coordinates of the stop are not in terms of lat & lon, project them 
-	//	if (Point->GetSpatialReference()->GetWKID() != 4326) {
-	//		auto ProjectedGeometry = UArcGISGeometryEngine::Project(Point,
-	//			UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
-	//		if (ProjectedGeometry != nullptr)
-	//		{
-	//			Point = static_cast<UArcGISPoint*>(ProjectedGeometry);
-	//		}
-	//	}
-	//	StopCoordinates.Append(FString::Printf(TEXT("%f,%f;"), Point->GetX(), Point->GetY()));
-	//}
-	//StopCoordinates.RemoveFromEnd(";");
-
-
-	// Read the API key from the map component
-
-
-	// Set the request body and sent it
-//	RequestBody = TEXT("f=json&token=") + APIToken + TEXT("&address=") + Address;
-//
-////	RequestBody = TEXT("&token=AAPKd92e3919a64e4758ae48061d88d35ee49rXW5paRxGMNDnw3m2hBpZXAElRU7MszfXmiCooHvKGW-vwB4patDMQdu72nTYiL&address=123 1stst,NYC");
-//	RequestBody = TEXT("f=json");
-//	
-	UE_LOG(LogTemp, Warning, TEXT("--------%s"), *Query);
-	//Request->SetContentAsString(RequestBody);
 	Request->ProcessRequest();
+	bWaitingForResponse = true;
 }
 
-//void AGeocoder::SendLocationQuery(UArcGISPoint Point)
-//{
-//}
-
-void AGeocoder::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
+void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
 	FString ResponseAddress = "";
 	TSharedPtr<FJsonObject> JsonObj;
@@ -183,120 +105,131 @@ void AGeocoder::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr R
 	UE_LOG(LogTemp, Warning, TEXT("response code %d"), Response->GetResponseCode());
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *Response->GetContentAsString());
 
-	if (FJsonSerializer::Deserialize(Reader, JsonObj) && Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300) {
+	if (FJsonSerializer::Deserialize(Reader, JsonObj) &&
+		Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300) {
 		const TArray<TSharedPtr<FJsonValue>>* Candidates;
 		TSharedPtr<FJsonValue> Location;
 		double PointX, PointY;
 		//AQueryLocation* LocationActor;
 
 		if (JsonObj->TryGetArrayField(TEXT("candidates"), Candidates)) {
+			if (Candidates->Num() > 0) {
+				TSharedPtr<FJsonValue> candidate = (*Candidates)[0];
 
-			//for (auto address : *Candidates) {
-			TSharedPtr<FJsonValue> candidate = (*Candidates)[0];
-
-
-			JsonObj = candidate->AsObject();
-
-			if (JsonObj->TryGetStringField(TEXT("Address"), ResponseAddress)) {
-
-				UE_LOG(LogTemp, Warning, TEXT("Address: %s"), *ResponseAddress);
-			}
-
-			if (Location = JsonObj->TryGetField(TEXT("location"))) {
-				JsonObj = Location->AsObject();
-				JsonObj->TryGetNumberField("x", PointX);
-				JsonObj->TryGetNumberField("y", PointY);
-
-
-				if (QueryLocation == nullptr) {
-					// Create a breadcrumb for each path point and set its location from the query response
-					FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-					SpawnParam.Owner = this;
-					QueryLocation = GetWorld()->SpawnActor<AQueryLocation>(AQueryLocation::StaticClass(), FVector3d(0.), FRotator3d(0.), SpawnParam);
-
+				JsonObj = candidate->AsObject();
+				if (JsonObj->TryGetStringField(TEXT("Address"), ResponseAddress)) {
+					UE_LOG(LogTemp, Warning, TEXT("Address: %s"), *ResponseAddress);
 				}
 
-				QueryLocation->ApplyQueryResults(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-					PointX, PointY, 10000,
-					UArcGISSpatialReference::CreateArcGISSpatialReference(4326)), ResponseAddress);
+				if (Location = JsonObj->TryGetField(TEXT("location"))) {
+					JsonObj = Location->AsObject();
+					JsonObj->TryGetNumberField("x", PointX);
+					JsonObj->TryGetNumberField("y", PointY);
+
+					// Spawn a QueryLocation actor is not already created
+					if (QueryLocation == nullptr) {
+						FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+						SpawnParam.Owner = this;
+						QueryLocation = GetWorld()->SpawnActor<AQueryLocation>(AQueryLocation::StaticClass(), FVector3d(0.), FRotator3d(0.), SpawnParam);
+					}
+					// Place the QueryLocation actor at the queried XY location and at high altitude
+					QueryLocation->SetupAddressQuery(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+						PointX, PointY, 10000,
+						UArcGISSpatialReference::CreateArcGISSpatialReference(4326)), ResponseAddress);
+				}
 			}
 		}
+	}
+	bWaitingForResponse = false;
+}
 
+void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
+{
+	if (bWaitingForResponse) {
+		return;
+	}
+	///////////////////////////////////////////////////////////////////////////////////////////////////////// TODO convert spatial reference if needed
+	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
+
+	FString Url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
+	FString APIToken = MapComponent ? MapComponent->GetAPIkey() : "";
+	FString Query;
+
+	// Set up the query 
+	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
+	Request->OnProcessRequestComplete().BindUObject(this, &AGeocoder::ProcessLocationQueryResponse);
+	Query = FString::Printf(TEXT("%s/?f=json&location=%f,%f"), *Url, InPoint->GetX(), InPoint->GetY());
+	Request->SetURL(Query.Replace(TEXT(" "), TEXT("%20")));
+	Request->SetVerb("GET");
+	Request->SetHeader("Content-Type", "x-www-form-urlencoded");
+	UE_LOG(LogTemp, Warning, TEXT("--------%s"), *Query);
+	Request->ProcessRequest();
+	bWaitingForResponse = true;
+}
+
+void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully) {
+	FString ResponseAddress = "";
+	TSharedPtr<FJsonObject> JsonObj;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+
+	//UE_LOG(LogTemp, Warning, TEXT("response code %d"), Response->GetResponseCode());
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *Response->GetContentAsString());
+
+	if (FJsonSerializer::Deserialize(Reader, JsonObj) && Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300) {
+
+		TSharedPtr<FJsonValue> AddressField;
+		if (AddressField = JsonObj->TryGetField((TEXT("address")))) {
+
+
+			JsonObj = AddressField->AsObject();
+			if (JsonObj->TryGetStringField(TEXT("Match_addr"), ResponseAddress)) {
+				UE_LOG(LogTemp, Warning, TEXT(">>>>>>>>>Address: %s"), *ResponseAddress);
+			}
+		}
 	}
 
+	if (QueryLocation != nullptr) {
+		QueryLocation->UpdateAddressCue(ResponseAddress);
+	}
+	bWaitingForResponse = false;
+}
 
-	//// Process the response if the query was successful
-	//if (FJsonSerializer::Deserialize(Reader, JsonObj) && Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300) {
-	//	float TraceLength = 100000.;
+//// Identify the location clicked on and make a line trace from there to find the point for placing the stop 
+void AGeocoder::SelectLocation()
+{
+	if (bWaitingForResponse) {
+		return;
+	}
 
-	//	FHitResult TraceHit;
-	//	FVector3d WorldLocation;
-	//	ABreadcrumb* BC;
-	//	double Minutes;
-	//	TSharedPtr<FJsonValue> RoutesField;
-	//	TSharedPtr<FJsonValue> GeometryField;
-	//	TSharedPtr<FJsonValue> AttributesField;
-	//	const TArray<TSharedPtr<FJsonValue>>* FeaturesField;
-	//	const TArray<TSharedPtr<FJsonValue>>* PathsField;
-	//	const TArray<TSharedPtr<FJsonValue>>* PointsField;
-	//	const TArray<TSharedPtr<FJsonValue>>* StopCoordinates;
+	float TraceLength = 1000000.f;
+	FVector WorldLocation;
+	FVector WorldDirection;
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
 
-	//	// Remove the old breadcrumbs
-	//	for (auto Breadcrumb : Breadcrumbs) {
-	//		Breadcrumb->Destroy();
-	//	}
-	//	Breadcrumbs.Empty();
+	FHitResult TraceHit;
+	if (GetWorld()->LineTraceSingleByChannel(TraceHit,
+		WorldLocation, WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams()))
+	{
+		if (TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("--------clicked %s"), *TraceHit.GetActor()->GetActorLabel());
 
-	//	// Parse the query response
-	//	if (RoutesField = JsonObj->TryGetField(TEXT("routes"))) {
-	//		JsonObj = RoutesField->AsObject();
-	//		if (JsonObj->TryGetArrayField(TEXT("features"), FeaturesField)) {
+			if (QueryLocation == nullptr)
+			{
+				FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+				SpawnParam.Owner = this;
+				QueryLocation = GetWorld()->SpawnActor<AQueryLocation>(AQueryLocation::StaticClass(),
+					FVector3d(0.), FRotator(0.), SpawnParam);
 
-	//			for (auto feature : *FeaturesField) {
-	//				JsonObj = feature->AsObject();
-	//				AttributesField = JsonObj->TryGetField(TEXT("attributes")); // checked later
-	//				if (GeometryField = JsonObj->TryGetField(TEXT("geometry"))) {
-	//					JsonObj = GeometryField->AsObject();
-	//					if (JsonObj->TryGetArrayField(TEXT("paths"), PathsField)) {
-	//						for (auto path : *PathsField) {
-	//							PointsField = &path->AsArray();
-	//							for (auto point : *PointsField) {
-	//								StopCoordinates = &point->AsArray();
+			}
 
-	//								// Create a breadcrumb for each path point and set its location from the query response
-	//								FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-	//								SpawnParam.Owner = this;
-	//								BC = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector3d(0.), FRotator3d(0.), SpawnParam);
+			QueryLocation->SetupLocationQuery(TraceHit.ImpactPoint);
 
-	//								BC->ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(
-	//									(*StopCoordinates)[0]->AsNumber(),
-	//									(*StopCoordinates)[1]->AsNumber(),
-	//									UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+			AddTickPrerequisiteComponent(QueryLocation->ArcGISLocation);
+			bShouldSendLocationQuery = true;
 
-	//								// Make sure this actor doesn't tick before all Breadcrumb actors have ticked. 
-	//								// Ensures that the transform of all Breadcrum actors have been updated before adding the route cue
-	//								AddTickPrerequisiteComponent(BC->ArcGISLocation);
-	//								Breadcrumbs.AddHead(BC);
-	//							}
-	//						}
-	//					}
-	//				}
-	//				if (AttributesField) {
-	//					JsonObj = AttributesField->AsObject();
-	//					if (JsonObj->TryGetNumberField(TEXT("Total_TravelTime"), Minutes)) {
+		}
+	}
 
-	//						// Call a function from the UI widget to set the travel time
-	//						UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetTravelTime"));
-	//						if (WidgetFunction) {
-	//							UIWidget->ProcessEvent(WidgetFunction, &Minutes);
-	//						}
-	//					}
-	//				}
-	//			}
-	//			// Visualize the route in the next tick
-	//			bShouldUpdateBreadcrums = true;
-	//		}
-	//	}
-	//}
-	//bIsRouting = false;
 }
