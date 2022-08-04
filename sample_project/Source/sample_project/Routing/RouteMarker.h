@@ -38,7 +38,7 @@ public:
 	UStaticMeshComponent* MeshComponent;
 
 	UPROPERTY(VisibleAnywhere)
-	FVector3d MeshScale = FVector3d(15.);
+	FVector3d MeshScale = FVector3d(35.);
 
 
 protected:
