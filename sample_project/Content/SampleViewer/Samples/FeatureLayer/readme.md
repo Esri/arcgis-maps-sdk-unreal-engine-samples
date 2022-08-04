@@ -1,6 +1,6 @@
 # Feature Layer
 
-Query objects from a feature layer and show it on the map.
+Query objects from a feature layer and show them on the map.
 
 ![Image of Feature Layer Sample](FeatureLayer.jpg)
 
