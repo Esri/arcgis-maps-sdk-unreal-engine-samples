@@ -1,4 +1,17 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/* Copyright 2022 Esri
+ *
+ * Licensed under the Apache License Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #pragma once
 
@@ -10,10 +23,6 @@
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
-
-#include "DrawDebugHelpers.h"
-#include "Components/SplineMeshComponent.h"
-
 #include "QueryLocation.generated.h"
 
 UCLASS()
@@ -30,8 +39,6 @@ public:
 	void SetupLocationQuery(FVector3d InPoint);
 	void UpdateAddressCue(FString inAddress);
 	
-	bool bIsAddressQuery = false;
-	
 	UPROPERTY(VisibleAnywhere, Category = "ArcGISMapsSDK|SampleDefaultPawn")
 	UArcGISLocationComponent* ArcGISLocation;
 
@@ -39,20 +46,10 @@ public:
 	UStaticMeshComponent* MeshComponent;
 
 	UPROPERTY(VisibleAnywhere)
-	FVector3d MeshScale = FVector3d(12.);
+	FVector3d MeshScale = FVector3d(20.);
 
 	UPROPERTY(VisibleAnywhere)
 	UTextRenderComponent* TextComponent;
-
-
-
-	AArcGISMapActor* Map;
-
-	UArcGISMapComponent* MapComp;
-
-
-
-
 protected:
 	virtual void BeginPlay() override;
 
