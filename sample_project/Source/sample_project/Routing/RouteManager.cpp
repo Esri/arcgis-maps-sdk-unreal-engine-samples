@@ -254,14 +254,14 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 		Breadcrumbs.Empty();
 
 		// Parse the query response
-		if (RoutesField = JsonObj->TryGetField(TEXT("routes"))) {
+		if ((RoutesField = JsonObj->TryGetField(TEXT("routes")))) {
 			JsonObj = RoutesField->AsObject();
 			if (JsonObj->TryGetArrayField(TEXT("features"), FeaturesField)) {
 
 				for (auto feature : *FeaturesField) {
 					JsonObj = feature->AsObject();
 					AttributesField = JsonObj->TryGetField(TEXT("attributes")); // checked later
-					if (GeometryField = JsonObj->TryGetField(TEXT("geometry"))) {
+					if ((GeometryField = JsonObj->TryGetField(TEXT("geometry")))) {
 						JsonObj = GeometryField->AsObject();
 						if (JsonObj->TryGetArrayField(TEXT("paths"), PathsField)) {
 							for (auto path : *PathsField) {
