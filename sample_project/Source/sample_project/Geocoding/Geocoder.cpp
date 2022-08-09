@@ -18,6 +18,11 @@
 AGeocoder::AGeocoder()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("WidgetBlueprint'/Game/SampleViewer/Samples/Geocoding/GeocodingUI.GeocodingUI_C'"));
+	if (WidgetAsset.Succeeded()) {
+		UIWidgetClass = WidgetAsset.Object;
+	}
 }
 
 void AGeocoder::BeginPlay()
@@ -33,9 +38,24 @@ void AGeocoder::BeginPlay()
 		PC->bShowMouseCursor = true;
 		PC->bEnableClickEvents = true;
 	}
+
+	// Create the UI and add it to the viewport
+	if (UIWidgetClass != nullptr)
+	{
+		AActor* self = this;
+		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+		if (UIWidget)
+		{
+			UIWidget->AddToViewport();
+			UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetGeoCoder"));
+			if (WidgetFunction) {
+				UIWidget->ProcessEvent(WidgetFunction, &self);
+			}
+			WidgetSetInfoFunction = UIWidget->FindFunction(FName("SetInfoString"));
+		}
+	}
 }
 
-// Called every frame
 void AGeocoder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -67,7 +87,10 @@ void AGeocoder::SendAddressQuery(FString Address)
 	if (bWaitingForResponse) {
 		return;
 	}
-
+	if (WidgetSetInfoFunction) {
+		FString temp = "";
+		UIWidget->ProcessEvent(WidgetSetInfoFunction, &temp);
+	}
 	FString Url = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
 	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
 	FString APIToken = MapComponent ? MapComponent->GetAPIkey() : "";
@@ -90,12 +113,14 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 	FString ResponseAddress = "";
 	TSharedPtr<FJsonObject> JsonObj;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
-	
+
 	// Check if the query was successful
 	if (FJsonSerializer::Deserialize(Reader, JsonObj) &&
 		Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300) {
 		const TArray<TSharedPtr<FJsonValue>>* Candidates;
 		TSharedPtr<FJsonValue> Location;
+		TSharedPtr<FJsonValue> Error;
+		FString ErrorMessage;
 		double PointX, PointY;
 
 		if (JsonObj->TryGetArrayField(TEXT("candidates"), Candidates)) {
@@ -124,6 +149,13 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 				}
 			}
 		}
+		// If the server responded with an error, show the error message
+		else if (Error = JsonObj->TryGetField(TEXT("error"))) {
+			JsonObj = Error->AsObject();
+			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), ErrorMessage)) {
+				UIWidget->ProcessEvent(WidgetSetInfoFunction, &ErrorMessage);
+			}
+		}
 	}
 	bWaitingForResponse = false;
 }
@@ -135,7 +167,10 @@ void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
 	if (bWaitingForResponse) {
 		return;
 	}
-
+	if (WidgetSetInfoFunction) {
+		FString temp = "";
+		UIWidget->ProcessEvent(WidgetSetInfoFunction, &temp);
+	}
 	FString Url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
 	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
 	FString APIToken = MapComponent ? MapComponent->GetAPIkey() : "";
@@ -165,6 +200,8 @@ void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
 // Parse the response for a reverse geocoding query
 void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully) {
 	FString ResponseAddress = "";
+	FString ErrorMessage;
+	TSharedPtr<FJsonValue> Error;
 	TSharedPtr<FJsonObject> JsonObj;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
 
@@ -177,6 +214,13 @@ void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpRespo
 			JsonObj = AddressField->AsObject();
 			if (!JsonObj->TryGetStringField(TEXT("Match_addr"), ResponseAddress)) {
 				ResponseAddress = TEXT("Query did not return valid response");
+			}
+		} 
+		// If the server responded with an error, show the error message
+		else if (Error = JsonObj->TryGetField(TEXT("error"))) {
+			JsonObj = Error->AsObject();
+			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), ErrorMessage)) {
+				UIWidget->ProcessEvent(WidgetSetInfoFunction, &ErrorMessage);
 			}
 		}
 	}

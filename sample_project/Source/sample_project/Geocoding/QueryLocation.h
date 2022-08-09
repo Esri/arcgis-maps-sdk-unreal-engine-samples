@@ -32,14 +32,12 @@ class SAMPLE_PROJECT_API AQueryLocation : public AActor
 	
 public:	
 	AQueryLocation();
-	
 	virtual void Tick(float DeltaTime) override;
-
 	void SetupAddressQuery(UArcGISPoint* InPoint, FString InAddress);
 	void SetupLocationQuery(FVector3d InPoint);
 	void UpdateAddressCue(FString inAddress);
 	
-	UPROPERTY(VisibleAnywhere, Category = "ArcGISMapsSDK|SampleDefaultPawn")
+	UPROPERTY(VisibleAnywhere)
 	UArcGISLocationComponent* ArcGISLocation;
 
 	UPROPERTY(VisibleAnywhere)
@@ -50,6 +48,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	UTextRenderComponent* TextComponent;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -61,7 +60,6 @@ private:
 	UINT16 FramesToWaitForLoading = 30; // Threshold for comparing the StableFramesCounter against
 	UINT16 RaycastCounter; // Counting the total number of raycasts performed for this location
 	UINT16 MaxRaycastAttemts = 200; // Threshold for comparing the RaycastCounter against
-
 	UStaticMesh* PinMesh;
 	UStaticMesh* PointMesh;
 	UMaterial* PointMaterial;

@@ -17,6 +17,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Blueprint/UserWidget.h"
 #include "Json.h"
 #include "Http.h"
 #include "QueryLocation.h"
@@ -40,7 +41,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SelectLocation();
 
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -53,4 +53,7 @@ private:
 	AQueryLocation* QueryLocation;
 	bool bWaitingForResponse = false;
 	bool bShouldSendLocationQuery = false;
+	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UUserWidget* UIWidget;
+	UFunction* WidgetSetInfoFunction;
 };
