@@ -123,7 +123,6 @@ void ARouteManager::Tick(float DeltaTime)
 		delete[] BCLocations;
 		bShouldUpdateBreadcrums = false;
 	}
-
 }
 
 // Bind the handler for selecting a stop point
@@ -149,36 +148,26 @@ void ARouteManager::AddStop()
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
 
-	FVector PlaneOrigin(0.0f, 0.0f, DistanceAboveGround);
-	FVector ActorWorldLocation = FMath::LinePlaneIntersection(
-		WorldLocation,
-		WorldLocation + WorldDirection,
-		PlaneOrigin,
-		FVector::UpVector);
-
 	FHitResult TraceHit;
-	if (!bIsRouting && GetWorld()->LineTraceSingleByChannel(TraceHit,
-		WorldLocation, WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams()))
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation, 
+		WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams());
+	if (!bIsRouting && bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass())
 	{
 		if (TraceHit.bBlockingHit)
 		{
 			FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 			SpawnParam.Owner = this;
 			Stops.AddHead(GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), TraceHit.ImpactPoint, FRotator(0.f), SpawnParam));
-
 			// Update the list of stops
 			if (Stops.Num() > StopCount) {
 				auto OldStop = Stops.GetTail();
-
 				OldStop->GetValue()->Destroy();
 				Stops.RemoveNode(OldStop);
 			}
-
 			// Make a routing query if enough stops added 
 			if (Stops.Num() == StopCount) {
 				bIsRouting = true;
-				PostRoutingRequest();
-				
+				PostRoutingRequest();			
 			}
 		}
 	}
@@ -221,7 +210,7 @@ void ARouteManager::PostRoutingRequest()
 	FString APIToken = MapComponent ? MapComponent->GetAPIkey() : "";
 
 	// Set the request body and sent it
-	RequestBody = TEXT("f=json&returnRoutes=true&token=") + APIToken + "&stops=" + StopCoordinates;
+	RequestBody = TEXT("f=json&returnRoutes=true&token=") + APIToken + TEXT("&stops=") + StopCoordinates;
 	Request->SetContentAsString(RequestBody);
 	Request->ProcessRequest();
 }
@@ -232,14 +221,17 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
 
 	// Process the response if the query was successful
-	if (FJsonSerializer::Deserialize(Reader, JsonObj) && Response->GetResponseCode()>199 && Response->GetResponseCode() < 300) {
+	if (FJsonSerializer::Deserialize(Reader, JsonObj) 
+		&& Response->GetResponseCode()>199 && Response->GetResponseCode() < 300) {
+	
 		float TraceLength = 100000.;
-
 		FHitResult TraceHit;
 		FVector3d WorldLocation;
 		ABreadcrumb* BC;
 		double Minutes;
+		FString InfoMessage;
 		TSharedPtr<FJsonValue> RoutesField;
+		TSharedPtr<FJsonValue> ErrorField;
 		TSharedPtr<FJsonValue> GeometryField;
 		TSharedPtr<FJsonValue> AttributesField;
 		const TArray<TSharedPtr<FJsonValue>>* FeaturesField;
@@ -252,6 +244,9 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 			Breadcrumb->Destroy();
 		}
 		Breadcrumbs.Empty();
+
+		// Find the function that sets the info text of the UI
+		UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetTravelInfo"));
 
 		// Parse the query response
 		if ((RoutesField = JsonObj->TryGetField(TEXT("routes")))) {
@@ -290,19 +285,26 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 					if (AttributesField) {
 						JsonObj = AttributesField->AsObject();
 						if (JsonObj->TryGetNumberField(TEXT("Total_TravelTime"), Minutes)) {
-							
-							// Call a function from the UI widget to set the travel time
-							UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetTravelTime"));
+							// Update the travel time info in the UI
 							if (WidgetFunction) {
-								UIWidget->ProcessEvent(WidgetFunction, &Minutes);
-							}
+								InfoMessage = FString::Printf(TEXT("\nTravel Time: %.2f Minutes"), Minutes);
+								UIWidget->ProcessEvent(WidgetFunction, &InfoMessage);
+							}			
 						}
 					}
 				}
 				// Visualize the route in the next tick
 				bShouldUpdateBreadcrums = true;
 			}
+		} else if (ErrorField = JsonObj->TryGetField(TEXT("error"))) {
+			JsonObj = ErrorField->AsObject();
+			// Show the error message in the UI
+			if (JsonObj->TryGetStringField(TEXT("message"), InfoMessage)) {
+				if (WidgetFunction) {
+					UIWidget->ProcessEvent(WidgetFunction, &InfoMessage);
+				}
+			}
 		}
-	}
+	} 
 	bIsRouting = false;
 }
