@@ -120,7 +120,7 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 		const TArray<TSharedPtr<FJsonValue>>* Candidates;
 		TSharedPtr<FJsonValue> Location;
 		TSharedPtr<FJsonValue> Error;
-		FString ErrorMessage;
+		FString Message;
 		double PointX, PointY;
 
 		if (JsonObj->TryGetArrayField(TEXT("candidates"), Candidates)) {
@@ -146,14 +146,21 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 					QueryLocation->SetupAddressQuery(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 						PointX, PointY, 10000,
 						UArcGISSpatialReference::CreateArcGISSpatialReference(4326)), ResponseAddress);
+					
+					// If there are more than 1 candidate, show a notification
+					Message = FString::Printf(
+						TEXT("The query returned multiple results. If the shown location is not the intended one, make your input more specific."));
+					if (WidgetSetInfoFunction && Candidates->Num() > 1) {
+						UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
+					}
 				}
 			}
 		}
 		// If the server responded with an error, show the error message
 		else if (Error = JsonObj->TryGetField(TEXT("error"))) {
 			JsonObj = Error->AsObject();
-			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), ErrorMessage)) {
-				UIWidget->ProcessEvent(WidgetSetInfoFunction, &ErrorMessage);
+			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), Message)) {
+				UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
 			}
 		}
 	}
@@ -200,7 +207,7 @@ void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
 // Parse the response for a reverse geocoding query
 void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully) {
 	FString ResponseAddress = "";
-	FString ErrorMessage;
+	FString Message;
 	TSharedPtr<FJsonValue> Error;
 	TSharedPtr<FJsonObject> JsonObj;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
@@ -219,8 +226,8 @@ void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpRespo
 		// If the server responded with an error, show the error message
 		else if (Error = JsonObj->TryGetField(TEXT("error"))) {
 			JsonObj = Error->AsObject();
-			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), ErrorMessage)) {
-				UIWidget->ProcessEvent(WidgetSetInfoFunction, &ErrorMessage);
+			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), Message)) {
+				UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
 			}
 		}
 	}
