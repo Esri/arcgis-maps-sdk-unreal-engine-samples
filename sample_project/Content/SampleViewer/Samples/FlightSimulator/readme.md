@@ -15,7 +15,8 @@ Allows users to explore a city/map from the perspective of a Third Person Charac
 
 ## Controls
 This sample supports keyboard controls and use of an Xbox/Playstation controller
-Keyboard Controls: W for Acceleration, S for Deceleration, A for Yaw Left, D for Yaw Right, K or 5 (on numberpad) for pitch Up, I or 8 (on numberpad) for pitch down, J or 4 (on numberpad) for roll left, L or 6 (on numberpad) for roll right. H can be used to toggle the landing gear.
+Keyboard Controls: Left Shift for Acceleration, Q for Yaw Left, E for Yaw Right, W or Mouse Y for pitch Up, S or Mouse Y for pitch down, A or Mouse X for roll left, D or Mouse X for roll right. 
+H can be used to toggle the landing gear.
 Controller Controls: Right Trigger for Acceleration, Left Trigger for Deceleration, Left Stick Left and Right for Yaw, Right Stick Left and Right for Roll, Right Stick up and down for Pitch. Right Thumbstick button to toggle landing gear. 
 
 ## About the data
