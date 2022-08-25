@@ -68,58 +68,57 @@ void AMeasure::Tick(float DeltaTime)
 
 	// If new routing information has been received, visualize the route
 
-		float TraceLength = 10000000.;
-		float HeightOffset = 200.;
-		FHitResult TraceHit;
-		FVector3d WorldLocation;
-		bool bTraceSuccess = false;
-		uint16 Counter = 0;
-		FVector3d Tangent;
-		USplineMeshComponent* SplineMesh;
-		FVector3d* BCLocations = new FVector3d[featurePoints.Num()];
+	float TraceLength = 10000000.;
+	float HeightOffset = 200.;
+	FHitResult TraceHit;
+	FVector3d WorldLocation;
+	bool bTraceSuccess = false;
+	uint16 Counter = 0;
+	FVector3d Tangent;
+	USplineMeshComponent* SplineMesh;
+	FVector3d* BCLocations = new FVector3d[featurePoints.Num()];
 
-		float DistanceAboveGround = 50000.0f;
-		float TraceLength = 10000000.f;
-		FVector WorldLocation;
-		FVector WorldDirection;
-		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-		PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+	float DistanceAboveGround = 50000.0f;
+	float TraceLength = 10000000.f;
+	FVector WorldLocation;
+	FVector WorldDirection;
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
 
-		FHitResult TraceHit;
-		bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
-			WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams());
+	FHitResult TraceHit;
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
+		WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams());
 
-		if (bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && TraceHit.bBlockingHit)
-		{
-			FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-			SpawnParam.Owner = this;
+	if (bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && TraceHit.bBlockingHit)
+	{
+		FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+		SpawnParam.Owner = this;
 
-			auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), TraceHit.ImpactPoint, FRotator(0.f), SpawnParam);
-			auto thisPoint = TraceHit.ImpactPoint;
-
-			lineMarker.findComponentBy= true;
-			lineMarker->GetComponent(UArcGISLocationComponent) = thisPoint;
-			lineMarker.GetComponent<ArcGISLocationComponent>().Rotation = new ArcGISRotation(0, 90, 0);
-			if (!stops.IsEmpty())
-			{
-				auto lastStop = stops.Peek();
-				auto lastPoint = lastStop.GetComponent<ArcGISLocationComponent>().Position;
-
-				//calculate distance from last point to this point
-				geodedicDistance += ArcGISGeometryEngine.DistanceGeodetic(lastPoint, thisPoint, new ArcGISLinearUnit(unit), new ArcGISAngularUnit(unitDegree), ArcGISGeodeticCurveType.Geodesic).Distance;
-				GeodedicDistanceText.text = "Distance: " + Math.Round(geodedicDistance, 3).ToString() + unitTxt;
-
-				featurePoints.Add(lastStop);
-				//interpolate middle points between last point and this point
-				Interpolate(lastStop, lineMarker, featurePoints);
-				featurePoints.Add(lineMarker);
-			}
-
-			stops.Enqueue(lineMarker);
-			RenderLine(featurePoints);
-		}
+		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), TraceHit.ImpactPoint, FRotator(0.f), SpawnParam);
+		auto ArcGISLocation = lineMarker->ArcGISLocation;
 		
+		auto thisPoint = lineMarker->ArcGISLocation->GetPosition();
+		lineMarker->ArcGISLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(0, 90, 0));
+		if (!stops.IsEmpty())
+		{
+			auto lastStop = *stops.Peek();
+			auto lastPoint = lastStop->ArcGISLocation->GetPosition();
 
+			//calculate distance from last point to this point
+			UArcGISGeodeticDistanceResult* d= UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees), EArcGISGeodeticCurveType::Geodesic).Distance;
+			GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(geodeticDistance * 1000.0) / 1000,  unitTxt);
+
+			featurePoints.Add(lastStop);
+			//interpolate middle points between last point and this point
+			//Interpolate(lastStop, lineMarker, featurePoints);
+			featurePoints.Add(lineMarker);
+		}
+
+		stops.Enqueue(lineMarker);
+		//RenderLine(featurePoints);
+	}
+}
+/*
 	void AMeasure::SetupInput()
 	{
 		InputComponent = NewObject<UInputComponent>(this);
@@ -130,7 +129,7 @@ void AMeasure::Tick(float DeltaTime)
 			InputComponent->BindAction("PlaceRoutePoint", IE_Pressed, this, &ARouteManager::AddStop);
 			EnableInput(GetWorld()->GetFirstPlayerController());
 		}
-	}
+	}*/
 	void SetBreadcrumbHeight()
 	{
 		for (int i = 0; i < featurePoints.Num(); i++)
@@ -138,24 +137,22 @@ void AMeasure::Tick(float DeltaTime)
 			SetElevation(featurePoints[i]);
 		}
 	}
+	
 	// Do a line trace to determine the height of breadcrumbs
-	void SetElevation(GameObject stop)
+	void SetElevation(ARouteMarker* stop)
 	{
-		
-		if (Physics.Raycast(raycastStart, Vector3.down, out RaycastHit hitInfo)
-		{
-			RemoveTickPrerequisiteComponent(BC->ArcGISLocation);			
+			RemoveTickPrerequisiteComponent(stop->ArcGISLocation);			
 			WorldLocation = FVector3d(
-				BC->GetActorLocation().X, BC->GetActorLocation().Y, TraceLength / 2.f);
+				stop->GetActorLocation().X, stop->GetActorLocation().Y, TraceLength / 2.f);
 			bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
 				WorldLocation + TraceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
 			WorldLocation.Z = bTraceSuccess ? TraceHit.ImpactPoint.Z + HeightOffset : 0.;
 
 			BC->SetActorLocation(WorldLocation);
 			featurePoints[Counter] = WorldLocation;
-		}
+	
 	}
-	void RenderLine(TArray<ARouteMarker*> featurePoints;)
+	/*void RenderLine(TArray<ARouteMarker*> featurePoints;)
 	{
 		// Add a spline mesh for each segment of the route
 		for (int i = 0; i < Counter; i++) {
@@ -189,7 +186,7 @@ void AMeasure::Tick(float DeltaTime)
 		SplineMeshComponents.Empty();
 
 	}
-
+*/
 	
-}
+
 

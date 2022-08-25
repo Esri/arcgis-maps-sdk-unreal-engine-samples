@@ -13,7 +13,15 @@
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISLinearUnitId.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISLinearUnit.h" 
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnit.h" 
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnitId.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeodeticCurveType.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeodeticDistanceResult.h"
+
 #include "Measure.generated.h"
+
 
 UCLASS()
 class AMeasure : public AActor
@@ -41,5 +49,8 @@ private:
 	TQueue<ARouteMarker*> stops;
 	TArray<ARouteMarker*> featurePoints;
 	FVector2D RouteCueScale = FVector2D(5.);
-
+	double geodeticDistance;
+	FString unitTxt;
+	FString GeodeticDistanceText;
+	int Unit = 9001;
 };
