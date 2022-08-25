@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/StaticMeshActor.h"
+#include "Engine/World.h"
 #include "Components/SplineMeshComponent.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerController.h"
@@ -19,7 +20,7 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnitId.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeodeticCurveType.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeodeticDistanceResult.h"
-
+#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometry.h"
 #include "Measure.generated.h"
 
 
@@ -41,6 +42,9 @@ protected:
 private:
 	
 	void SetupInput();
+	void AddStop();
+	void SetElevation(ARouteMarker* stop);
+
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UUserWidget* UIWidget;
 	UArcGISMapComponent* MapComponent;
@@ -49,7 +53,7 @@ private:
 	TQueue<ARouteMarker*> stops;
 	TArray<ARouteMarker*> featurePoints;
 	FVector2D RouteCueScale = FVector2D(5.);
-	double geodeticDistance;
+	double geodeticDistance=0;
 	FString unitTxt;
 	FString GeodeticDistanceText;
 	int Unit = 9001;
