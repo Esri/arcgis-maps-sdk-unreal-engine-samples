@@ -44,6 +44,7 @@ private:
 	void SetupInput();
 	void AddStop();
 	void SetElevation(ARouteMarker* stop);
+	void Interpolate(ARouteMarker* start, ARouteMarker* end);
 
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UUserWidget* UIWidget;
@@ -54,7 +55,8 @@ private:
 	TArray<ARouteMarker*> featurePoints;
 	FVector2D RouteCueScale = FVector2D(5.);
 	double geodeticDistance=0;
+	double InterpolationInterval = 10000;
 	FString unitTxt;
 	FString GeodeticDistanceText;
-	int Unit = 9001;
+	
 };

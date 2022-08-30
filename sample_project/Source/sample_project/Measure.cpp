@@ -29,7 +29,7 @@ AMeasure::AMeasure()
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Cube.Cube"));
 	if (MeshAsset.Succeeded()) {
-		RouteMesh = MeshAsset.Object;
+		RouteMesh = MeshAsset.Object; 
 	}
 
 }
@@ -58,7 +58,7 @@ void AMeasure::BeginPlay()
 			UIWidget->AddToViewport();
 		}
 	}
-	
+	unitTxt = " m";
 }
 
 // Called every frame
@@ -73,7 +73,6 @@ void AMeasure::Tick(float DeltaTime)
 	FVector position;
 	FVector direction;
 	FHitResult hit;
-//	USplineMeshComponent* SplineMesh;
 	float elevationOffset = 200.;
 	uint16 Counter = 0;
 	FVector3d Tangent;
@@ -81,8 +80,6 @@ void AMeasure::Tick(float DeltaTime)
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	PlayerController->DeprojectMousePositionToWorld(position, direction);
 
-	
-	
 }
 
 	void AMeasure::SetupInput()
@@ -93,6 +90,7 @@ void AMeasure::Tick(float DeltaTime)
 		if (InputComponent)
 		{
 			InputComponent->BindAction("PlaceRoutePoint", IE_Pressed, this, &AMeasure::AddStop);
+		//	InputComponent->BindAction("IntepolatePoint", IE_Pressed, this, &AMeasure::Interpolate);
 			EnableInput(GetWorld()->GetFirstPlayerController());
 		}
 	}
@@ -103,11 +101,9 @@ void AMeasure::Tick(float DeltaTime)
 		FVector position;
 		FVector direction;
 		FHitResult hit;
-		//	USplineMeshComponent* SplineMesh;
 		float elevationOffset = 200.;
-		uint16 Counter = 0;
-		FVector3d Tangent;
-		FVector3d* BCLocations = new FVector3d[featurePoints.Num()];
+		FVector tangent;
+		
 		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 		PlayerController->DeprojectMousePositionToWorld(position, direction);
 
@@ -123,7 +119,6 @@ void AMeasure::Tick(float DeltaTime)
 			auto ArcGISLocation = lineMarker->ArcGISLocation;
 
 			auto thisPoint = lineMarker->ArcGISLocation->GetPosition();
-			lineMarker->ArcGISLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(0, 90, 0));
 
 			if (!stops.IsEmpty())
 			{
@@ -132,16 +127,42 @@ void AMeasure::Tick(float DeltaTime)
 
 				//calculate distance from last point to this point
 				geodeticDistance += UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees), EArcGISGeodeticCurveType::Geodesic)->GetDistance();
-			//	GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(geodeticDistance * 1000.0) / 1000,  unitTxt);
+				GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(geodeticDistance * 1000.0) / 1000.0,  *unitTxt);
+				UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetTravelInfo"));
+				UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 
 				featurePoints.Add(lastStop);
 				//interpolate middle points between last point and this point
-				//Interpolate(lastStop, lineMarker, featurePoints);
+				Interpolate(lastStop, lineMarker);
 				featurePoints.Add(lineMarker);
 			}
 
 			stops.Enqueue(lineMarker);
-			//RenderLine(featurePoints);
+
+			// Add a spline mesh for each segment of the route
+			USplineMeshComponent* SplineMesh;
+			for (int i = 1; i < featurePoints.Num(); i++) 
+			{
+
+					SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
+					SplineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+					SplineMesh->RegisterComponent();
+					SplineMesh->SetMobility(EComponentMobility::Movable);
+
+					FVector end = featurePoints[i]->GetActorLocation();
+					FVector start = featurePoints[i - 1]->GetActorLocation();
+
+					tangent = end - start;
+					tangent.Normalize();
+					tangent = tangent * 100.;
+
+					SplineMesh->SetStartAndEnd(start, tangent, end, tangent);
+					SplineMesh->SetStartScale(RouteCueScale);
+					SplineMesh->SetEndScale(RouteCueScale);
+					SplineMesh->SetStaticMesh(RouteMesh);
+				//	SplineMeshComponents.AddHead(SplineMesh);
+
+			}
 		}
 	}
 	// Do a line trace from high above to update the elevation info of feature points
@@ -163,41 +184,54 @@ void AMeasure::Tick(float DeltaTime)
 
 	
 	}
-	/*void RenderLine(TArray<ARouteMarker*> featurePoints;)
+
+	void AMeasure::Interpolate(ARouteMarker* start, ARouteMarker* end)
 	{
-		// Add a spline mesh for each segment of the route
-		for (int i = 0; i < Counter; i++) {
-			if (i > 0) {
-				SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
-				SplineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
-				SplineMesh->RegisterComponent();
-				SplineMesh->SetMobility(EComponentMobility::Movable);
+		auto startPoint = start->ArcGISLocation->GetPosition();
+		auto endPoint = end->ArcGISLocation->GetPosition();
 
-				Tangent = BCLocations[i] - BCLocations[i - 1];
-				Tangent.Normalize();
-				Tangent = Tangent * 100.;
+		double d = UArcGISGeometryEngine::DistanceGeodetic(startPoint, endPoint, UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees), EArcGISGeodeticCurveType::Geodesic)->GetDistance();
+		float n = floor((float)d / InterpolationInterval);
+		double dx = (end->GetActorLocation().X - start->GetActorLocation().X) / n;
+		double dy = (end->GetActorLocation().Y - start->GetActorLocation().Y) / n;
 
-				SplineMesh->SetStartAndEnd(BCLocations[i - 1], Tangent, BCLocations[i], Tangent);
-				SplineMesh->SetStartScale(RouteCueScale);
-				SplineMesh->SetEndScale(RouteCueScale);
+		auto pre = start->GetActorLocation();
 
-				SplineMesh->SetStaticMesh(RouteMesh);
+		//calculate n-1 intepolation points/n-1 segments because the last segment is already created by the end point 
+		for (int i = 0; i < n - 1; i++)
+		{
+			FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+			SpawnParam.Owner = this;
+			auto next = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), FVector(0,0,0), FRotator(0.f), SpawnParam);
 
-				SplineMeshComponents.AddHead(SplineMesh);
-			}
+			//calculate transform of next point
+			float nextX = pre.X + (float)dx;
+			float nextY = pre.Y + (float)dy;
+			next->SetActorLocation(FVector(nextX, 0, nextY));
+
+			//set default location component of next point
+		//	next.GetComponent<ArcGISLocationComponent>().Rotation = new ArcGISRotation(0, 90, 0);
+
+			//define height
+			SetElevation(next);
+
+			featurePoints.Add(next);
+
+			pre = next->GetActorLocation();
 		}
-		delete[] BCLocations;
+
 	}
-	void ClearLine()
+/*	void ClearLine()
 	{
-		for (auto SPC : SplineMeshComponents) {
-			SPC->UnregisterComponent();
-			SPC->DestroyComponent();
+		USplineMeshComponent* SplineMesh=getactorofclasss
+		for (auto point : SplineMeshComponents) {
+			point->UnregisterComponent();
+			point->DestroyComponent();
 		}
 		SplineMeshComponents.Empty();
 
-	}
-*/
+	}*/
+
 	
 
 
