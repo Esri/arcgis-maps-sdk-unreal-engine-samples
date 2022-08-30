@@ -90,7 +90,7 @@ void AMeasure::Tick(float DeltaTime)
 		if (InputComponent)
 		{
 			InputComponent->BindAction("PlaceRoutePoint", IE_Pressed, this, &AMeasure::AddStop);
-		//	InputComponent->BindAction("IntepolatePoint", IE_Pressed, this, &AMeasure::Interpolate);
+		//	InputComponent->BindAction("InterpolatePoint", IE_Pressed, this, &AMeasure::Interpolate);
 			EnableInput(GetWorld()->GetFirstPlayerController());
 		}
 	}
@@ -126,14 +126,45 @@ void AMeasure::Tick(float DeltaTime)
 				auto lastPoint = lastStop->ArcGISLocation->GetPosition();
 
 				//calculate distance from last point to this point
-				geodeticDistance += UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees), EArcGISGeodeticCurveType::Geodesic)->GetDistance();
+				double d = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees), EArcGISGeodeticCurveType::Geodesic)->GetDistance();
+				geodeticDistance += d;
 				GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(geodeticDistance * 1000.0) / 1000.0,  *unitTxt);
 				UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetTravelInfo"));
 				UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 
 				featurePoints.Add(lastStop);
-				//interpolate middle points between last point and this point
-				Interpolate(lastStop, lineMarker);
+
+				//interpolate middle points between last point/start and this point(end)
+				
+				float n = floor((float)d / InterpolationInterval);
+				double dx = (lineMarker->GetActorLocation().X - lastStop->GetActorLocation().X) / n;
+				double dy = (lineMarker->GetActorLocation().Y - lastStop->GetActorLocation().Y) / n;
+
+				auto pre = lastStop->GetActorLocation();
+
+				//calculate n-1 intepolation points/n-1 segments because the last segment is already created by the end point 
+				for (int i = 0; i < n - 1; i++)
+				{
+					
+					SpawnParam.Owner = this;
+					auto next = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), FVector(0, 0, 0), FRotator(0.f), SpawnParam);
+
+					//calculate transform of next point
+					float nextX = pre.X + (float)dx;
+					float nextY = pre.Y + (float)dy;
+					next->SetActorLocation(FVector(nextX, 0, nextY));
+
+					//set default location component of next point
+				//	next.GetComponent<ArcGISLocationComponent>().Rotation = new ArcGISRotation(0, 90, 0);
+
+					//define height
+					SetElevation(next);
+
+					featurePoints.Add(next);
+
+					pre = next->GetActorLocation();
+				}
+
 				featurePoints.Add(lineMarker);
 			}
 
@@ -185,42 +216,6 @@ void AMeasure::Tick(float DeltaTime)
 	
 	}
 
-	void AMeasure::Interpolate(ARouteMarker* start, ARouteMarker* end)
-	{
-		auto startPoint = start->ArcGISLocation->GetPosition();
-		auto endPoint = end->ArcGISLocation->GetPosition();
-
-		double d = UArcGISGeometryEngine::DistanceGeodetic(startPoint, endPoint, UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees), EArcGISGeodeticCurveType::Geodesic)->GetDistance();
-		float n = floor((float)d / InterpolationInterval);
-		double dx = (end->GetActorLocation().X - start->GetActorLocation().X) / n;
-		double dy = (end->GetActorLocation().Y - start->GetActorLocation().Y) / n;
-
-		auto pre = start->GetActorLocation();
-
-		//calculate n-1 intepolation points/n-1 segments because the last segment is already created by the end point 
-		for (int i = 0; i < n - 1; i++)
-		{
-			FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-			SpawnParam.Owner = this;
-			auto next = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), FVector(0,0,0), FRotator(0.f), SpawnParam);
-
-			//calculate transform of next point
-			float nextX = pre.X + (float)dx;
-			float nextY = pre.Y + (float)dy;
-			next->SetActorLocation(FVector(nextX, 0, nextY));
-
-			//set default location component of next point
-		//	next.GetComponent<ArcGISLocationComponent>().Rotation = new ArcGISRotation(0, 90, 0);
-
-			//define height
-			SetElevation(next);
-
-			featurePoints.Add(next);
-
-			pre = next->GetActorLocation();
-		}
-
-	}
 /*	void ClearLine()
 	{
 		USplineMeshComponent* SplineMesh=getactorofclasss
