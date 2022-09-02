@@ -11,6 +11,7 @@
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerController.h"
 #include "Routing/RouteMarker.h"
+#include "Routing/Breadcrumb.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
@@ -43,19 +44,18 @@ private:
 	
 	void SetupInput();
 	void AddStop();
-	void SetElevation(ARouteMarker* stop);
-	void Interpolate(ARouteMarker* start, ARouteMarker* end);
-
+	void SetElevation(AActor* stop);
+	
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UUserWidget* UIWidget;
 	UArcGISMapComponent* MapComponent;
 	TDoubleLinkedList < USplineMeshComponent*> SplineMeshComponents;
 	UStaticMesh* RouteMesh;
-	TQueue<ARouteMarker*> stops;
-	TArray<ARouteMarker*> featurePoints;
+	TArray<ARouteMarker*> stops;
+	TArray<AActor*> featurePoints;
 	FVector2D RouteCueScale = FVector2D(5.);
 	double geodeticDistance=0;
-	double InterpolationInterval = 10000;
+	double InterpolationInterval = 100;
 	FString unitTxt;
 	FString GeodeticDistanceText;
 	
