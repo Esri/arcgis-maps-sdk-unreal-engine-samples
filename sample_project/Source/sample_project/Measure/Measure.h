@@ -1,4 +1,17 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// COPYRIGHT 1995-2022 ESRI
+// TRADE SECRETS: ESRI PROPRIETARY AND CONFIDENTIAL
+// Unpublished material - all rights reserved under the
+// Copyright Laws of the United States and applicable international
+// laws, treaties, and conventions.
+//
+// For additional information, contact:
+// Attn: Contracts and Legal Department
+// Environmental Systems Research Institute, Inc.
+// 380 New York Street
+// Redlands, California 92373
+// USA
+//
+// email: legal@esri.com
 
 #pragma once
 
@@ -7,6 +20,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
+#include "Components/ComboBoxString.h"
 #include "Components/SplineMeshComponent.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerController.h"
@@ -25,41 +39,57 @@
 #include "Measure.generated.h"
 
 
+UENUM()
+enum UnitType
+{
+	m = 0,
+	km = 1,
+	mi = 2,
+	ft = 3
+};
+
+
 UCLASS()
 class AMeasure : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AMeasure();
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
+	UFUNCTION(BlueprintCallable)
+		void ClearLine();
+	UFUNCTION(BlueprintCallable)
+		void UnitChanged();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
-	
+
 	void SetupInput();
 	void AddStop();
 	void SetElevation(AActor* stop);
-	void ClearLine();
+
 
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UUserWidget* UIWidget;
+	UFunction* WidgetFunction;
+	UComboBoxString* UnitDropdown;
 	UArcGISMapComponent* MapComponent;
 	TDoubleLinkedList < USplineMeshComponent*> SplineMeshComponents;
 	UStaticMesh* RouteMesh;
-
 	TArray<AActor*> featurePoints;
 	TArray<ARouteMarker*> stops;
 	FVector2D RouteCueScale = FVector2D(5.);
-	double geodeticDistance=0;
+	double geodeticDistance = 0;
 	double InterpolationInterval = 100;
 	FString unitTxt;
-	FString GeodeticDistanceText;
-	
+	FString geodeticDistanceText;
+	double ConvertUnits(double units, UnitType from, UnitType to);
+	UArcGISLinearUnit* unit;
+	UnitType currentUnit;
 };
