@@ -70,17 +70,6 @@ void AMeasure::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	float raycastHeight = 50000.0f;
-	float traceLength = 10000000.f;
-	FVector position;
-	FVector direction;
-	FHitResult hit;
-	float elevationOffset = 200.;
-	uint16 Counter = 0;
-	FVector3d Tangent;
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	PlayerController->DeprojectMousePositionToWorld(position, direction);
-
 }
 
 void AMeasure::SetupInput()
@@ -96,12 +85,10 @@ void AMeasure::SetupInput()
 }
 void AMeasure::AddStop()
 {
-	float raycastHeight = 50000.0f;
 	float traceLength = 10000000.f;
 	FVector position;
 	FVector direction;
 	FHitResult hit;
-	float elevationOffset = 200.;
 	FVector tangent;
 
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -116,7 +103,6 @@ void AMeasure::AddStop()
 		SpawnParam.Owner = this;
 
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0.f), SpawnParam);
-		auto ArcGISLocation = lineMarker->ArcGISLocation;
 
 		auto thisPoint = lineMarker->ArcGISLocation->GetPosition();
 
@@ -131,7 +117,6 @@ void AMeasure::AddStop()
 			geodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(geodeticDistance * 1000.0) / 1000.0, *unitTxt);
 			UIWidget->ProcessEvent(WidgetFunction, &geodeticDistanceText);
 
-
 			//interpolate points between last point/start and this point(end)
 
 			float n = floor((float)d / InterpolationInterval);
@@ -143,7 +128,6 @@ void AMeasure::AddStop()
 			//calculate n intepolation points/n segments because the last segment is already created by the end point 
 			for (int i = 0; i < n - 1; i++)
 			{
-
 				SpawnParam.Owner = this;
 				//calculate transform of next point
 				float nextX = pre.X + (float)dx;
@@ -157,13 +141,10 @@ void AMeasure::AddStop()
 
 				pre = next->GetActorLocation();
 			}
-
-
 		}
 		featurePoints.Add(lineMarker);
 		stops.Add(lineMarker);
 
-		// Add a spline mesh for each segment of the route
 		USplineMeshComponent* SplineMesh;
 		for (int i = 1; i < featurePoints.Num(); i++)
 		{
@@ -184,7 +165,6 @@ void AMeasure::AddStop()
 			SplineMesh->SetEndScale(RouteCueScale);
 			SplineMesh->SetStaticMesh(RouteMesh);
 			SplineMeshComponents.AddHead(SplineMesh);
-
 		}
 	}
 }
@@ -198,19 +178,15 @@ void AMeasure::SetElevation(AActor* stop)
 	FHitResult hitInfo;
 	float elevationOffset = 200.;
 
-
 	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hitInfo, raycastStart,
 		position + traceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
 	position.Z = bTraceSuccess ? hitInfo.ImpactPoint.Z + elevationOffset : 0.;
 
 	stop->SetActorLocation(position);
-
-
 }
 
 void AMeasure::ClearLine()
 {
-
 	if (!SplineMeshComponents.IsEmpty())
 	{
 		for (auto point : SplineMeshComponents) {
@@ -232,7 +208,6 @@ void AMeasure::ClearLine()
 		geodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), geodeticDistance, *unitTxt);
 		UIWidget->ProcessEvent(WidgetFunction, &geodeticDistanceText);
 	}
-
 }
 void AMeasure::UnitChanged()
 {
@@ -267,7 +242,6 @@ void AMeasure::UnitChanged()
 	}
 	geodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(geodeticDistance * 1000.0) / 1000.0, *unitTxt);
 	UIWidget->ProcessEvent(WidgetFunction, &geodeticDistanceText);
-
 }
 double AMeasure::ConvertUnits(double value, UnitType from, UnitType to)
 {

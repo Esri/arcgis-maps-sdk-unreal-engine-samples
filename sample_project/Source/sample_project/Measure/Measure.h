@@ -74,7 +74,6 @@ private:
 	void AddStop();
 	void SetElevation(AActor* stop);
 
-
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UUserWidget* UIWidget;
 	UFunction* WidgetFunction;
