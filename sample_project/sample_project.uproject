@@ -7,16 +7,7 @@
 		{
 			"Name": "sample_project",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"Engine"
-			]
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "ArcGISMapsSDK",
-			"Enabled": true
+			"LoadingPhase": "Default"
 		}
 	]
 }
