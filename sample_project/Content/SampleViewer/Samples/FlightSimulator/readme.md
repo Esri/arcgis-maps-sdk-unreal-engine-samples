@@ -1,4 +1,4 @@
-# Third Person Character Controller
+# Create a Flight Simulator Sample
 
 Allows users to explore a city/map from the perspective of a Third Person Character.
 
@@ -7,11 +7,15 @@ Allows users to explore a city/map from the perspective of a Third Person Charac
 ## How it works
 
 1. Check the box for **Mesh Colliers Enabled** on the `ArcGIS Map` component.
-2. Pick an airport to take off from and set the latitude and longitude of the airport as your world center
-3. Create a new blueprint and call it "bp_Runway".
-4. Add a cube and change the scale of it to be 50, 2500, 1. Or something similar that suits your needs.
-5. Add your Plane blueprint on top of your run way.
-6. Enjoy flying around the world.
+2. Make sure the component is in **Global Mode**.
+3. Pick an airport to take off from and set the latitude and longitude of the airport as your world center
+4. Create a new blueprint and call it "bp_Runway".
+5. Add a cube and change the scale of it to be 50, 2500, 1. Or something similar that suits your needs.
+6. Add your Plane blueprint on top of your run way.
+7. Enjoy flying around the world.
+
+Movement of the plane is done through Unreal physics.
+We add a physics **linear velocity** depending on the thrust and rotate for each of the axis adding a **torque** in such axis so that the plane can rotate in the roll, pitch and yaw axes. If the plane reduces enough the speed, a false gravity drags the plane towards Earth.
 
 ## Controls
 This sample supports keyboard controls and use of an Xbox/Playstation controller
