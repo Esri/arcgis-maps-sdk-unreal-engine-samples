@@ -13,25 +13,25 @@
  * limitations under the License.
  */
 
-
 #include "Measure.h"
 
- // Sets default values
+// Sets default values
 AMeasure::AMeasure()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Load the necessary assets
-	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Measure/Blueprints/UI_Measure.UI_Measure_C"));
-	if (WidgetAsset.Succeeded()) {
+	ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Measure/Blueprints/UI_Measure.UI_Measure_C"));
+	if (WidgetAsset.Succeeded())
+	{
 		UIWidgetClass = WidgetAsset.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Cube.Cube"));
-	if (MeshAsset.Succeeded()) {
+	ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Cube.Cube"));
+	if (MeshAsset.Succeeded())
+	{
 		RouteMesh = MeshAsset.Object;
 	}
-
 }
 
 // Called when the game starts or when spawned
@@ -42,11 +42,12 @@ void AMeasure::BeginPlay()
 	SetupInput();
 
 	// Make sure mouse cursor remains visible
-	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PC)
+	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (playerController)
 	{
-		PC->bShowMouseCursor = true;
-		PC->bEnableClickEvents = true;
+		playerController->bShowMouseCursor = true;
+		playerController->bEnableClickEvents = true;
 	}
 
 	// Create the UI and add it to the viewport
@@ -60,16 +61,10 @@ void AMeasure::BeginPlay()
 			UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));
 		}
 	}
-	unitTxt = " m";
-	unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
-	currentUnit = m;
-}
 
-// Called every frame
-void AMeasure::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
+	UnitText = " m";
+	Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
+	CurrentUnit = m;
 }
 
 void AMeasure::SetupInput()
@@ -85,7 +80,7 @@ void AMeasure::SetupInput()
 }
 void AMeasure::AddStop()
 {
-	float traceLength = 10000000.f;
+	float traceLength = 10000000.0f;
 	FVector position;
 	FVector direction;
 	FHitResult hit;
@@ -94,71 +89,71 @@ void AMeasure::AddStop()
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	PlayerController->DeprojectMousePositionToWorld(position, direction);
 
-	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hit, position,
-		position + traceLength * direction, ECC_Visibility, FCollisionQueryParams());
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hit, position, position + traceLength * direction, ECC_Visibility, FCollisionQueryParams());
 
 	if (bTraceSuccess && hit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && hit.bBlockingHit)
 	{
 		FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 		SpawnParam.Owner = this;
 
-		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0.f), SpawnParam);
+		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
 
 		auto thisPoint = lineMarker->ArcGISLocation->GetPosition();
 
-		if (!stops.IsEmpty())
+		if (!Stops.IsEmpty())
 		{
-			auto lastStop = stops.Last();
+			auto lastStop = Stops.Last();
 			auto lastPoint = lastStop->ArcGISLocation->GetPosition();
 
 			//calculate distance from last point to this point
-			double d = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, unit, UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees), EArcGISGeodeticCurveType::Geodesic)->GetDistance();
-			geodeticDistance += d;
-			geodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(geodeticDistance * 1000.0) / 1000.0, *unitTxt);
-			UIWidget->ProcessEvent(WidgetFunction, &geodeticDistanceText);
+			double distance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees),EArcGISGeodeticCurveType::Geodesic)->GetDistance();
+			GeodeticDistance += distance;
+			GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
+			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 
 			//interpolate points between last point/start and this point(end)
 
-			float n = floor((float)d / InterpolationInterval);
-			double dx = (lineMarker->GetActorLocation().X - lastStop->GetActorLocation().X) / n;
-			double dy = (lineMarker->GetActorLocation().Y - lastStop->GetActorLocation().Y) / n;
+			float numInterpolation = floor((float)distance / InterpolationInterval);
+			double dx = (lineMarker->GetActorLocation().X - lastStop->GetActorLocation().X) / numInterpolation;
+			double dy = (lineMarker->GetActorLocation().Y - lastStop->GetActorLocation().Y) / numInterpolation;
 
 			auto pre = lastStop->GetActorLocation();
 
-			//calculate n intepolation points/n segments because the last segment is already created by the end point 
-			for (int i = 0; i < n - 1; i++)
+			//calculate n intepolation points/n segments because the last segment is already created by the end point
+			for (int i = 0; i < numInterpolation - 1; i++)
 			{
 				SpawnParam.Owner = this;
 				//calculate transform of next point
 				float nextX = pre.X + (float)dx;
 				float nextY = pre.Y + (float)dy;
-				auto next = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextX, nextY, 0), FRotator3d(0.), SpawnParam);
+				auto next = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextX, nextY, 0), FRotator3d(0), SpawnParam);
 
 				//define height
 				SetElevation(next);
 
-				featurePoints.Add(next);
+				FeaturePoints.Add(next);
 
 				pre = next->GetActorLocation();
 			}
 		}
-		featurePoints.Add(lineMarker);
-		stops.Add(lineMarker);
+		FeaturePoints.Add(lineMarker);
+		Stops.Add(lineMarker);
 
-		USplineMeshComponent* SplineMesh;
-		for (int i = 1; i < featurePoints.Num(); i++)
+		TObjectPtr<USplineMeshComponent> SplineMesh;
+
+		for (int i = 1; i < FeaturePoints.Num(); i++)
 		{
 			SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
 			SplineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
 			SplineMesh->RegisterComponent();
 			SplineMesh->SetMobility(EComponentMobility::Movable);
 
-			FVector end = featurePoints[i]->GetActorLocation();
-			FVector start = featurePoints[i - 1]->GetActorLocation();
+			FVector end = FeaturePoints[i]->GetActorLocation();
+			FVector start = FeaturePoints[i - 1]->GetActorLocation();
 
 			tangent = end - start;
 			tangent.Normalize();
-			tangent = tangent * 100.;
+			tangent = tangent * 100.0f;
 
 			SplineMesh->SetStartAndEnd(start, tangent, end, tangent);
 			SplineMesh->SetStartScale(RouteCueScale);
@@ -168,19 +163,19 @@ void AMeasure::AddStop()
 		}
 	}
 }
+
 // Do a line trace from high above to update the elevation info of feature points
 void AMeasure::SetElevation(AActor* stop)
 {
 	float raycastHeight = 1000000.0f;
-	float traceLength = 1000000.f;
+	float traceLength = 1000000.0f;
 	FVector position = stop->GetActorLocation();
 	FVector raycastStart = FVector(position.X, position.Y, position.Z + raycastHeight);
 	FHitResult hitInfo;
-	float elevationOffset = 200.;
+	float elevationOffset = 200.0f;
 
-	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hitInfo, raycastStart,
-		position + traceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
-	position.Z = bTraceSuccess ? hitInfo.ImpactPoint.Z + elevationOffset : 0.;
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hitInfo, raycastStart, position + traceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
+	position.Z = bTraceSuccess ? hitInfo.ImpactPoint.Z + elevationOffset : 0.0f;
 
 	stop->SetActorLocation(position);
 }
@@ -189,73 +184,68 @@ void AMeasure::ClearLine()
 {
 	if (!SplineMeshComponents.IsEmpty())
 	{
-		for (auto point : SplineMeshComponents) {
+		for (auto point : SplineMeshComponents)
+		{
 			point->UnregisterComponent();
 			point->DestroyComponent();
 		}
-		for (auto stop : featurePoints)
+		for (auto stop : FeaturePoints)
 		{
 			stop->Destroy();
 		}
-		for (auto stop : stops)
+		for (auto stop : Stops)
 		{
 			stop->Destroy();
 		}
 		SplineMeshComponents.Empty();
-		featurePoints.Empty();
-		stops.Empty();
-		geodeticDistance = 0;
-		geodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), geodeticDistance, *unitTxt);
-		UIWidget->ProcessEvent(WidgetFunction, &geodeticDistanceText);
+		FeaturePoints.Empty();
+		Stops.Empty();
+		GeodeticDistance = 0;
+		GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), GeodeticDistance, *UnitText);
+		UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 	}
 }
 void AMeasure::UnitChanged()
 {
 	if (UnitDropdown->GetSelectedOption() == "Meters")
 	{
-		unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
-		geodeticDistance = ConvertUnits(geodeticDistance, currentUnit, m);
-		currentUnit = m;
-		unitTxt = " m";
+		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
+		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, m);
+		CurrentUnit = m;
+		UnitText = " m";
 	}
 
 	else if (UnitDropdown->GetSelectedOption() == "Kilometers")
 	{
-		unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers);
-		geodeticDistance = ConvertUnits(geodeticDistance, currentUnit, km);
-		currentUnit = km;
-		unitTxt = " km";
+		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers);
+		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, km);
+		CurrentUnit = km;
+		UnitText = " km";
 	}
+
 	else if (UnitDropdown->GetSelectedOption() == "Miles")
 	{
-		unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
-		geodeticDistance = ConvertUnits(geodeticDistance, currentUnit, mi);
-		currentUnit = mi;
-		unitTxt = " mi";
+		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
+		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, mi);
+		CurrentUnit = mi;
+		UnitText = " mi";
 	}
+
 	else if (UnitDropdown->GetSelectedOption() == "Feet")
 	{
-		unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet);
-		geodeticDistance = ConvertUnits(geodeticDistance, currentUnit, ft);
-		currentUnit = ft;
-		unitTxt = " ft";
+		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet);
+		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, ft);
+		CurrentUnit = ft;
+		UnitText = " ft";
 	}
-	geodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(geodeticDistance * 1000.0) / 1000.0, *unitTxt);
-	UIWidget->ProcessEvent(WidgetFunction, &geodeticDistanceText);
+
+	GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
+	UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 }
 double AMeasure::ConvertUnits(double value, UnitType from, UnitType to)
 {
-	double factor[4][4] =
-	{
-		{ 1, 0.001, 0.000621371, 3.28084 },
-		{ 1000,   1,     0.621371,   3280.84},
-		{ 1609.344,     1.609344,       1,   5280},
-		{ 0.3048,    0.0003048,  0.00018939,    1}
-	};
+	double factor[4][4] = {
+		{1, 0.001, 0.000621371, 3.28084}, {1000, 1, 0.621371, 3280.84}, {1609.344, 1.609344, 1, 5280}, {0.3048, 0.0003048, 0.00018939, 1}};
 
 	return value * factor[(int)from][(int)to];
 }
-
-
-
-
