@@ -28,6 +28,7 @@ AMeasure::AMeasure()
 	}
 
 	ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Cube.Cube"));
+
 	if (MeshAsset.Succeeded())
 	{
 		RouteMesh = MeshAsset.Object;
@@ -64,7 +65,7 @@ void AMeasure::BeginPlay()
 
 	UnitText = " m";
 	Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
-	CurrentUnit = m;
+	CurrentUnit = meters;
 }
 
 void AMeasure::SetupInput()
@@ -80,7 +81,6 @@ void AMeasure::SetupInput()
 }
 void AMeasure::AddStop()
 {
-	float traceLength = 10000000.0f;
 	FVector position;
 	FVector direction;
 	FHitResult hit;
@@ -89,7 +89,8 @@ void AMeasure::AddStop()
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	PlayerController->DeprojectMousePositionToWorld(position, direction);
 
-	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hit, position, position + traceLength * direction, ECC_Visibility, FCollisionQueryParams());
+	bool bTraceSuccess =
+		GetWorld()->LineTraceSingleByChannel(hit, position, position + traceLength * direction, ECC_Visibility, FCollisionQueryParams());
 
 	if (bTraceSuccess && hit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && hit.bBlockingHit)
 	{
@@ -106,7 +107,10 @@ void AMeasure::AddStop()
 			auto lastPoint = lastStop->ArcGISLocation->GetPosition();
 
 			//calculate distance from last point to this point
-			double distance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees),EArcGISGeodeticCurveType::Geodesic)->GetDistance();
+			double distance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,
+																	  UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees),
+																	  EArcGISGeodeticCurveType::Geodesic)
+								  ->GetDistance();
 			GeodeticDistance += distance;
 			GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
 			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
@@ -153,7 +157,7 @@ void AMeasure::AddStop()
 
 			tangent = end - start;
 			tangent.Normalize();
-			tangent = tangent * 100.0f;
+			tangent = tangent * 100;
 
 			SplineMesh->SetStartAndEnd(start, tangent, end, tangent);
 			SplineMesh->SetStartScale(RouteCueScale);
@@ -167,14 +171,13 @@ void AMeasure::AddStop()
 // Do a line trace from high above to update the elevation info of feature points
 void AMeasure::SetElevation(AActor* stop)
 {
-	float raycastHeight = 1000000.0f;
-	float traceLength = 1000000.0f;
 	FVector position = stop->GetActorLocation();
-	FVector raycastStart = FVector(position.X, position.Y, position.Z + raycastHeight);
+	FVector raycastStart = FVector(position.X, position.Y, position.Z + traceLength);
 	FHitResult hitInfo;
 	float elevationOffset = 200.0f;
 
-	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hitInfo, raycastStart, position + traceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hitInfo, raycastStart, position + traceLength * FVector3d::DownVector, ECC_Visibility,
+															  FCollisionQueryParams());
 	position.Z = bTraceSuccess ? hitInfo.ImpactPoint.Z + elevationOffset : 0.0f;
 
 	stop->SetActorLocation(position);
@@ -189,14 +192,17 @@ void AMeasure::ClearLine()
 			point->UnregisterComponent();
 			point->DestroyComponent();
 		}
+
 		for (auto stop : FeaturePoints)
 		{
 			stop->Destroy();
 		}
+
 		for (auto stop : Stops)
 		{
 			stop->Destroy();
 		}
+
 		SplineMeshComponents.Empty();
 		FeaturePoints.Empty();
 		Stops.Empty();
@@ -210,32 +216,29 @@ void AMeasure::UnitChanged()
 	if (UnitDropdown->GetSelectedOption() == "Meters")
 	{
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
-		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, m);
-		CurrentUnit = m;
+		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, meters);
+		CurrentUnit = meters;
 		UnitText = " m";
 	}
-
 	else if (UnitDropdown->GetSelectedOption() == "Kilometers")
 	{
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers);
-		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, km);
-		CurrentUnit = km;
+		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, kilometers);
+		CurrentUnit = kilometers;
 		UnitText = " km";
 	}
-
 	else if (UnitDropdown->GetSelectedOption() == "Miles")
 	{
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
-		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, mi);
-		CurrentUnit = mi;
+		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, miles);
+		CurrentUnit = miles;
 		UnitText = " mi";
 	}
-
 	else if (UnitDropdown->GetSelectedOption() == "Feet")
 	{
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet);
-		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, ft);
-		CurrentUnit = ft;
+		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, feet);
+		CurrentUnit = feet;
 		UnitText = " ft";
 	}
 

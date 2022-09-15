@@ -6,8 +6,8 @@ Draw lines on the map and show distance.
 
 ## How to use the sample
 
-1. Set your API Key in the ArcGISMapActor using the World Outliner window (if you are using the SampleViewerLevel you can also set the key through the UI or the level blueprint).
-2. While holding shift, click on the map to begin measuring. Keep clicking to add vertices. The accumulated distance will be shown. This sample is only setup to work with mouse and keyboard.
+1. Set your API Key in the ArcGIS Map Actor using the World Outliner window (if you are using the Sample Viewer Level you can also set the key through the UI or the level blueprint).
+2. While holding shift, click on the map to begin measuring. Continue to click on the map to add additional vertices. The accumulated distance will be shown. This sample is only set up to work with a mouse and keyboard.
 
 ## How it works
 
