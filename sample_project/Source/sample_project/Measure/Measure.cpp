@@ -15,7 +15,9 @@
 
 #include "Measure.h"
 
-// Sets default values
+constexpr double InterpolationInterval = 100;
+constexpr int TraceLength = 1000000;
+
 AMeasure::AMeasure()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -90,7 +92,7 @@ void AMeasure::AddStop()
 	PlayerController->DeprojectMousePositionToWorld(position, direction);
 
 	bool bTraceSuccess =
-		GetWorld()->LineTraceSingleByChannel(hit, position, position + traceLength * direction, ECC_Visibility, FCollisionQueryParams());
+		GetWorld()->LineTraceSingleByChannel(hit, position, position + TraceLength * direction, ECC_Visibility, FCollisionQueryParams());
 
 	if (bTraceSuccess && hit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && hit.bBlockingHit)
 	{
@@ -109,8 +111,7 @@ void AMeasure::AddStop()
 			//calculate distance from last point to this point
 			double distance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,
 																	  UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees),
-																	  EArcGISGeodeticCurveType::Geodesic)
-								  ->GetDistance();
+																	  EArcGISGeodeticCurveType::Geodesic)->GetDistance();
 			GeodeticDistance += distance;
 			GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
 			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
@@ -123,7 +124,7 @@ void AMeasure::AddStop()
 
 			auto pre = lastStop->GetActorLocation();
 
-			//calculate n intepolation points/n segments because the last segment is already created by the end point
+			//calculate numInterpolation intepolation points/n segments because the last segment is already created by the end point
 			for (int i = 0; i < numInterpolation - 1; i++)
 			{
 				SpawnParam.Owner = this;
@@ -172,11 +173,11 @@ void AMeasure::AddStop()
 void AMeasure::SetElevation(AActor* stop)
 {
 	FVector position = stop->GetActorLocation();
-	FVector raycastStart = FVector(position.X, position.Y, position.Z + traceLength);
+	FVector raycastStart = FVector(position.X, position.Y, position.Z + TraceLength);
 	FHitResult hitInfo;
 	float elevationOffset = 200.0f;
 
-	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hitInfo, raycastStart, position + traceLength * FVector3d::DownVector, ECC_Visibility,
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(hitInfo, raycastStart, position + TraceLength * FVector3d::DownVector, ECC_Visibility,
 															  FCollisionQueryParams());
 	position.Z = bTraceSuccess ? hitInfo.ImpactPoint.Z + elevationOffset : 0.0f;
 

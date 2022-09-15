@@ -73,13 +73,11 @@ private:
 	TArray<AActor*> FeaturePoints;
 	double GeodeticDistance;
 	FString GeodeticDistanceText;
-	double InterpolationInterval = 100;
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 	FVector2D RouteCueScale = FVector2D(5);
 	TObjectPtr<UStaticMesh> RouteMesh;
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	TArray<ARouteMarker*> Stops;
-	int traceLength = 1000000;
 	TObjectPtr<UUserWidget> UIWidget;
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	TObjectPtr<UArcGISLinearUnit> Unit;
