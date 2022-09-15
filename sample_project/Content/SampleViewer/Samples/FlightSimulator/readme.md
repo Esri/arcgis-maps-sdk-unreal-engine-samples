@@ -4,6 +4,19 @@ Allows users to explore a map from the perspective of a flying object.
 
 ![Image of Flight Simulator](FlightSim.jpg)
 
+## How to use the sample
+
+1. Open the **FlightSim_lvl**.
+2. Click on **ArcGIS Map Actor** in the **Outliner** panel, and set your API key in the **ArcGIS Map Component**.
+3. Click on play and enjoy flying around the world.
+
+### Controls
+
+- Keyboard Controls: Spacebar for Acceleration, Q for Yaw Left, E for Yaw Right, W or Mouse Y for Pitch Up, S or Mouse Y for Pitch Down, A or Mouse X for Roll Left, D or Mouse X for Roll Right. 
+H can be used to toggle the landing gear.
+
+- Controller Controls: Right Trigger for Acceleration, Left Trigger for Deceleration, Left Stick Left and Right for Yaw, Right Stick Left and Right for Roll, Right Stick up and down for Pitch. Right Thumbstick button to toggle landing gear. 
+
 ## How it works
 
 1. Create a `Global` map and enable mesh colliders on the **ArcGIS Map Component**.
