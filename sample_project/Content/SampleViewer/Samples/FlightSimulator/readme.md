@@ -7,15 +7,11 @@ Allows users to explore a map from the perspective of a flying object.
 ## How it works
 
 1. Create a `Global` map and enable mesh colliders on the **ArcGIS Map Component**.
-2. Make sure the component is in **Global Mode**.
-3. Pick an airport to take off from and set the latitude and longitude of the airport as your world center
-4. Create a new blueprint and call it "bp_Runway".
-5. Add a cube and change the scale of it to be 50, 2500, 1. Or something similar that suits your needs.
-6. Add your Plane blueprint on top of your run way.
-7. Enjoy flying around the world.
-
-Movement of the plane is done through Unreal physics.
-We add a physics **linear velocity** depending on the thrust and rotate for each of the axis adding a **torque** in such axis so that the plane can rotate in the roll, pitch and yaw axes. If the plane reduces enough the speed, a false gravity drags the plane towards Earth.
+2. Set the **Origin Position** for the place where you want to place the runway.
+3. Create a runway and add it to the level. In this sample, the runway is created by using a cube and saved as **BP_Runway**.
+4. Create a flying object as a **Pawn** and attach the [**ArcGIS Camera Component**](https://developers.arcgis.com/unreal-engine/maps/camera/#arcgis-camera-component) and [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/).
+5. Connect the flying object to the [**Player Controller**](https://docs.unrealengine.com/5.0/en-US/player-controllers-in-unreal-engine/) and place it on the map. In this sample, the flying object is saved as **BP_Ship**.
+6. Work on [physics](https://docs.unrealengine.com/5.0/en-US/physics-in-unreal-engine/) from Unreal Engine's feature for the flying object. This sample uses [**Set Physics Linear Velocity**](https://docs.unrealengine.com/5.0/en-US/BlueprintAPI/Physics/SetPhysicsLinearVelocity/) for the speed control and [**Add Torque in Degrees**](https://docs.unrealengine.com/4.26/en-US/BlueprintAPI/Physics/AddTorqueinDegrees/) for the object's roll, pitch, and yaw. If the plane reduces enough its speed, false gravity drags the plane toward Earth.
 
 ## Controls
 This sample supports keyboard controls and use of an Xbox/Playstation controller
