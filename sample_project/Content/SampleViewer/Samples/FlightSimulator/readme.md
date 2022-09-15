@@ -1,4 +1,4 @@
-# Create a Flight Simulator Sample
+# Explore a map with a plane
 
 Allows users to explore a map from the perspective of a flying object.
 
