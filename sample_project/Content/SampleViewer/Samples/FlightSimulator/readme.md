@@ -1,6 +1,6 @@
 # Create a Flight Simulator Sample
 
-Allows users to explore a city/map from the perspective of a Third Person Character.
+Allows users to explore a map from the perspective of a flying object.
 
 ![Image of Flight Simulator](FlightSim.jpg)
 
