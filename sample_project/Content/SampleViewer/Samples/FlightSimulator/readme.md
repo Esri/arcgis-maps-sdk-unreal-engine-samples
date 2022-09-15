@@ -26,11 +26,6 @@ H can be used to toggle the landing gear.
 5. Connect the flying object to the [**Player Controller**](https://docs.unrealengine.com/5.0/en-US/player-controllers-in-unreal-engine/) and place it on the map. In this sample, the flying object is saved as **BP_Ship**.
 6. Work on [physics](https://docs.unrealengine.com/5.0/en-US/physics-in-unreal-engine/) from Unreal Engine's feature for the flying object. This sample uses [**Set Physics Linear Velocity**](https://docs.unrealengine.com/5.0/en-US/BlueprintAPI/Physics/SetPhysicsLinearVelocity/) for the speed control and [**Add Torque in Degrees**](https://docs.unrealengine.com/4.26/en-US/BlueprintAPI/Physics/AddTorqueinDegrees/) for the object's roll, pitch, and yaw. If the plane reduces enough its speed, false gravity drags the plane toward Earth.
 
-## Controls
-This sample supports keyboard controls and use of an Xbox/Playstation controller
-Keyboard Controls: Spacebar for Acceleration, Q for Yaw Left, E for Yaw Right, W or Mouse Y for Pitch Up, S or Mouse Y for Pitch Down, A or Mouse X for Roll Left, D or Mouse X for Roll Right. 
-H can be used to toggle the landing gear.
-Controller Controls: Right Trigger for Acceleration, Left Trigger for Deceleration, Left Stick Left and Right for Yaw, Right Stick Left and Right for Roll, Right Stick up and down for Pitch. Right Thumbstick button to toggle landing gear. 
 
 ## About the data
 
