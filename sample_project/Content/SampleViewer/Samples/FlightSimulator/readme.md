@@ -6,7 +6,7 @@ Allows users to explore a map from the perspective of a flying object.
 
 ## How it works
 
-1. Check the box for **Mesh Colliers Enabled** on the `ArcGIS Map` component.
+1. Create a `Global` map and enable mesh colliders on the **ArcGIS Map Component**.
 2. Make sure the component is in **Global Mode**.
 3. Pick an airport to take off from and set the latitude and longitude of the airport as your world center
 4. Create a new blueprint and call it "bp_Runway".
