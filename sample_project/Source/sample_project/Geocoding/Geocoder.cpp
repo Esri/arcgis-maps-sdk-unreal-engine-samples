@@ -131,7 +131,7 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 				if (!JsonObj->TryGetStringField(TEXT("Address"), ResponseAddress)) {
 					ResponseAddress = TEXT("Query did not return valid response");
 				}
-				if (Location = JsonObj->TryGetField(TEXT("location"))) {
+				if ((Location = JsonObj->TryGetField(TEXT("location")))) {
 					JsonObj = Location->AsObject();
 					JsonObj->TryGetNumberField("x", PointX);
 					JsonObj->TryGetNumberField("y", PointY);
@@ -157,7 +157,7 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 			}
 		}
 		// If the server responded with an error, show the error message
-		else if (Error = JsonObj->TryGetField(TEXT("error"))) {
+		else if ((Error = JsonObj->TryGetField(TEXT("error")))) {
 			JsonObj = Error->AsObject();
 			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), Message)) {
 				UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
@@ -217,14 +217,14 @@ void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpRespo
 		Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300) {
 
 		TSharedPtr<FJsonValue> AddressField;
-		if (AddressField = JsonObj->TryGetField((TEXT("address")))) {
+		if ((AddressField = JsonObj->TryGetField((TEXT("address"))))) {
 			JsonObj = AddressField->AsObject();
 			if (!JsonObj->TryGetStringField(TEXT("Match_addr"), ResponseAddress)) {
 				ResponseAddress = TEXT("Query did not return valid response");
 			}
 		} 
 		// If the server responded with an error, show the error message
-		else if (Error = JsonObj->TryGetField(TEXT("error"))) {
+		else if ((Error = JsonObj->TryGetField(TEXT("error")))) {
 			JsonObj = Error->AsObject();
 			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), Message)) {
 				UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
