@@ -45,7 +45,7 @@ void AMeasure::BeginPlay()
 	SetupInput();
 
 	// Make sure mouse cursor remains visible
-	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 	if (playerController)
 	{
@@ -88,7 +88,7 @@ void AMeasure::AddStop()
 	FHitResult hit;
 	FVector tangent;
 
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	auto PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	PlayerController->DeprojectMousePositionToWorld(position, direction);
 
 	bool bTraceSuccess =
@@ -108,7 +108,7 @@ void AMeasure::AddStop()
 			auto lastStop = Stops.Last();
 			auto lastPoint = lastStop->ArcGISLocation->GetPosition();
 
-			//calculate distance from last point to this point
+			//Calculate distance from last point to this point
 			double distance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,
 																	  UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees),
 																	  EArcGISGeodeticCurveType::Geodesic)->GetDistance();
@@ -116,7 +116,7 @@ void AMeasure::AddStop()
 			GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
 			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 
-			//interpolate points between last point/start and this point(end)
+			//Interpolate points between last point/start and this point(end)
 
 			float numInterpolation = floor((float)distance / InterpolationInterval);
 			double dx = (lineMarker->GetActorLocation().X - lastStop->GetActorLocation().X) / numInterpolation;
@@ -124,16 +124,16 @@ void AMeasure::AddStop()
 
 			auto pre = lastStop->GetActorLocation();
 
-			//calculate numInterpolation intepolation points/n segments because the last segment is already created by the end point
+			//Calculate numInterpolation intepolation points/n segments 
 			for (int i = 0; i < numInterpolation - 1; i++)
 			{
 				SpawnParam.Owner = this;
-				//calculate transform of next point
+				//Calculate transform of next point
 				float nextX = pre.X + (float)dx;
 				float nextY = pre.Y + (float)dy;
 				auto next = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextX, nextY, 0), FRotator3d(0), SpawnParam);
 
-				//define height
+				//Define height
 				SetElevation(next);
 
 				FeaturePoints.Add(next);
@@ -215,41 +215,31 @@ void AMeasure::ClearLine()
 void AMeasure::UnitChanged()
 {
 	if (UnitDropdown->GetSelectedOption() == "Meters")
-	{
+	{	
+		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
-		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, meters);
-		CurrentUnit = meters;
 		UnitText = " m";
 	}
 	else if (UnitDropdown->GetSelectedOption() == "Kilometers")
 	{
+		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers);
-		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, kilometers);
-		CurrentUnit = kilometers;
 		UnitText = " km";
 	}
 	else if (UnitDropdown->GetSelectedOption() == "Miles")
 	{
+		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
-		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, miles);
-		CurrentUnit = miles;
 		UnitText = " mi";
 	}
 	else if (UnitDropdown->GetSelectedOption() == "Feet")
 	{
+		
+		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet);
-		GeodeticDistance = ConvertUnits(GeodeticDistance, CurrentUnit, feet);
-		CurrentUnit = feet;
 		UnitText = " ft";
 	}
 
 	GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
 	UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
-}
-double AMeasure::ConvertUnits(double value, UnitType from, UnitType to)
-{
-	double factor[4][4] = {
-		{1, 0.001, 0.000621371, 3.28084}, {1000, 1, 0.621371, 3280.84}, {1609.344, 1.609344, 1, 5280}, {0.3048, 0.0003048, 0.00018939, 1}};
-
-	return value * factor[(int)from][(int)to];
 }

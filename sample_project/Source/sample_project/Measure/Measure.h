@@ -40,15 +40,6 @@
 
 #include "Measure.generated.h"
 
-UENUM()
-enum UnitType
-{
-	meters = 0,
-	kilometers = 1,
-	miles = 2,
-	feet = 3
-};
-
 UCLASS()
 class AMeasure : public AActor
 {
@@ -57,6 +48,9 @@ class AMeasure : public AActor
 public:
 	// Sets default values for this actor's properties
 	AMeasure();
+
+	UFUNCTION(BlueprintCallable)
+	void RenderLine();
 
 	UFUNCTION(BlueprintCallable)
 	void ClearLine();
@@ -69,7 +63,6 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	UnitType CurrentUnit;
 	TArray<AActor*> FeaturePoints;
 	double GeodeticDistance;
 	FString GeodeticDistanceText;
