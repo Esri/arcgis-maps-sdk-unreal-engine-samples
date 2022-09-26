@@ -22,9 +22,10 @@
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Materials/MaterialExpressionConstant3Vector.h"
 
-#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometry.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometry.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnit.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnitId.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeodeticCurveType.h"
@@ -73,13 +74,15 @@ private:
 	TArray<ARouteMarker*> Stops;
 	TObjectPtr<UUserWidget> UIWidget;
 	TSubclassOf<UUserWidget> UIWidgetClass;
-	//TObjectPtr<UUserWidget> UIWidgetClass;
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
 	FString UnitText;
 	UFunction* WidgetFunction;
+	double SegmentDistance;
+	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 
 	void AddStop();
+	void Interpolate(AActor* start, AActor* end);
 	void SetElevation(AActor* stop);
 	void SetupInput();
 };
