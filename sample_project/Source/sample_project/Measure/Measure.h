@@ -72,14 +72,14 @@ private:
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	TArray<ARouteMarker*> Stops;
 	TObjectPtr<UUserWidget> UIWidget;
-	TSubclassOf<class UUserWidget> UIWidgetClass;
+	TSubclassOf<UUserWidget> UIWidgetClass;
+	//TObjectPtr<UUserWidget> UIWidgetClass;
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
 	FString UnitText;
 	UFunction* WidgetFunction;
 
 	void AddStop();
-	double ConvertUnits(double units, UnitType from, UnitType to);
 	void SetElevation(AActor* stop);
 	void SetupInput();
 };

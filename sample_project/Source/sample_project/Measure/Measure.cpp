@@ -24,6 +24,7 @@ AMeasure::AMeasure()
 
 	// Load the necessary assets
 	ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Measure/Blueprints/UI_Measure.UI_Measure_C"));
+
 	if (WidgetAsset.Succeeded())
 	{
 		UIWidgetClass = WidgetAsset.Object;
@@ -67,7 +68,6 @@ void AMeasure::BeginPlay()
 
 	UnitText = " m";
 	Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
-	CurrentUnit = meters;
 }
 
 void AMeasure::SetupInput()
@@ -182,6 +182,11 @@ void AMeasure::SetElevation(AActor* stop)
 	position.Z = bTraceSuccess ? hitInfo.ImpactPoint.Z + elevationOffset : 0.0f;
 
 	stop->SetActorLocation(position);
+}
+
+void AMeasure::RenderLine()
+{
+	
 }
 
 void AMeasure::ClearLine()
