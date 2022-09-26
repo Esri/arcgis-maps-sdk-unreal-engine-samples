@@ -296,7 +296,7 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 				// Visualize the route in the next tick
 				bShouldUpdateBreadcrums = true;
 			}
-		} else if (ErrorField = JsonObj->TryGetField(TEXT("error"))) {
+		} else if ((ErrorField = JsonObj->TryGetField(TEXT("error")))) {
 			JsonObj = ErrorField->AsObject();
 			// Show the error message in the UI
 			if (JsonObj->TryGetStringField(TEXT("message"), InfoMessage)) {
