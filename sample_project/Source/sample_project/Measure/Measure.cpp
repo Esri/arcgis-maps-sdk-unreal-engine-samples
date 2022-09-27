@@ -32,7 +32,7 @@ AMeasure::AMeasure()
 	}
 
 	ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
-	
+
 	if (MeshAsset.Succeeded())
 	{
 		RouteMesh = MeshAsset.Object;
@@ -88,7 +88,7 @@ void AMeasure::AddStop()
 	FVector direction;
 	FHitResult hit;
 	FVector position;
-	
+
 	auto PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	PlayerController->DeprojectMousePositionToWorld(position, direction);
 
@@ -109,13 +109,14 @@ void AMeasure::AddStop()
 			auto lastPoint = lastStop->ArcGISLocation->GetPosition();
 
 			//Calculate distance from last point to this point
-			SegmentDistance = UArcGISGeometryEngine::DistanceGeodetic(
-										 lastPoint, thisPoint, Unit, UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees),
-																	  EArcGISGeodeticCurveType::Geodesic)->GetDistance();
+			SegmentDistance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,
+																	  UArcGISAngularUnit::CreateArcGISAngularUnit(EArcGISAngularUnitId::Degrees),
+																	  EArcGISGeodeticCurveType::Geodesic)
+								  ->GetDistance();
 			GeodeticDistance += SegmentDistance;
 			GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
 			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
-			
+
 			FeaturePoints.Add(lastStop);
 			Interpolate(lastStop, lineMarker);
 			FeaturePoints.Add(lineMarker);
@@ -225,7 +226,7 @@ void AMeasure::ClearLine()
 void AMeasure::UnitChanged()
 {
 	if (UnitDropdown->GetSelectedOption() == "Meters")
-	{	
+	{
 		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
 		UnitText = " m";
