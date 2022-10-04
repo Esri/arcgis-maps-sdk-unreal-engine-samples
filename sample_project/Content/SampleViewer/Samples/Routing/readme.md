@@ -17,10 +17,10 @@ Note: This sample is only set up to work with mouse and keyboard.
 
 ## How it works
 
-1. The `HTTPClient` is required for using the [routing service's REST API](https://developers.arcgis.com/rest/network/api-reference/overview-of-network-analysis-services.htm). 
-2. Use the [direct request](https://developers.arcgis.com/rest/network/api-reference/route-synchronous-service.htm) to request and to obtain the routing result.
+1. The `HTTPClient` is used to query the [routing service's REST API](https://developers.arcgis.com/rest/network/api-reference/overview-of-network-analysis-services.htm). 
+2. The sample makes a [direct request](https://developers.arcgis.com/rest/network/api-reference/route-synchronous-service.htm) to obtain the routing result.
 3. Use [Traces](https://docs.unrealengine.com/5.0/en-US/using-a-single-line-trace-raycast-by-channel-in-unreal-engine/) (Raycasts) to determine the elevation at each breadcrumb's position to account for elevation. (Enable the mesh collider from the **ArcGIS Map Component** to use the Raycast.)
-4. Use the [Spline meshes](https://docs.unrealengine.com/5.0/en-US/BlueprintAPI/SplineMesh/) to visualize the route segments between pairs of breadcrumbs.
+4. [Spline meshes](https://docs.unrealengine.com/5.0/en-US/BlueprintAPI/SplineMesh/) are used to visualize the route segments between pairs of breadcrumbs.
 
 
 ## Tags
