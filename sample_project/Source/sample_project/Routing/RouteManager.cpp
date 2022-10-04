@@ -27,7 +27,7 @@ ARouteManager::ARouteManager()
 		UIWidgetClass = WidgetAsset.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/Samples/Routing/Geometries/Cube.Cube"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 	if (MeshAsset.Succeeded()) {
 		RouteMesh = MeshAsset.Object;
 	}

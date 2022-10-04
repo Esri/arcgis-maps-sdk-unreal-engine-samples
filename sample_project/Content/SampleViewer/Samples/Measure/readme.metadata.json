@@ -1,0 +1,15 @@
+{
+    "category": "Analysis",
+    "description": "Measure by placing points",
+    "formal_name": "Measure",
+    "ignore": false,
+    "images": [
+        "Measure.png"
+    ],
+    "keywords": [
+        "Measure",
+        "geometry",
+        "analysis"
+    ],
+    "title": "Measure"
+}
