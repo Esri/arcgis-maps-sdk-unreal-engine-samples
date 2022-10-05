@@ -4,13 +4,24 @@ Allows users to explore a city/map from the perspective of a Third Person Charac
 
 ![Image of Third Person Controller](3rdPersonDemo.png)
 
+## How to use the sample
+
+1. Open the **ThirdPerson** level.
+2. Click on the **ArcGISMapActor** in the Outliner panel.
+3. Set your API key under **Authentication** section in the Details panel.
+4. Click play and move the character by using WASD keys and right mouse button. Jump with the space key.
+
+Note: The terrain needs to be loaded before the Third Person Character falls on the ground. Adjust the `Z` Location value of the **BP_ThirdPersonCharacter** in order to gain more time for the terrain to be loaded if it's necessary.
+
+
 ## How it works
 
-1. Check the box for **Mesh Colliers Enabled** on the `ArcGIS Map` component.
-2. Create a parent object with an `ArcGIS Location` component.
-3. Create child game objects in the scene that use `Transform` components.
-4. Using the `ArcGIS Map`, change the latitude and longitude of where you would like to explore.
-5. Add your third person character controller to the level and position it slightly above the ground.
+1. Set up **ArcGIS Map** for the exploration area.
+2. Create a Third Person Character with its control and attach the [**ArcGIS Camera Component**](https://developers.arcgis.com/unreal-engine/maps/camera/#arcgis-camera-component) to the Character Mesh. 
+3. Add the Third Person Character to the level.
+   - Mesh colliders need to be enabled in the **ArcGIS Map Component**.
+   - If you want to place the character on a specific position, attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to specify it.
+   - Adjust the `Z` Location value of the character to have enough time to load the terrain.
 
 ## About the data
 
@@ -20,4 +31,4 @@ Elevation data is loaded from the [Terrain 3D elevation layer](https://www.arcgi
 
 ## Tags
 
-exploration, third person pespective, third person controller
+exploration, third person perspective, third person controller
