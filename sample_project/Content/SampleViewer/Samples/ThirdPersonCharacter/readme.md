@@ -8,8 +8,8 @@ Allows users to explore a city/map from the perspective of a Third Person Charac
 
 1. Open the **ThirdPerson** level.
 2. Click on the **ArcGISMapActor** in the Outliner panel.
-3. Set your API key under **Authentication** section in the Details panel.
-4. Click play and move the character by using WASD keys and right mouse button. Jump with the space key.
+3. Set your API key under th **Authentication** section in the Details panel.
+4. Click play and move the character by using the WASD keys and the right mouse button. Jump with the space key.
 
 Note: The terrain needs to be loaded before the Third Person Character falls on the ground. Adjust the `Z` Location value of the **BP_ThirdPersonCharacter** in order to gain more time for the terrain to be loaded if it's necessary.
 
@@ -20,7 +20,7 @@ Note: The terrain needs to be loaded before the Third Person Character falls on 
 2. Create a Third Person Character with its control and attach the [**ArcGIS Camera Component**](https://developers.arcgis.com/unreal-engine/maps/camera/#arcgis-camera-component) to the Character Mesh. 
 3. Add the Third Person Character to the level.
    - Mesh colliders need to be enabled in the **ArcGIS Map Component**.
-   - If you want to place the character on a specific position, attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to specify it.
+   - If you want to place the character on a specific location, attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to specify it.
    - Adjust the `Z` Location value of the character to have enough time to load the terrain.
 
 ## About the data
