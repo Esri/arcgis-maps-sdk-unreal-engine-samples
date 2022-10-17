@@ -1,4 +1,4 @@
-# Third Person Character Controller
+# Explore with Third Person Character
 
 Allows users to explore a city/map from the perspective of a Third Person Character.
 
