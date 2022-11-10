@@ -196,7 +196,7 @@ void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
 	// Set up the query 
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AGeocoder::ProcessLocationQueryResponse);
-	Query = FString::Printf(TEXT("%s/?f=json&location=%f,%f"), *Url, Point->GetX(), Point->GetY());
+	Query = FString::Printf(TEXT("%s/?f=json&langCode=en&location=%f,%f"), *Url, Point->GetX(), Point->GetY());
 	Request->SetURL(Query.Replace(TEXT(" "), TEXT("%20")));
 	Request->SetVerb("GET");
 	Request->SetHeader("Content-Type", "x-www-form-urlencoded");
