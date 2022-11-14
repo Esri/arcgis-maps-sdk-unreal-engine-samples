@@ -13,14 +13,14 @@ Query objects from a feature layer and show them on the map.
 
 ## How it works
 
-1. Create a new C++ class and make an http request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
+1. Create a new C++ class and make a http request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
 2. Create a new Blueprint Actor class
-   - Make the event to place the stadium data returned from the feature layer.
+   - Create the event to place the stadium data returned from the feature layer.
    - Create a function to spawn the actor according to the stadium `NAME`.
-   - Create a function to apply different material according to the `LEAGUE` value.
-   - Attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to the static stadium mesh model
+   - Create a function to apply different materials according to the `LEAGUE` value.
+   - Attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to the static stadium mesh model.
    - Create a function to place the static mesh model on the `geometry`'s `coordinates` location returned by the feature layer query and the height calculated by [raycasts](https://docs.unrealengine.com/5.0/en-US/using-a-single-line-trace-raycast-by-channel-in-unreal-engine/).
-3. Create a widget for the viewport so users can select a stadium from the list feed from the feature service.
+3. Create a widget for the viewport so users can select a stadium from the list fed from the feature service.
 
 Note: You can use `UE_LOG` to print log messages in the **Output Log** window and see if you are gathering the data properly from the feature service.
 
