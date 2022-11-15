@@ -1,4 +1,4 @@
-# Calculate line of sight
+# Determine the visibility for a line of sight
 
 Determine if the line of sight is obstructed by any object in the scene.
 
@@ -7,15 +7,15 @@ Determine if the line of sight is obstructed by any object in the scene.
 ## How to use the sample
 
 1. Open **LineOfSight** level.
-2. Click on **ArcGISMapActor** in the Outliner.
-3. Set your API key in the Details panel.
+2. Click on **ArcGISMapActor** in the **Outliner**.
+3. Set your API key in the **Details** panel.
 4. Click play and see the line color change to red if there is any object obstructing the sight.
 
 ## How it works
 
 1. Have an ArcGIS Map with the [mesh collider](https://developers.arcgis.com/unreal-engine/maps/mesh-collider/) enabled.
 2. Have a camera with the [**ArcGIS Camera Component**](https://developers.arcgis.com/unreal-engine/maps/camera/#arcgis-camera-component) attached for the area.
-3. Have an Actor for checking line of sight (**LineOfSignt** Actor) and another for defining the path that the target object is moving along (**WayPoints** Actor).
+3. Have an Actor for checking line of sight (**LineOfSight** Actor) and another for defining the path that the target object is moving along (**WayPoints** Actor).
 4. The moiving object's path is defined by [Spline Components](https://docs.unrealengine.com/5.0/en-US/blueprint-spline-components-overview-in-unreal-engine/).
 5. The **LineOfSignt** Actor looks for an instance of the **WayPoints** Actor and performs a [line trace](https://docs.unrealengine.com/5.0/en-US/BlueprintAPI/Collision/LineTraceByChannel/) between them at each frame. 
     - Any actors that unintentionally intersect the trace can be added to the `Actors to Ignore` of the line trace in the **LineOfSignt** Actor blueprint. 
