@@ -207,7 +207,7 @@ void ARouteManager::PostRoutingRequest()
 	MapComponent = UArcGISMapComponent::GetMapComponent(this);
 
 	// Read the API key from the map component
-	FString APIToken = MapComponent ? MapComponent->GetAPIkey() : "";
+	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
 
 	// Set the request body and sent it
 	RequestBody = TEXT("f=json&returnRoutes=true&token=") + APIToken + TEXT("&stops=") + StopCoordinates;
