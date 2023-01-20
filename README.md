@@ -5,6 +5,7 @@
 Here is an Unreal Engine 5 project containing a set of samples showing you how to accomplish various things using the combined features of Unreal Engine 5 and the ArcGIS Maps SDK for Unreal Engine. The `main` branch is configured to work with our most recent release (1.1.0) if you want to use the sample repo with an older release check out the corresponding tag of the sample repo, `git checkout 1.0.0` for the sample repo that worked with our 1.0.0 release.
 
 ## Features
+
 * [Feature Layer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/FeatureLayer) - Query objects from a feature layer and show them on the map in Unreal Engine.
 * [Geocoding](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Geocoding) - Search for an address or click on the surface to get the address of that location.
 * [Line of sight](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/LineOfSight) - See how to check the line of sight between two objects.
@@ -16,9 +17,9 @@ Here is an Unreal Engine 5 project containing a set of samples showing you how t
 
 1. Clone this repo. **Note** On Windows there is a 260 character limit in your file path. The ArcGISMapsSDK for Unreal Engine Plugin is ~160 characters at the longest point. This samples repo by default adds `arcgis-maps-sdk-unreal-engine-samples\sample_project` for a total of ~215 characters. You can use `git clone <git_repo_url> <your_custom_directory_name>` to remove the lengthy `arcgis-maps-sdk-unreal-engine-samples` to give you more freedom for where it can be cloned.
 2. Refer to the [ArcGIS Maps SDK for Unreal Engine's documentation on getting started](https://developers.arcgis.com/unreal-engine/get-started/) on how to download `Unreal Engine 5` and the `ArcGIS Maps SDK for Unreal Engine`.
-3. Launch the Unreal Engine project. **Note** if you are prompted that there is a version mismatch that can be ignored, but if the project needs to be re-compiled you will need to [launch it thru Visual Studio](https://docs.unrealengine.com/5.0/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/). 
-3. Import the Plugin into this project.
-4. Launch the `SampleViewer` level. You will be prompted to enter an API Key for the samples to work. To avoid entering it each time you push play you can enter it in the SampleViewer level blueprint.
+3. Launch the Unreal Engine project. **Note** If you are prompted that there is a version mismatch, the project may need to be re-compiled. You will need to [launch it through Visual Studio](https://docs.unrealengine.com/5.0/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/).
+4. [Install the plugin](https://developers.arcgis.com/unreal-engine/install-and-set-up/add-the-plugin-to-an-existing-project/#install-the-plugin) into this project.
+5. Launch the `SampleViewer` level. You will be prompted to enter an API Key for the samples to work. To avoid entering it each time you push play you can enter it in the SampleViewer level blueprint. To learn more about API keys, read the [developer documentation](https://links.esri.com/arcgis-api-keys).
 
 ## Requirements
 
@@ -27,8 +28,9 @@ Here is an Unreal Engine 5 project containing a set of samples showing you how t
 ## Resources
 
 * [ArcGIS Maps SDK for Unreal Engine's documentation](https://developers.arcgis.com/unreal-engine/)
-* [Unreal Engine's documentation](https://docs.unrealengine.com/5.0/en-US/)
 * [Esri Community forum](https://community.esri.com/t5/arcgis-maps-sdks-for-unreal-engine-questions/bd-p/arcgis-maps-sdks-unreal-engine-questions)
+* [Obtaining an API key](https://links.esri.com/arcgis-api-keys)
+* [Unreal Engine's documentation](https://docs.unrealengine.com/5.0/en-US/)
 
 ## Issues
 
@@ -39,6 +41,7 @@ Find a bug or want to request a new feature?  Please let us know by submitting a
 Esri welcomes contributions from anyone and everyone. Please see our [guidelines for contributing](https://github.com/esri/contributing).
 
 ## Licensing
+
 Copyright 2022 Esri
 
 Licensed under the Apache License, Version 2.0 (the "License");
