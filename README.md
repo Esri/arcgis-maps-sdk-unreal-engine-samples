@@ -19,7 +19,7 @@ Here is an Unreal Engine 5 project containing a set of samples showing you how t
 2. Refer to the [ArcGIS Maps SDK for Unreal Engine's documentation on getting started](https://developers.arcgis.com/unreal-engine/get-started/) on how to download `Unreal Engine 5` and the `ArcGIS Maps SDK for Unreal Engine`.
 3. Launch the Unreal Engine project. **Note** If you are prompted that there is a version mismatch, the project may need to be re-compiled. You will need to [launch it through Visual Studio](https://docs.unrealengine.com/5.0/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/).
 4. [Install the plugin](https://developers.arcgis.com/unreal-engine/install-and-set-up/add-the-plugin-to-an-existing-project/#install-the-plugin) into this project.
-5. Launch the `SampleViewer` level. You will be prompted to enter an API Key for the samples to work. To avoid entering it each time you run the viewer, enter the key in the SampleViewer level blueprint. To learn more about API keys, read the [developer documentation](https://links.esri.com/arcgis-api-keys).
+5. Launch the `SampleViewer` level. You will be prompted to enter an API Key for the samples to work. To avoid entering it each time you run the viewer, go to `Edit -> Project Settings -> Plugins -> ArcGIS Maps SDK` and set the API Key for the project. To learn more about API keys, read the [developer documentation](https://links.esri.com/arcgis-api-keys).
 
 ## Requirements
 
