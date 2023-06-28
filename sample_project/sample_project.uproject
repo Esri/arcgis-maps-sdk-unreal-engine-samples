@@ -8,6 +8,10 @@
 			"Name": "sample_project",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
 		}
 	]
-}
+}
