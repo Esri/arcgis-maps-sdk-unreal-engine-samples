@@ -36,11 +36,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 		 UInputAction* LookAction;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
-	UInputAction* MoveUpAction;
+		UInputAction* MoveUpAction;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
-		UInputAction* ShowMouse;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int jumpCount;
+		UInputAction* StartFlyingAction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
+		UInputAction* StopFlyingAction;
 
 	
 protected:
@@ -50,13 +50,15 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	void SetCameraBoomSettings();
+	void StartFlying(const FInputActionValue& value);
+	void StopFlying(const FInputActionValue& value);
 	void JumpActionEvent(const FInputActionValue& value);
 	void StopJumpActionEvent(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
 	void MoveUp(const FInputActionValue& value);
 	void MoveForward(const FInputActionValue& value);
 	void MoveRight(const FInputActionValue& value);
-	void ShowCursor(const FInputActionValue& value);
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

@@ -4,6 +4,7 @@
 #include "ThirdPersonCharacter.h"
 
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AThirdPersonCharacter::AThirdPersonCharacter()
@@ -45,39 +46,45 @@ void AThirdPersonCharacter::BeginPlay()
 
 void AThirdPersonCharacter::JumpActionEvent(const FInputActionValue& value)
 {
-	float time = 0.0f;
-	bool isFlying = false;
-	++jumpCount;
-	if(jumpCount == 2)
-	{
-		if(!isFlying)
-		{
-			GetCharacterMovement()->SetMovementMode(MOVE_Flying,0);
-			isFlying = true;
-			jumpCount = 0;
-		}
-		else
-		{
-			GetCharacterMovement()->SetMovementMode(MOVE_Walking,0);
-			isFlying = false;
-			jumpCount = 0;
-		}
-	}
-	else
-	{
 		Jump();
-		time += 0.1f;
-		if(time >= 0.5f)
-		{
-			jumpCount = 0;
-		}
-	}
 }
 void AThirdPersonCharacter::StopJumpActionEvent(const FInputActionValue& value)
 {
 	StopJumping();
 }
 
+void AThirdPersonCharacter::SetCameraBoomSettings()
+{
+	if(GetCharacterMovement()->IsFlying())
+	{
+		CameraBoom->SocketOffset.Z = 75.0f;
+		CameraBoom->bEnableCameraLag = true;
+	}
+	else
+	{
+		CameraBoom->SocketOffset.Z = 0.0f;
+		CameraBoom->bEnableCameraLag = false;
+	}
+}
+
+
+void AThirdPersonCharacter::StartFlying(const FInputActionValue& value)
+{
+	if(!GetCharacterMovement()->IsFlying())
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_Flying,0);
+	}
+	SetCameraBoomSettings();
+}
+
+void AThirdPersonCharacter::StopFlying(const FInputActionValue& value)
+{
+	if(GetCharacterMovement()->IsFlying())
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking,0);
+	}
+	SetCameraBoomSettings();
+}
 
 void AThirdPersonCharacter::Look(const FInputActionValue& value)
 {
@@ -95,37 +102,40 @@ void AThirdPersonCharacter::MoveForward(const FInputActionValue& value)
 	FRotator Rotation = Controller->GetControlRotation();
 	FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
 	FVector Direction = GetActorForwardVector();
-	Direction = GetActorForwardVector();
-	AddMovementInput(Direction, inputValue);
+	if(GetCharacterMovement()->IsFlying())
+	{
+		AddMovementInput(Direction, inputValue);
+	}
+	else
+	{
+		AddMovementInput(Direction, inputValue);
+	}
 }
 
 void AThirdPersonCharacter::MoveRight(const FInputActionValue& value)
 {
-	const float inputValue = value.Get<float>();
+	float inputValue = value.Get<float>();
 	FRotator Rotation = Controller->GetControlRotation();
 	FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
-	FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	Direction = GetActorRightVector();
-	AddMovementInput(Direction, inputValue);
+	FVector Direction = GetActorRightVector();
+	if(GetCharacterMovement()->IsFlying())
+	{
+		AddMovementInput(Direction, inputValue);
+	}
+	else
+	{
+		AddMovementInput(Direction, inputValue);
+	}
 }
 
 void AThirdPersonCharacter::MoveUp(const FInputActionValue& value)
 {
+	float inputValue = value.Get<float>();
 	if(GetCharacterMovement()->IsFlying())
 	{
-		AddMovementInput(GetActorUpVector(), value.Get<float>());	
+		AddMovementInput(GetActorUpVector(), inputValue * 10000.0f);
 	}
 }
-
-
-void AThirdPersonCharacter::ShowCursor(const FInputActionValue& value)
-{
-	if(value.Get<bool>())
-	{
-		ShowCursor(true);	
-	}
-}
-
 
 // Called every frame
 void AThirdPersonCharacter::Tick(float DeltaTime)
@@ -145,7 +155,8 @@ void AThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(MoveUpAction, ETriggerEvent::Triggered, this, &AThirdPersonCharacter::MoveUp);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AThirdPersonCharacter::JumpActionEvent);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AThirdPersonCharacter::StopJumpActionEvent);
-		EnhancedInputComponent->BindAction(ShowMouse, ETriggerEvent::Canceled, this, &AThirdPersonCharacter::ShowCursor);
+		EnhancedInputComponent->BindAction(StartFlyingAction, ETriggerEvent::Triggered, this, &AThirdPersonCharacter::StartFlying);
+		EnhancedInputComponent->BindAction(StopFlyingAction, ETriggerEvent::Triggered, this, &AThirdPersonCharacter::StopFlying);
 	}
 
 }
