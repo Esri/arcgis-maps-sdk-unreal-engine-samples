@@ -80,6 +80,7 @@ private:
 	UFunction* WidgetFunction;
 	double SegmentDistance;
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+	float MarkerHeight = 7000.f;
 
 	void AddStop();
 	void Interpolate(AActor* start, AActor* end);

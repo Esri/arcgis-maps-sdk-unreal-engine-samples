@@ -117,11 +117,23 @@ void AMeasure::AddStop()
 			GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
 			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 
-			FeaturePoints.Add(lastStop);
+			// Confirm FeaturePoints list does not already contain element
+			if (!FeaturePoints.Contains(lastStop))
+			{
+				FeaturePoints.Add(lastStop);
+			}
 			Interpolate(lastStop, lineMarker);
-			FeaturePoints.Add(lineMarker);
+			// Confirm FeaturePoints list does not already contain element
+			if (!FeaturePoints.Contains(lineMarker))
+			{
+				FeaturePoints.Add(lineMarker);
+			}
 		}
-		Stops.Add(lineMarker);
+		// Confirm Stops list does not already contain element
+		if (!Stops.Contains(lineMarker))
+		{
+			Stops.Add(lineMarker);
+		}
 		RenderLine();
 	}
 }
@@ -132,8 +144,9 @@ void AMeasure::Interpolate(AActor* start, AActor* end)
 	int numInterpolation = floor((float)SegmentDistance / InterpolationInterval);
 	double dx = (end->GetActorLocation().X - start->GetActorLocation().X) / numInterpolation;
 	double dy = (end->GetActorLocation().Y - start->GetActorLocation().Y) / numInterpolation;
+	double dz = (end->GetActorLocation().Z - start->GetActorLocation().Z) / numInterpolation;
 
-	auto pre = start->GetActorLocation();
+	auto pre = start->GetActorLocation() + FVector(0, 0, MarkerHeight);
 
 	for (int i = 0; i < numInterpolation - 1; i++)
 	{
@@ -141,12 +154,18 @@ void AMeasure::Interpolate(AActor* start, AActor* end)
 		//Calculate transform of next point
 		float nextX = pre.X + (float)dx;
 		float nextY = pre.Y + (float)dy;
-		auto next = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextX, nextY, 0), FRotator3d(0), SpawnParam);
+		float nextZ = pre.Z + (float)dz;
+		auto next =
+			GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextX, nextY, nextZ), FRotator3d(0), SpawnParam);
 
-		//Define height
-		SetElevation(next);
+		// Obsolete: would raycast elevation to always be on groud level, now just match to the line.
+		//SetElevation(next);
 
-		FeaturePoints.Add(next);
+		// Confirm FeaturePoints list does not already contain element
+		if (!FeaturePoints.Contains(next))
+		{
+			FeaturePoints.Add(next);
+		}
 
 		pre = next->GetActorLocation();
 	}
@@ -180,7 +199,15 @@ void AMeasure::RenderLine()
 		SplineMesh->SetMobility(EComponentMobility::Movable);
 
 		FVector end = FeaturePoints[i]->GetActorLocation();
+		if (Cast<ARouteMarker>(FeaturePoints[i]) != nullptr) // Since interpolations are already at correct elevation, only alter the route markers
+		{
+			end.Z = end.Z + MarkerHeight;
+		}
 		FVector start = FeaturePoints[i - 1]->GetActorLocation();
+		if (Cast<ARouteMarker>(FeaturePoints[i - 1]) != nullptr) // Since interpolations are already at correct elevation, only alter the route markers
+		{
+			start.Z = start.Z + MarkerHeight;
+		}	
 
 		tangent = end - start;
 		tangent.Normalize();
