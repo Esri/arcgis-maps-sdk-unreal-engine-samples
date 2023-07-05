@@ -56,6 +56,7 @@ void AMeasure::BeginPlay()
 	}
 
 	// Create the UI and add it to the viewport
+
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
@@ -118,18 +119,24 @@ void AMeasure::AddStop()
 			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 
 			// Confirm FeaturePoints list does not already contain element
+
 			if (!FeaturePoints.Contains(lastStop))
 			{
 				FeaturePoints.Add(lastStop);
 			}
+
 			Interpolate(lastStop, lineMarker);
+
 			// Confirm FeaturePoints list does not already contain element
+
 			if (!FeaturePoints.Contains(lineMarker))
 			{
 				FeaturePoints.Add(lineMarker);
 			}
 		}
+
 		// Confirm Stops list does not already contain element
+
 		if (!Stops.Contains(lineMarker))
 		{
 			Stops.Add(lineMarker);
@@ -158,10 +165,8 @@ void AMeasure::Interpolate(AActor* start, AActor* end)
 		auto next =
 			GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextX, nextY, nextZ), FRotator3d(0), SpawnParam);
 
-		// Obsolete: would raycast elevation to always be on groud level, now just match to the line.
-		//SetElevation(next);
-
 		// Confirm FeaturePoints list does not already contain element
+
 		if (!FeaturePoints.Contains(next))
 		{
 			FeaturePoints.Add(next);
@@ -199,14 +204,21 @@ void AMeasure::RenderLine()
 		SplineMesh->SetMobility(EComponentMobility::Movable);
 
 		FVector end = FeaturePoints[i]->GetActorLocation();
-		if (Cast<ARouteMarker>(FeaturePoints[i]) != nullptr) // Since interpolations are already at correct elevation, only alter the route markers
+
+		// Since interpolations are already at correct elevation, only alter the route markers
+
+		if (Cast<ARouteMarker>(FeaturePoints[i]) != nullptr)
 		{
 			end.Z = end.Z + MarkerHeight;
 		}
+
 		FVector start = FeaturePoints[i - 1]->GetActorLocation();
-		if (Cast<ARouteMarker>(FeaturePoints[i - 1]) != nullptr) // Since interpolations are already at correct elevation, only alter the route markers
+
+		// Since interpolations are already at correct elevation, only alter the route markers
+
+		if (Cast<ARouteMarker>(FeaturePoints[i - 1]) != nullptr)
 		{
-			start.Z = start.Z + MarkerHeight;
+			start.Z += MarkerHeight;
 		}	
 
 		tangent = end - start;
