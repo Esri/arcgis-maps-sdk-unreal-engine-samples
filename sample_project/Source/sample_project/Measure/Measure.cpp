@@ -153,26 +153,26 @@ void AMeasure::Interpolate(AActor* start, AActor* end)
 	double dy = (end->GetActorLocation().Y - start->GetActorLocation().Y) / numInterpolation;
 	double dz = (end->GetActorLocation().Z - start->GetActorLocation().Z) / numInterpolation;
 
-	auto pre = start->GetActorLocation() + FVector(0, 0, MarkerHeight);
+	auto PreviousInterpolation = start->GetActorLocation() + FVector(0, 0, MarkerHeight);
 
 	for (int i = 0; i < numInterpolation - 1; i++)
 	{
 		SpawnParam.Owner = this;
-		//Calculate transform of next point
-		float nextX = pre.X + (float)dx;
-		float nextY = pre.Y + (float)dy;
-		float nextZ = pre.Z + (float)dz;
-		auto next =
-			GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextX, nextY, nextZ), FRotator3d(0), SpawnParam);
+		//Calculate transform of NextInterpolation point
+		float NextInterpolationX = PreviousInterpolation.X + (float)dx;
+		float NextInterpolationY = PreviousInterpolation.Y + (float)dy;
+		float NextInterpolationZ = PreviousInterpolation.Z + (float)dz;
+		auto NextInterpolation =
+			GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(NextInterpolationX, NextInterpolationY, NextInterpolationZ), FRotator3d(0), SpawnParam);
 
 		// Confirm FeaturePoints list does not already contain element
 
-		if (!FeaturePoints.Contains(next))
+		if (!FeaturePoints.Contains(NextInterpolation))
 		{
-			FeaturePoints.Add(next);
+			FeaturePoints.Add(NextInterpolation);
 		}
 
-		pre = next->GetActorLocation();
+		PreviousInterpolation = NextInterpolation->GetActorLocation();
 	}
 }
 
