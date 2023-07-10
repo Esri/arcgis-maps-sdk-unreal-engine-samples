@@ -20,6 +20,36 @@
 #include "Http.h"
 #include "FeatureLayer.generated.h"
 
+UCLASS(Blueprintable)
+class SAMPLE_PROJECT_API UWebLink : public UObject
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	FString link;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	FString requestHeaders;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	FString outFieldHeader;
+};
+
+USTRUCT(BlueprintType)
+struct SAMPLE_PROJECT_API FFeature
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TArray<FString> LEAGUE;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TArray<FString>  TEAM;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TArray<FString>  NAME;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TArray<double>  longitude;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TArray<double>  latitude;
+};
+
 UCLASS()
 class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 {
@@ -29,43 +59,13 @@ public:
 	// Sets default values for this actor's properties
 	AFeatureLayer();
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		UFeature* data = NewObject<UFeature>();
+		FFeature data;
 private:
-	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+		void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 public:	
 	// Called every frame
 
-};
-UCLASS(Blueprintable)
-class SAMPLE_PROJECT_API UWebLink : public UObject
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		FString link;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		FString requestHeaders;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		FString outFieldHeader;
-};
-
-UCLASS(Blueprintable)
-class SAMPLE_PROJECT_API UFeature : public UObject
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		TArray<FString> LEAGUE;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		TArray<FString>  TEAM;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		TArray<FString>  NAME;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		TArray<double>  longitude;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		TArray<double>  latitude;
 };
