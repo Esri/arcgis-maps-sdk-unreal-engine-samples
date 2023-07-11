@@ -40,11 +40,11 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 			TSharedPtr<FJsonObject> properties = feature->GetObjectField("properties");
 			TSharedPtr<FJsonObject> Geometry = feature->GetObjectField("geometry");
 			TArray<TSharedPtr<FJsonValue>> coordinates = Geometry->GetArrayField("coordinates");
-			data->NAME.Add(properties->GetStringField("NAME"));
-			data->LEAGUE.Add(properties->GetStringField("LEAGUE"));
-			data->TEAM.Add(properties->GetStringField("TEAM"));
-			data->longitude.Add(coordinates[0]->AsNumber());
-			data->latitude.Add(coordinates[1]->AsNumber());
+			data.NAME.Add(properties->GetStringField("NAME"));
+			data.LEAGUE.Add(properties->GetStringField("LEAGUE"));
+			data.TEAM.Add(properties->GetStringField("TEAM"));
+			data.longitude.Add(coordinates[0]->AsNumber());
+			data.latitude.Add(coordinates[1]->AsNumber());
 		}
 	}
 }
