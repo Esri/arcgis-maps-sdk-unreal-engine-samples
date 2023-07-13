@@ -16,7 +16,7 @@
 #include "Measure.h"
 
 constexpr float ElevationOffset = 200.0f;
-constexpr double InterpolationInterval = 100;
+constexpr double InterpolationInterval = 10000;
 constexpr int TraceLength = 1000000;
 
 AMeasure::AMeasure()
@@ -148,31 +148,31 @@ void AMeasure::AddStop()
 //Interpolate points between last point/start and this point(end)
 void AMeasure::Interpolate(AActor* start, AActor* end)
 {
-	int numInterpolation = floor((float)SegmentDistance / InterpolationInterval);
+	int numInterpolation = floor(FVector::Distance(start->GetActorLocation(), end->GetActorLocation()) / InterpolationInterval);
 	double dx = (end->GetActorLocation().X - start->GetActorLocation().X) / numInterpolation;
 	double dy = (end->GetActorLocation().Y - start->GetActorLocation().Y) / numInterpolation;
 	double dz = (end->GetActorLocation().Z - start->GetActorLocation().Z) / numInterpolation;
 
-	auto PreviousInterpolation = start->GetActorLocation() + FVector(0, 0, MarkerHeight);
+	auto previousInterpolation = start->GetActorLocation() + FVector(0, 0, MarkerHeight);
 
 	for (int i = 0; i < numInterpolation - 1; i++)
 	{
 		SpawnParam.Owner = this;
-		//Calculate transform of NextInterpolation point
-		float NextInterpolationX = PreviousInterpolation.X + (float)dx;
-		float NextInterpolationY = PreviousInterpolation.Y + (float)dy;
-		float NextInterpolationZ = PreviousInterpolation.Z + (float)dz;
-		auto NextInterpolation =
-			GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(NextInterpolationX, NextInterpolationY, NextInterpolationZ), FRotator3d(0), SpawnParam);
+		//Calculate transform of nextInterpolation point
+		float nextInterpolationX = previousInterpolation.X + (float)dx;
+		float nextInterpolationY = previousInterpolation.Y + (float)dy;
+		float nextInterpolationZ = previousInterpolation.Z + (float)dz;
+		auto nextInterpolation =
+			GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextInterpolationX, nextInterpolationY, nextInterpolationZ), FRotator3d(0), SpawnParam);
 
 		// Confirm FeaturePoints list does not already contain element
 
-		if (!FeaturePoints.Contains(NextInterpolation))
+		if (!FeaturePoints.Contains(nextInterpolation))
 		{
-			FeaturePoints.Add(NextInterpolation);
+			FeaturePoints.Add(nextInterpolation);
 		}
 
-		PreviousInterpolation = NextInterpolation->GetActorLocation();
+		previousInterpolation = nextInterpolation->GetActorLocation();
 	}
 }
 
