@@ -153,6 +153,25 @@ void AThirdPersonCharacter::MoveUp(const FInputActionValue& value)
 	}
 }
 
+void AThirdPersonCharacter::Sprint(const FInputActionValue& value)
+{
+	bool inputValue = value.Get<bool>();
+	if(inputValue)
+	{
+		if(!sprinting)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = 2000.0f;
+			sprinting = true;
+		}
+		else if(sprinting)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+			sprinting = false;
+		}	
+	}
+}
+
+
 void AThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
@@ -165,5 +184,6 @@ void AThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AThirdPersonCharacter::StopJumpActionEvent);
 		EnhancedInputComponent->BindAction(StartFlyingAction, ETriggerEvent::Triggered, this, &AThirdPersonCharacter::StartFlying);
 		EnhancedInputComponent->BindAction(StopFlyingAction, ETriggerEvent::Triggered, this, &AThirdPersonCharacter::StopFlying);
+		EnhancedInputComponent->BindAction(SprintingAction, ETriggerEvent::Started, this, &AThirdPersonCharacter::Sprint);
 	}
 }

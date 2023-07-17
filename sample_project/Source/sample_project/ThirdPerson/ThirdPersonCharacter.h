@@ -53,7 +53,9 @@ public:
 		UInputAction* StartFlyingAction;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 		UInputAction* StopFlyingAction;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
+		UInputAction* SprintingAction;
+	bool sprinting;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -68,6 +70,7 @@ private:
 	void MoveUp(const FInputActionValue& value);
 	void MoveForward(const FInputActionValue& value);
 	void MoveRight(const FInputActionValue& value);
+	void Sprint(const FInputActionValue& value);
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
