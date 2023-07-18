@@ -70,12 +70,10 @@ void AThirdPersonCharacter::SetCameraBoomSettings()
 	if (GetCharacterMovement()->IsFlying())
 	{
 		CameraBoom->SocketOffset.Z = 75.0f;
-		CameraBoom->bEnableCameraLag = true;
 	}
 	else
 	{
 		CameraBoom->SocketOffset.Z = 0.0f;
-		CameraBoom->bEnableCameraLag = false;
 	}
 }
 
