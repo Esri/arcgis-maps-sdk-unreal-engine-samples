@@ -16,7 +16,7 @@
 #include "Measure.h"
 
 constexpr float ElevationOffset = 200.0f;
-constexpr double InterpolationInterval = 100;
+constexpr double InterpolationInterval = 10000;
 constexpr int TraceLength = 1000000;
 
 AMeasure::AMeasure()
@@ -56,6 +56,7 @@ void AMeasure::BeginPlay()
 	}
 
 	// Create the UI and add it to the viewport
+
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
@@ -117,11 +118,29 @@ void AMeasure::AddStop()
 			GeodeticDistanceText = FString::Printf(TEXT("Distance: %f %s"), round(GeodeticDistance * 1000.0) / 1000.0, *UnitText);
 			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 
-			FeaturePoints.Add(lastStop);
+			// Confirm FeaturePoints list does not already contain element
+
+			if (!FeaturePoints.Contains(lastStop))
+			{
+				FeaturePoints.Add(lastStop);
+			}
+
 			Interpolate(lastStop, lineMarker);
-			FeaturePoints.Add(lineMarker);
+
+			// Confirm FeaturePoints list does not already contain element
+
+			if (!FeaturePoints.Contains(lineMarker))
+			{
+				FeaturePoints.Add(lineMarker);
+			}
 		}
-		Stops.Add(lineMarker);
+
+		// Confirm Stops list does not already contain element
+
+		if (!Stops.Contains(lineMarker))
+		{
+			Stops.Add(lineMarker);
+		}
 		RenderLine();
 	}
 }
@@ -129,26 +148,31 @@ void AMeasure::AddStop()
 //Interpolate points between last point/start and this point(end)
 void AMeasure::Interpolate(AActor* start, AActor* end)
 {
-	int numInterpolation = floor((float)SegmentDistance / InterpolationInterval);
+	int numInterpolation = floor(FVector::Distance(start->GetActorLocation(), end->GetActorLocation()) / InterpolationInterval);
 	double dx = (end->GetActorLocation().X - start->GetActorLocation().X) / numInterpolation;
 	double dy = (end->GetActorLocation().Y - start->GetActorLocation().Y) / numInterpolation;
+	double dz = (end->GetActorLocation().Z - start->GetActorLocation().Z) / numInterpolation;
 
-	auto pre = start->GetActorLocation();
+	auto previousInterpolation = start->GetActorLocation() + FVector(0, 0, MarkerHeight);
 
 	for (int i = 0; i < numInterpolation - 1; i++)
 	{
 		SpawnParam.Owner = this;
-		//Calculate transform of next point
-		float nextX = pre.X + (float)dx;
-		float nextY = pre.Y + (float)dy;
-		auto next = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextX, nextY, 0), FRotator3d(0), SpawnParam);
+		//Calculate transform of nextInterpolation point
+		float nextInterpolationX = previousInterpolation.X + (float)dx;
+		float nextInterpolationY = previousInterpolation.Y + (float)dy;
+		float nextInterpolationZ = previousInterpolation.Z + (float)dz;
+		auto nextInterpolation =
+			GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector(nextInterpolationX, nextInterpolationY, nextInterpolationZ), FRotator3d(0), SpawnParam);
 
-		//Define height
-		SetElevation(next);
+		// Confirm FeaturePoints list does not already contain element
 
-		FeaturePoints.Add(next);
+		if (!FeaturePoints.Contains(nextInterpolation))
+		{
+			FeaturePoints.Add(nextInterpolation);
+		}
 
-		pre = next->GetActorLocation();
+		previousInterpolation = nextInterpolation->GetActorLocation();
 	}
 }
 
@@ -180,7 +204,22 @@ void AMeasure::RenderLine()
 		SplineMesh->SetMobility(EComponentMobility::Movable);
 
 		FVector end = FeaturePoints[i]->GetActorLocation();
+
+		// Since interpolations are already at correct elevation, only alter the route markers
+
+		if (Cast<ARouteMarker>(FeaturePoints[i]) != nullptr)
+		{
+			end.Z = end.Z + MarkerHeight;
+		}
+
 		FVector start = FeaturePoints[i - 1]->GetActorLocation();
+
+		// Since interpolations are already at correct elevation, only alter the route markers
+
+		if (Cast<ARouteMarker>(FeaturePoints[i - 1]) != nullptr)
+		{
+			start.Z += MarkerHeight;
+		}	
 
 		tangent = end - start;
 		tangent.Normalize();
