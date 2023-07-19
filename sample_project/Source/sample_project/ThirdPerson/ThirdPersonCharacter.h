@@ -32,7 +32,6 @@ class SAMPLE_PROJECT_API AThirdPersonCharacter : public ACharacter
 
 public:
 	AThirdPersonCharacter();
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		USpringArmComponent* CameraBoom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -52,10 +51,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 		UInputAction* StartFlyingAction;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
-		UInputAction* StopFlyingAction;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 		UInputAction* SprintingAction;
+private:
 	bool sprinting;
+	bool flying;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -63,7 +62,6 @@ protected:
 private:	
 	void SetCameraBoomSettings();
 	void StartFlying(const FInputActionValue& value);
-	void StopFlying(const FInputActionValue& value);
 	void JumpActionEvent(const FInputActionValue& value);
 	void StopJumpActionEvent(const FInputActionValue& value);
 	void Look(const FInputActionValue& value);
@@ -74,5 +72,4 @@ private:
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 };

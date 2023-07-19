@@ -70,32 +70,31 @@ void AThirdPersonCharacter::SetCameraBoomSettings()
 	if (GetCharacterMovement()->IsFlying())
 	{
 		CameraBoom->SocketOffset.Z = 75.0f;
-		CameraBoom->bEnableCameraLag = true;
 	}
 	else
 	{
 		CameraBoom->SocketOffset.Z = 0.0f;
-		CameraBoom->bEnableCameraLag = false;
 	}
 }
 
 
 void AThirdPersonCharacter::StartFlying(const FInputActionValue& value)
 {
-	if (!GetCharacterMovement()->IsFlying())
+	auto inputValue = value.Get<bool>();
+	if(inputValue)
 	{
-		GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
+		if (!flying)
+		{
+			GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
+			flying = true;
+		}
+		else if(flying)
+		{
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking, 0);
+			flying = false;
+		}
+		SetCameraBoomSettings();
 	}
-	SetCameraBoomSettings();
-}
-
-void AThirdPersonCharacter::StopFlying(const FInputActionValue& value)
-{
-	if (GetCharacterMovement()->IsFlying())
-	{
-		GetCharacterMovement()->SetMovementMode(MOVE_Walking, 0);
-	}
-	SetCameraBoomSettings();
 }
 
 void AThirdPersonCharacter::Look(const FInputActionValue& value)
@@ -111,7 +110,7 @@ void AThirdPersonCharacter::Look(const FInputActionValue& value)
 
 void AThirdPersonCharacter::MoveForward(const FInputActionValue& value)
 {
-	const float inputValue = value.Get<float>();
+	const auto inputValue = value.Get<float>();
 	FRotator Rotation = Controller->GetControlRotation();
 	FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
 	FVector Direction = GetActorForwardVector();
@@ -128,7 +127,7 @@ void AThirdPersonCharacter::MoveForward(const FInputActionValue& value)
 
 void AThirdPersonCharacter::MoveRight(const FInputActionValue& value)
 {
-	float inputValue = value.Get<float>();
+	auto inputValue = value.Get<float>();
 	FRotator Rotation = Controller->GetControlRotation();
 	FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
 	FVector Direction = GetActorRightVector();
@@ -145,7 +144,7 @@ void AThirdPersonCharacter::MoveRight(const FInputActionValue& value)
 
 void AThirdPersonCharacter::MoveUp(const FInputActionValue& value)
 {
-	float inputValue = value.Get<float>();
+	auto inputValue = value.Get<float>();
 	
 	if (GetCharacterMovement()->IsFlying())
 	{
@@ -155,7 +154,8 @@ void AThirdPersonCharacter::MoveUp(const FInputActionValue& value)
 
 void AThirdPersonCharacter::Sprint(const FInputActionValue& value)
 {
-	bool inputValue = value.Get<bool>();
+	auto inputValue = value.Get<bool>();
+	
 	if(inputValue)
 	{
 		if(!sprinting)
@@ -182,8 +182,7 @@ void AThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(MoveUpAction, ETriggerEvent::Triggered, this, &AThirdPersonCharacter::MoveUp);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AThirdPersonCharacter::JumpActionEvent);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AThirdPersonCharacter::StopJumpActionEvent);
-		EnhancedInputComponent->BindAction(StartFlyingAction, ETriggerEvent::Triggered, this, &AThirdPersonCharacter::StartFlying);
-		EnhancedInputComponent->BindAction(StopFlyingAction, ETriggerEvent::Triggered, this, &AThirdPersonCharacter::StopFlying);
+		EnhancedInputComponent->BindAction(StartFlyingAction, ETriggerEvent::Started, this, &AThirdPersonCharacter::StartFlying);
 		EnhancedInputComponent->BindAction(SprintingAction, ETriggerEvent::Started, this, &AThirdPersonCharacter::Sprint);
 	}
 }
