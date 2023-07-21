@@ -48,6 +48,7 @@ void AGeocoder::BeginPlay()
 		{
 			UIWidget->AddToViewport();
 			UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetGeoCoder"));
+			HideInstructions = UIWidget->FindFunction(FName("HideDirections"));
 			if (WidgetFunction) {
 				UIWidget->ProcessEvent(WidgetFunction, &self);
 			}
@@ -55,6 +56,15 @@ void AGeocoder::BeginPlay()
 		}
 	}
 }
+
+void AGeocoder::HideDirections()
+{
+	AActor* self = this;
+	if (HideInstructions) {
+		UIWidget->ProcessEvent(HideInstructions, &self);
+	}
+}
+
 
 void AGeocoder::Tick(float DeltaTime)
 {

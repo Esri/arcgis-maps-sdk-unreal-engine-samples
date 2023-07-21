@@ -59,6 +59,19 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnitChanged();
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		bool bIsFeet;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		bool bIsMeters;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		bool bIsMiles;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		bool bIsKilometers;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		TObjectPtr<UUserWidget> UIWidget;
+	
+	UFUNCTION(BlueprintCallable)
+	void HideDirections();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -72,7 +85,6 @@ private:
 	TObjectPtr<UStaticMesh> RouteMesh;
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	TArray<ARouteMarker*> Stops;
-	TObjectPtr<UUserWidget> UIWidget;
 	TSubclassOf<UUserWidget> UIWidgetClass;
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
@@ -81,6 +93,7 @@ private:
 	double SegmentDistance;
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	float MarkerHeight = 7000.0f;
+	UFunction* HideInstructions;
 
 	void AddStop();
 	void Interpolate(AActor* start, AActor* end);

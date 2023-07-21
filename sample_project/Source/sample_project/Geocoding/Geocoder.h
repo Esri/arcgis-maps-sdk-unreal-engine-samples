@@ -41,6 +41,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SelectLocation();
 
+	UFUNCTION(BlueprintCallable)
+	void HideDirections();
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -56,4 +59,5 @@ private:
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UUserWidget* UIWidget;
 	UFunction* WidgetSetInfoFunction;
+	UFunction* HideInstructions;
 };

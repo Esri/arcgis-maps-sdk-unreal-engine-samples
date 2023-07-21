@@ -52,6 +52,7 @@ void ARouteManager::BeginPlay()
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+		HideInstructions = UIWidget->FindFunction(FName("HideDirections"));
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();			
@@ -173,6 +174,28 @@ void ARouteManager::AddStop()
 	}
 }
 
+void ARouteManager::ClearMap()
+{
+	// Remove the old route cue
+	for (auto SPC : SplineMeshComponents)
+	{
+		SPC->UnregisterComponent();
+		SPC->DestroyComponent();
+	}
+	SplineMeshComponents.Empty();
+	// Remove the old breadcrumbs
+	for (auto Breadcrumb : Breadcrumbs) {
+		Breadcrumb->Destroy();
+	}
+	Breadcrumbs.Empty();
+	for(auto Stop : Stops)
+	{
+		Stop->Destroy();
+	}
+	Stops.Empty();
+}
+
+
 // Make a query for routing between the selected stops 
 void ARouteManager::PostRoutingRequest()
 {
@@ -215,6 +238,13 @@ void ARouteManager::PostRoutingRequest()
 	Request->ProcessRequest();
 }
 
+void ARouteManager::HideDirections()
+{
+	AActor* self = this;
+	if (HideInstructions) {
+		UIWidget->ProcessEvent(HideInstructions, &self);
+	}
+}
 void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
 	TSharedPtr<FJsonObject> JsonObj;
@@ -287,7 +317,7 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 						if (JsonObj->TryGetNumberField(TEXT("Total_TravelTime"), Minutes)) {
 							// Update the travel time info in the UI
 							if (WidgetFunction) {
-								InfoMessage = FString::Printf(TEXT("\nTravel Time: %.2f Minutes"), Minutes);
+								InfoMessage = FString::Printf(TEXT("%.2f"), Minutes);
 								UIWidget->ProcessEvent(WidgetFunction, &InfoMessage);
 							}			
 						}
