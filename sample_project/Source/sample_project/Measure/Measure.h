@@ -41,6 +41,14 @@
 
 #include "Measure.generated.h"
 
+UENUM(BlueprintType)
+enum ESelection
+{
+	isMiles,
+	isFeet,
+	isMetes,
+	isKilometers
+};
 UCLASS()
 class AMeasure : public AActor
 {
@@ -60,13 +68,9 @@ public:
 	void UnitChanged();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		bool bIsFeet;
+		TEnumAsByte<ESelection> Selection;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		bool bIsMeters;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		bool bIsMiles;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		bool bIsKilometers;
+		float GeodeticDistance;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TObjectPtr<UUserWidget> UIWidget;
 	
@@ -78,8 +82,6 @@ protected:
 
 private:
 	TArray<AActor*> FeaturePoints;
-	double GeodeticDistance;
-	FString GeodeticDistanceText;
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 	FVector2D RouteCueScale = FVector2D(5);
 	TObjectPtr<UStaticMesh> RouteMesh;

@@ -115,8 +115,6 @@ void AMeasure::AddStop()
 																	  EArcGISGeodeticCurveType::Geodesic)
 								  ->GetDistance();
 			GeodeticDistance += SegmentDistance;
-			GeodeticDistanceText = FString::Printf(TEXT("%f"), round(GeodeticDistance * 1000.0) / 1000.0);
-			UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 
 			// Confirm FeaturePoints list does not already contain element
 
@@ -257,36 +255,31 @@ void AMeasure::ClearLine()
 		FeaturePoints.Empty();
 		Stops.Empty();
 		GeodeticDistance = 0;
-		GeodeticDistanceText = FString::Printf(TEXT("%f"), GeodeticDistance);
-		UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 	}
 }
 
 void AMeasure::UnitChanged()
 {
-	if (bIsMeters && !bIsKilometers && !bIsMiles && !bIsFeet)
+	if (Selection == isMetes)
 	{
 		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
 	}
-	else if (bIsKilometers && !bIsMeters && !bIsMiles && !bIsFeet)
+	else if (Selection == isKilometers)
 	{
 		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers);
 	}
-	else if (bIsMiles && !bIsKilometers && !bIsMeters && !bIsFeet)
+	else if (Selection == isMiles)
 	{
 		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
 	}
-	else if (bIsFeet && !bIsKilometers && !bIsMeters && !bIsMiles)
+	else if (Selection == isFeet)
 	{
 		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet);
 	}
-
-	GeodeticDistanceText = FString::Printf(TEXT("%f"), round(GeodeticDistance * 100.0) * 0.01f);
-	UIWidget->ProcessEvent(WidgetFunction, &GeodeticDistanceText);
 }
 
 void AMeasure::HideDirections()
