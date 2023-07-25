@@ -18,6 +18,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Http.h"
+#include "ArcGISSamples/Public/ArcGISPawn.h"
 #include "FeatureLayer.generated.h"
 
 UCLASS(Blueprintable)
@@ -60,6 +61,8 @@ public:
 	AFeatureLayer();
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 		FFeature data;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+		AArcGISPawn* ArcGisPawn;
 private:
 		void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 protected:
