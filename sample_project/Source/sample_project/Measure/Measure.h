@@ -41,6 +41,14 @@
 
 #include "Measure.generated.h"
 
+UENUM(BlueprintType)
+enum ESelection
+{
+	isMiles,
+	isFeet,
+	isMetes,
+	isKilometers
+};
 UCLASS()
 class AMeasure : public AActor
 {
@@ -59,20 +67,26 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnitChanged();
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		TEnumAsByte<ESelection> Selection;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		float GeodeticDistance;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		TObjectPtr<UUserWidget> UIWidget;
+	
+	UFUNCTION(BlueprintCallable)
+	void HideDirections();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
 	TArray<AActor*> FeaturePoints;
-	double GeodeticDistance;
-	FString GeodeticDistanceText;
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 	FVector2D RouteCueScale = FVector2D(5);
 	TObjectPtr<UStaticMesh> RouteMesh;
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	TArray<ARouteMarker*> Stops;
-	TObjectPtr<UUserWidget> UIWidget;
 	TSubclassOf<UUserWidget> UIWidgetClass;
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
@@ -81,6 +95,7 @@ private:
 	double SegmentDistance;
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	float MarkerHeight = 7000.0f;
+	UFunction* HideInstructions;
 
 	void AddStop();
 	void Interpolate(AActor* start, AActor* end);

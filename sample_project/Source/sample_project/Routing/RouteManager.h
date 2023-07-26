@@ -41,6 +41,11 @@ public:
 	// Sets default values for this actor's properties
 	ARouteManager();
 
+	UFUNCTION(BlueprintCallable)
+	void HideDirections();
+	UFUNCTION(BlueprintCallable)
+	void ClearMap();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -63,4 +68,5 @@ private:
 	bool bShouldUpdateBreadcrums = false;
 	FVector2D RouteCueScale = FVector2D(5.);
 	int StopCount = 2;
+	UFunction* HideInstructions;
 };
