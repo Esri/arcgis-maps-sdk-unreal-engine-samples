@@ -21,34 +21,30 @@
 #include "ArcGISSamples/Public/ArcGISPawn.h"
 #include "FeatureLayer.generated.h"
 
-UCLASS(Blueprintable)
-class SAMPLE_PROJECT_API UWebLink : public UObject
+USTRUCT(BlueprintType)
+struct SAMPLE_PROJECT_API FWebLink
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString link;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString requestHeaders;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> outFields;
+	FString headers;
 	FString outFieldHeader;
 };
 
 USTRUCT(BlueprintType)
-struct SAMPLE_PROJECT_API FFeature
+struct SAMPLE_PROJECT_API FProperties
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<FString> LEAGUE;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<FString>  TEAM;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<FString>  NAME;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<double>  longitude;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<double>  latitude;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> featureProperties;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<float> geoProperties;
 };
 
 UCLASS()
@@ -59,16 +55,19 @@ class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AFeatureLayer();
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FWebLink WebLink;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FProperties> FeatureData;
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		FFeature data;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		AArcGISPawn* ArcGisPawn;
+	AArcGISPawn* ArcGisPawn;
 private:
 		void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 public:	
-	// Called every frame
+	UFUNCTION(BlueprintCallable)
+	void ProcessWebRequest();
 
 };
