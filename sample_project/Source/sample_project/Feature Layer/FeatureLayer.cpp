@@ -30,22 +30,10 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 	TSharedPtr<FJsonObject> ResponseObj;
 	const FString ResponseBody = Response->GetContentAsString();
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+	
 	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 	{
 		TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
-		/*for (int i = 0; i != Features.Num(); i++)
-		{
-			TArray<double> geoCoordinates = {};
-			TSharedPtr<FJsonObject> feature = Features[i]->AsObject();
-			TSharedPtr<FJsonObject> properties = feature->GetObjectField("properties");
-			TSharedPtr<FJsonObject> Geometry = feature->GetObjectField("geometry");
-			TArray<TSharedPtr<FJsonValue>> coordinates = Geometry->GetArrayField("coordinates");
-			data.NAME.Add(properties->GetStringField("NAME"));
-			data.LEAGUE.Add(properties->GetStringField("LEAGUE"));
-			data.TEAM.Add(properties->GetStringField("TEAM"));
-			data.longitude.Add(coordinates[0]->AsNumber());
-			data.latitude.Add(coordinates[1]->AsNumber());
-		}*/
 
 		for (int i = 0; i != Features.Num(); i++)
 		{
@@ -66,6 +54,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 
 void AFeatureLayer::ProcessWebRequest()
 {
+	FeatureData.Empty();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AFeatureLayer::OnResponseRecieved);
 	Request->SetURL(WebLink.link);

@@ -61,6 +61,12 @@ public:
 	TArray<FProperties> FeatureData;
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	AArcGISPawn* ArcGisPawn;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bGetAllFeatures = true;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int startValue;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int lastValue;
 private:
 		void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 protected:
