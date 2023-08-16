@@ -15,7 +15,6 @@
 
 
 #include "FeatureLayer.h"
-#include "Json.h"
 
 // Sets default values
 AFeatureLayer::AFeatureLayer()
@@ -55,6 +54,14 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 void AFeatureLayer::ProcessWebRequest()
 {
 	FeatureData.Empty();
+	for (auto outfield : WebLink.outFields)
+	{
+		WebLink.headers += outfield + ",";
+	}
+	WebLink.outFieldHeader = "outfields=" + WebLink.headers;
+
+	WebLink.requestHeaders += "&" + WebLink.outFieldHeader;
+	WebLink.link += WebLink.requestHeaders;
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AFeatureLayer::OnResponseRecieved);
 	Request->SetURL(WebLink.link);
@@ -69,12 +76,4 @@ void AFeatureLayer::BeginPlay()
 	/*
 	WebLink.link = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0/Query?";
 	WebLink.requestHeaders = "f=geojson&where=1=1";*/
-	for (auto outfield : WebLink.outFields)
-	{
-		WebLink.headers += outfield + ",";
-	}
-	WebLink.outFieldHeader = "outfields=" + WebLink.headers;
-
-	WebLink.requestHeaders += "&" + WebLink.outFieldHeader;
-	WebLink.link += WebLink.requestHeaders;
 }

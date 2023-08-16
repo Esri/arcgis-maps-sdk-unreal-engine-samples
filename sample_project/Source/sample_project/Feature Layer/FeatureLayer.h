@@ -75,5 +75,5 @@ protected:
 public:	
 	UFUNCTION(BlueprintCallable)
 	void ProcessWebRequest();
-
+	
 };
