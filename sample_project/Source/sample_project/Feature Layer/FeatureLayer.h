@@ -67,6 +67,12 @@ public:
 	int startValue;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int lastValue;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bButtonActive;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	bool bLinkReturnError;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	bool bCoordinatesErrorReturn;
 private:
 		void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 protected:
@@ -75,5 +81,9 @@ protected:
 public:	
 	UFUNCTION(BlueprintCallable)
 	void ProcessWebRequest();
+	UFUNCTION(BlueprintCallable)
+	bool ErrorCheck();
+	UFUNCTION(BlueprintCallable)
+	void CreateLink();
 
 };

@@ -27,30 +27,79 @@ AFeatureLayer::AFeatureLayer()
 
 void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
-	TSharedPtr<FJsonObject> ResponseObj;
-	const FString ResponseBody = Response->GetContentAsString();
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
-	
-	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
+	if(bConnectedSucessfully)
 	{
-		TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
-
-		for (int i = 0; i != Features.Num(); i++)
+		bLinkReturnError = false;
+		TSharedPtr<FJsonObject> ResponseObj;
+		const FString ResponseBody = Response->GetContentAsString();
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+	
+		if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 		{
-			TSharedPtr<FJsonObject> feature = Features[i]->AsObject();
-			TSharedPtr<FJsonObject> properties = feature->GetObjectField("properties");
-			FProperties testProperties;
-			for (auto featureProp : WebLink.outFields)
+			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
+
+			for (int i = 0; i != Features.Num(); i++)
 			{
-				testProperties.featureProperties.Add(feature->GetObjectField("properties")->GetStringField(featureProp));
+				FProperties testProperties;
+				TSharedPtr<FJsonObject> feature = Features[i]->AsObject();
+				TSharedPtr<FJsonObject> properties = feature->GetObjectField("properties");
+			
+				for(int j = 0; j != WebLink.outFields.Max(); j++)
+				{
+					testProperties.featureProperties.Add(feature->GetObjectField("properties")->GetStringField(WebLink.outFields[j]));
+				}
+				TArray<TSharedPtr<FJsonValue>> coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
+				testProperties.geoProperties.Add(coordinates[0]->AsNumber());
+				testProperties.geoProperties.Add(coordinates[1]->AsNumber());	
+				FeatureData.Add(testProperties);
 			}
-			TArray<TSharedPtr<FJsonValue>> coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
-			testProperties.geoProperties.Add(coordinates[0]->AsNumber());
-			testProperties.geoProperties.Add(coordinates[1]->AsNumber());
-			FeatureData.Add(testProperties);
-		}
+		}	
+	}
+	else
+	{
+		bLinkReturnError = true;
 	}
 }
+
+bool AFeatureLayer::ErrorCheck()
+{
+	for (auto Element : FeatureData)
+	{
+		FProperties feature = Element;
+		for (auto property : feature.featureProperties)
+		{
+			if(property.Len() == 0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void AFeatureLayer::CreateLink()
+{
+	if(!WebLink.link.Contains("f=geojson&where=1=1"))
+	{
+		WebLink.requestHeaders += "&outfields=*";
+		WebLink.link += WebLink.requestHeaders;
+		bButtonActive = true;
+	}
+	else if(WebLink.link.EndsWith("where=1=1"))
+	{
+		WebLink.link += "&outfields=*";
+		bButtonActive = true;
+	}
+	else if(WebLink.link.EndsWith("outfields=*"))
+	{
+		bButtonActive = true;
+	}
+	else
+	{
+		bButtonActive = false;
+	}
+}
+
 
 void AFeatureLayer::ProcessWebRequest()
 {
@@ -66,15 +115,9 @@ void AFeatureLayer::ProcessWebRequest()
 void AFeatureLayer::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CreateLink();
 	/*
 	WebLink.link = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0/Query?";
 	WebLink.requestHeaders = "f=geojson&where=1=1";*/
-	for (auto outfield : WebLink.outFields)
-	{
-		WebLink.headers += outfield + ",";
-	}
-	WebLink.outFieldHeader = "outfields=" + WebLink.headers;
-
-	WebLink.requestHeaders += "&" + WebLink.outFieldHeader;
-	WebLink.link += WebLink.requestHeaders;
 }
