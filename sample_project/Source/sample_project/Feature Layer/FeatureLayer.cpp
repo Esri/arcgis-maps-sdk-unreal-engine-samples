@@ -44,9 +44,9 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 				TSharedPtr<FJsonObject> feature = Features[i]->AsObject();
 				TSharedPtr<FJsonObject> properties = feature->GetObjectField("properties");
 			
-				for(int j = 0; j != WebLink.outFields.Max(); j++)
+				for(auto outfield : WebLink.outFields)
 				{
-					testProperties.featureProperties.Add(feature->GetObjectField("properties")->GetStringField(WebLink.outFields[j]));
+					testProperties.featureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
 				}
 				TArray<TSharedPtr<FJsonValue>> coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
 				testProperties.geoProperties.Add(coordinates[0]->AsNumber());
@@ -66,6 +66,7 @@ bool AFeatureLayer::ErrorCheck()
 	for (auto Element : FeatureData)
 	{
 		FProperties feature = Element;
+		
 		for (auto property : feature.featureProperties)
 		{
 			if(property.Len() == 0)
@@ -117,7 +118,4 @@ void AFeatureLayer::BeginPlay()
 	Super::BeginPlay();
 
 	CreateLink();
-	/*
-	WebLink.link = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0/Query?";
-	WebLink.requestHeaders = "f=geojson&where=1=1";*/
 }

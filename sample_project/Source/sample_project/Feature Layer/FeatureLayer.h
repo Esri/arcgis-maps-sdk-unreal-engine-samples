@@ -53,7 +53,6 @@ class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AFeatureLayer();
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FWebLink WebLink;
@@ -73,11 +72,13 @@ public:
 	bool bLinkReturnError;
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	bool bCoordinatesErrorReturn;
+	
 private:
-		void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
 public:	
 	UFUNCTION(BlueprintCallable)
 	void ProcessWebRequest();
