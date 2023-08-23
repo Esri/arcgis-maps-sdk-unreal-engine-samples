@@ -27,24 +27,24 @@ struct SAMPLE_PROJECT_API FWebLink
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString link;
+	FString Link;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString requestHeaders;
+	FString RequestHeaders;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> outFields;
-	FString headers;
-	FString outFieldHeader;
+	TArray<FString> OutFields;
+	FString Headers;
+	FString OutFieldHeader;
 };
 
 USTRUCT(BlueprintType)
-struct SAMPLE_PROJECT_API FProperties
+struct SAMPLE_PROJECT_API FFeatureLayerProperties
 {
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> featureProperties;
+	TArray<FString> FeatureProperties;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<float> geoProperties;
+	TArray<float> GeoProperties;
 };
 
 UCLASS()
@@ -52,26 +52,33 @@ class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
+	UFUNCTION(BlueprintCallable)
+	void ProcessWebRequest();
+	UFUNCTION(BlueprintCallable)
+	bool ErrorCheck();
+	UFUNCTION(BlueprintCallable)
+	void CreateLink();
 	AFeatureLayer();
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FWebLink WebLink;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FProperties> FeatureData;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	AArcGISPawn* ArcGisPawn;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bGetAllFeatures = true;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int startValue;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int lastValue;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bButtonActive;
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	bool bCoordinatesErrorReturn;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bGetAllFeatures = true;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bLinkReturnError;
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	bool bCoordinatesErrorReturn;
+	AArcGISPawn* ArcGISPawn;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<FFeatureLayerProperties> FeatureData;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int LastValue;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int StartValue;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FWebLink WebLink;
 	
 private:
 	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
@@ -79,12 +86,4 @@ private:
 protected:
 	virtual void BeginPlay() override;
 	
-public:	
-	UFUNCTION(BlueprintCallable)
-	void ProcessWebRequest();
-	UFUNCTION(BlueprintCallable)
-	bool ErrorCheck();
-	UFUNCTION(BlueprintCallable)
-	void CreateLink();
-
 };

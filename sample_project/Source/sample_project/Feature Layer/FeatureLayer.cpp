@@ -31,8 +31,8 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 	{
 		bLinkReturnError = false;
 		TSharedPtr<FJsonObject> ResponseObj;
-		const FString ResponseBody = Response->GetContentAsString();
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+		const auto ResponseBody = Response->GetContentAsString();
+		auto Reader = TJsonReaderFactory<>::Create(ResponseBody);
 	
 		if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 		{
@@ -40,17 +40,17 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 
 			for (int i = 0; i != Features.Num(); i++)
 			{
-				FProperties testProperties;
-				TSharedPtr<FJsonObject> feature = Features[i]->AsObject();
-				TSharedPtr<FJsonObject> properties = feature->GetObjectField("properties");
+				FFeatureLayerProperties testProperties;
+				auto feature = Features[i]->AsObject();
+				auto properties = feature->GetObjectField("properties");
 			
-				for(auto outfield : WebLink.outFields)
+				for (auto outfield : WebLink.OutFields)
 				{
-					testProperties.featureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
+					testProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
 				}
 				TArray<TSharedPtr<FJsonValue>> coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
-				testProperties.geoProperties.Add(coordinates[0]->AsNumber());
-				testProperties.geoProperties.Add(coordinates[1]->AsNumber());	
+				testProperties.GeoProperties.Add(coordinates[0]->AsNumber());
+				testProperties.GeoProperties.Add(coordinates[1]->AsNumber());	
 				FeatureData.Add(testProperties);
 			}
 		}	
@@ -63,11 +63,11 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 
 bool AFeatureLayer::ErrorCheck()
 {
-	for (auto Element : FeatureData)
+	for (const auto Data : FeatureData)
 	{
-		FProperties feature = Element;
+		FFeatureLayerProperties feature = Data;
 		
-		for (auto property : feature.featureProperties)
+		for (const auto property : feature.FeatureProperties)
 		{
 			if(property.Len() == 0)
 			{
@@ -80,18 +80,18 @@ bool AFeatureLayer::ErrorCheck()
 
 void AFeatureLayer::CreateLink()
 {
-	if(!WebLink.link.Contains("f=geojson&where=1=1"))
+	if(!WebLink.Link.Contains("f=geojson&where=1=1"))
 	{
-		WebLink.requestHeaders += "&outfields=*";
-		WebLink.link += WebLink.requestHeaders;
+		WebLink.RequestHeaders += "&outfields=*";
+		WebLink.Link += WebLink.RequestHeaders;
 		bButtonActive = true;
 	}
-	else if(WebLink.link.EndsWith("where=1=1"))
+	else if(WebLink.Link.EndsWith("where=1=1"))
 	{
-		WebLink.link += "&outfields=*";
+		WebLink.Link += "&outfields=*";
 		bButtonActive = true;
 	}
-	else if(WebLink.link.EndsWith("outfields=*"))
+	else if(WebLink.Link.EndsWith("outfields=*"))
 	{
 		bButtonActive = true;
 	}
@@ -107,12 +107,11 @@ void AFeatureLayer::ProcessWebRequest()
 	FeatureData.Empty();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AFeatureLayer::OnResponseRecieved);
-	Request->SetURL(WebLink.link);
+	Request->SetURL(WebLink.Link);
 	Request->SetVerb("Get");
 	Request->ProcessRequest();
 }
 
-// Called when the game starts or when spawned
 void AFeatureLayer::BeginPlay()
 {
 	Super::BeginPlay();
