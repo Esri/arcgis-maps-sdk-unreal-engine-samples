@@ -63,6 +63,11 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 
 bool AFeatureLayer::ErrorCheck()
 {
+	if(FeatureData.IsEmpty())
+	{
+		bLinkReturnError = true;
+		return false;
+	}
 	for (const auto Data : FeatureData)
 	{
 		FFeatureLayerProperties feature = Data;
@@ -88,7 +93,7 @@ void AFeatureLayer::CreateLink()
 		}
 		else
 		{
-			break;
+			continue;
 		}
 	}
 
