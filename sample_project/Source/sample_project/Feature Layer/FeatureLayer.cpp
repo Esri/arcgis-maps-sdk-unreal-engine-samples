@@ -80,7 +80,11 @@ bool AFeatureLayer::ErrorCheck()
 
 void AFeatureLayer::CreateLink()
 {
-	if(!WebLink.Link.Contains("f=geojson&where=1=1"))
+	if(!WebLink.Link.Contains("/0/query?"))
+	{
+		WebLink.Link += "/0/query?";
+	}
+	else if(!WebLink.Link.Contains("f=geojson&where=1=1"))
 	{
 		WebLink.RequestHeaders += "&outfields=*";
 		WebLink.Link += WebLink.RequestHeaders;
