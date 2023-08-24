@@ -83,6 +83,7 @@ void AFeatureLayer::CreateLink()
 	if(!WebLink.Link.Contains("/0/query?"))
 	{
 		WebLink.Link += "/0/query?";
+		bButtonActive = true;
 	}
 	else if(!WebLink.Link.Contains("f=geojson&where=1=1"))
 	{
