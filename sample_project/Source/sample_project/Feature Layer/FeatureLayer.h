@@ -29,7 +29,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString Link;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString RequestHeaders;
+	TArray<FString> RequestHeaders;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> OutFields;
 	FString Headers;

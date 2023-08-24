@@ -80,25 +80,21 @@ bool AFeatureLayer::ErrorCheck()
 
 void AFeatureLayer::CreateLink()
 {
-	if(!WebLink.Link.Contains("/0/query?"))
+	for (auto header : WebLink.RequestHeaders)
 	{
-		WebLink.Link += "/0/query?";
-		bButtonActive = true;
+		if(!WebLink.Link.Contains(header))
+		{
+			WebLink.Link += header;
+		}
+		else
+		{
+			break;
+		}
 	}
-	else if(!WebLink.Link.Contains("f=geojson&where=1=1"))
+
+	if(WebLink.Link.EndsWith("outfields=*"))
 	{
-		WebLink.RequestHeaders += "&outfields=*";
-		WebLink.Link += WebLink.RequestHeaders;
-		bButtonActive = true;
-	}
-	else if(WebLink.Link.EndsWith("where=1=1"))
-	{
-		WebLink.Link += "&outfields=*";
-		bButtonActive = true;
-	}
-	else if(WebLink.Link.EndsWith("outfields=*"))
-	{
-		bButtonActive = true;
+		bButtonActive = true;	
 	}
 	else
 	{
