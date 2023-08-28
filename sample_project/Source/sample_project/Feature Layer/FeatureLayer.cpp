@@ -49,8 +49,17 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					testProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
 				}
 				TArray<TSharedPtr<FJsonValue>> coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
-				testProperties.GeoProperties.Add(coordinates[0]->AsNumber());
-				testProperties.GeoProperties.Add(coordinates[1]->AsNumber());	
+				if(!coordinates.IsEmpty())
+				{
+					for (const auto Coordinate : coordinates)
+					{
+						testProperties.GeoProperties.Add(Coordinate->AsNumber());
+					}
+				}
+				else
+				{
+					bCoordinatesErrorReturn = true;
+				}
 				FeatureData.Add(testProperties);
 			}
 		}	
