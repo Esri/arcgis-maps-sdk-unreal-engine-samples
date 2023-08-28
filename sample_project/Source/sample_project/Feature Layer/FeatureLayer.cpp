@@ -48,13 +48,16 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 				{
 					testProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
 				}
+				auto type = feature->GetObjectField("geometry")->GetStringField("type");
 				TArray<TSharedPtr<FJsonValue>> coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
-				if(!coordinates.IsEmpty())
+
+				if(type.ToLower() == "point")
 				{
 					for (const auto Coordinate : coordinates)
 					{
 						testProperties.GeoProperties.Add(Coordinate->AsNumber());
 					}
+					bCoordinatesErrorReturn = false;
 				}
 				else
 				{
@@ -77,6 +80,7 @@ bool AFeatureLayer::ErrorCheck()
 		bLinkReturnError = true;
 		return false;
 	}
+	
 	for (const auto Data : FeatureData)
 	{
 		FFeatureLayerProperties feature = Data;
