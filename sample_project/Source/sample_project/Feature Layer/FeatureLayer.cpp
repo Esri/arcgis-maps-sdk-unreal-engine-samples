@@ -17,52 +17,136 @@
 #include "FeatureLayer.h"
 #include "Json.h"
 
-// Sets default values
 AFeatureLayer::AFeatureLayer()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 }
 
 void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
-	TSharedPtr<FJsonObject> ResponseObj;
-	const FString ResponseBody = Response->GetContentAsString();
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
-	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
+	if(bConnectedSucessfully)
 	{
-		TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
-		for (int i = 0; i != Features.Num(); i++)
+		bLinkReturnError = false;
+		TSharedPtr<FJsonObject> ResponseObj;
+		const auto ResponseBody = Response->GetContentAsString();
+		auto Reader = TJsonReaderFactory<>::Create(ResponseBody);
+
+		//deserialize the json data received in the http request
+		if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 		{
-			TArray<double> geoCoordinates = {};
-			TSharedPtr<FJsonObject> feature = Features[i]->AsObject();
-			TSharedPtr<FJsonObject> properties = feature->GetObjectField("properties");
-			TSharedPtr<FJsonObject> Geometry = feature->GetObjectField("geometry");
-			TArray<TSharedPtr<FJsonValue>> coordinates = Geometry->GetArrayField("coordinates");
-			data.NAME.Add(properties->GetStringField("NAME"));
-			data.LEAGUE.Add(properties->GetStringField("LEAGUE"));
-			data.TEAM.Add(properties->GetStringField("TEAM"));
-			data.longitude.Add(coordinates[0]->AsNumber());
-			data.latitude.Add(coordinates[1]->AsNumber());
-		}
+			//get the array field features
+			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
+
+			//parse through the features in order to get individual properties associated with the features
+			for (int i = 0; i != Features.Num(); i++)
+			{
+				//create a new feature object to store the data received associated with this feature iteration
+				FFeatureLayerProperties featureLayerProperties;
+				auto feature = Features[i]->AsObject();
+				//get the properties field associated with the individual feature
+				auto properties = feature->GetObjectField("properties");
+
+				/*outfield can be set in the scene on bp_feature
+				this loop will take each outfield set in the scene and check to see if the outfield exists
+				if it does exist, it will return the result of the outfield associated with this feature
+				if it does not exist, it will return and error message in the scene*/
+				for (auto outfield : WebLink.OutFields)
+				{
+					featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
+				}
+				//this will get the type of feature
+				auto type = feature->GetObjectField("geometry")->GetStringField("type");
+				//this will get the geometry or coordinates of the feature
+				auto coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
+
+				//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
+				//if not, it will return an error
+				//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
+				if(type.ToLower() == "point")
+				{
+					for (const auto Coordinate : coordinates)
+					{
+						featureLayerProperties.GeoProperties.Add(Coordinate->AsNumber());
+					}
+					bCoordinatesErrorReturn = false;
+				}
+				else
+				{
+					bCoordinatesErrorReturn = true;
+				}
+				//Add the data recieved into the object and load the object into an array for use later.
+				FeatureData.Add(featureLayerProperties);
+			}
+		}	
+	}
+	else
+	{
+		bLinkReturnError = true;
 	}
 }
 
-// Called when the game starts or when spawned
+//check for errors that could result in a crash or null return
+bool AFeatureLayer::ErrorCheck()
+{
+	if(FeatureData.IsEmpty())
+	{
+		bLinkReturnError = true;
+		return false;
+	}
+	
+	for (const auto feature : FeatureData)
+	{		
+		for (const auto property : feature.FeatureProperties)
+		{
+			if(property.Len() == 0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+//create the link for the user
+void AFeatureLayer::CreateLink()
+{
+	for (auto header : WebLink.RequestHeaders)
+	{
+		if(!WebLink.Link.Contains(header))
+		{
+			WebLink.Link += header;
+		}
+		else
+		{
+			continue;
+		}
+	}
+
+	if(WebLink.Link.EndsWith("outfields=*"))
+	{
+		bButtonActive = true;	
+	}
+	else
+	{
+		bButtonActive = false;
+	}
+}
+
+//Process the request in order to get the data
+void AFeatureLayer::ProcessWebRequest()
+{
+	FeatureData.Empty();
+	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
+	Request->OnProcessRequestComplete().BindUObject(this, &AFeatureLayer::OnResponseRecieved);
+	Request->SetURL(WebLink.Link);
+	Request->SetVerb("Get");
+	Request->ProcessRequest();
+}
+
 void AFeatureLayer::BeginPlay()
 {
 	Super::BeginPlay();
-	UWebLink* url = NewObject<UWebLink>();
-	url->link = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0";
-	url->requestHeaders = "f=geojson&where=1=1";
-	url->outFieldHeader = "outfields=TEAM,NAME,LEAGUE";
 
-	url->requestHeaders += "&" + url->outFieldHeader;
-	url->link += "/Query?" + url->requestHeaders;
-	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &AFeatureLayer::OnResponseRecieved);
-	Request->SetURL(url->link);
-	Request->SetVerb("Get");
-	Request->ProcessRequest();
+	CreateLink();
 }

@@ -21,34 +21,30 @@
 #include "ArcGISSamples/Public/ArcGISPawn.h"
 #include "FeatureLayer.generated.h"
 
-UCLASS(Blueprintable)
-class SAMPLE_PROJECT_API UWebLink : public UObject
+USTRUCT(BlueprintType)
+struct SAMPLE_PROJECT_API FWebLink
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	FString link;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	FString requestHeaders;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	FString outFieldHeader;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString Link;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> RequestHeaders;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> OutFields;
+	FString Headers;
+	FString OutFieldHeader;
 };
 
 USTRUCT(BlueprintType)
-struct SAMPLE_PROJECT_API FFeature
+struct SAMPLE_PROJECT_API FFeatureLayerProperties
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<FString> LEAGUE;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<FString>  TEAM;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<FString>  NAME;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<double>  longitude;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TArray<double>  latitude;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> FeatureProperties;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<float> GeoProperties;
 };
 
 UCLASS()
@@ -56,19 +52,38 @@ class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
-	// Sets default values for this actor's properties
+public:
+	UFUNCTION(BlueprintCallable)
+	void ProcessWebRequest();
+	UFUNCTION(BlueprintCallable)
+	bool ErrorCheck();
+	UFUNCTION(BlueprintCallable)
+	void CreateLink();
 	AFeatureLayer();
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		FFeature data;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-		AArcGISPawn* ArcGisPawn;
-private:
-		void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-public:	
-	// Called every frame
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bButtonActive;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	bool bCoordinatesErrorReturn;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bGetAllFeatures = true;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	bool bLinkReturnError;
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	AArcGISPawn* ArcGISPawn;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<FFeatureLayerProperties> FeatureData;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int LastValue;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int StartValue;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FWebLink WebLink;
+	
+private:
+	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	
+protected:
+	virtual void BeginPlay() override;
+	
 };
