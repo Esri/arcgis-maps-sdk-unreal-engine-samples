@@ -63,7 +63,7 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bButtonActive;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bCoordinatesErrorReturn;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bGetAllFeatures = true;
