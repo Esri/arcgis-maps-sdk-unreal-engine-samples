@@ -111,8 +111,41 @@ bool AFeatureLayer::ErrorCheck()
 //create the link for the user
 void AFeatureLayer::CreateLink()
 {
+	if(!WebLink.Link.Contains("outfields="))
+	{
+		if(WebLink.OutFields.IsEmpty())
+		{
+			if(WebLink.RequestHeaders.Last() == "&where=1=1")
+			{
+				WebLink.RequestHeaders.Add("&outfields=*");
+			}
+			else
+			{
+				WebLink.RequestHeaders.Last() = "&outfields=*";
+			}
+		}
+		else
+		{
+			FString outfieldHeader = "&outfields=";
+			for (auto outfield : WebLink.OutFields)
+			{
+				outfieldHeader += outfield + ",";
+			}
+			
+			if(WebLink.RequestHeaders.Last() == "&where=1=1")
+			{
+				WebLink.RequestHeaders.Add(outfieldHeader);	
+			}
+			else
+			{
+				WebLink.RequestHeaders.Last() = outfieldHeader;
+			}
+		}	
+	}
+	
 	for (auto header : WebLink.RequestHeaders)
 	{
+		
 		if(!WebLink.Link.Contains(header))
 		{
 			WebLink.Link += header;
@@ -122,8 +155,8 @@ void AFeatureLayer::CreateLink()
 			continue;
 		}
 	}
-
-	if(WebLink.Link.EndsWith("outfields=*"))
+	
+	if(WebLink.Link.Contains("outfields="))
 	{
 		bButtonActive = true;	
 	}
