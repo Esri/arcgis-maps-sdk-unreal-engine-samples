@@ -19,10 +19,11 @@
 #include "GameFramework/Actor.h"
 #include "Http.h"
 #include "ArcGISSamples/Public/ArcGISPawn.h"
+#include "Engine/DataTable.h"
 #include "FeatureLayer.generated.h"
 
 USTRUCT(BlueprintType)
-struct SAMPLE_PROJECT_API FWebLink
+struct SAMPLE_PROJECT_API FWebLink : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
@@ -30,7 +31,7 @@ public:
 	FString Link;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> RequestHeaders;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FString> OutFields;
 	FString Headers;
 	FString OutFieldHeader;
@@ -69,6 +70,8 @@ public:
 	bool bGetAllFeatures = true;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bLinkReturnError;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bNewLink;
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	AArcGISPawn* ArcGISPawn;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)

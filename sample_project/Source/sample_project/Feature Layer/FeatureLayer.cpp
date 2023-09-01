@@ -38,51 +38,67 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 			//get the array field features
 			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
 
-			//parse through the features in order to get individual properties associated with the features
-			for (int i = 0; i != Features.Num(); i++)
+			if(bNewLink)
 			{
-				//create a new feature object to store the data received associated with this feature iteration
-				FFeatureLayerProperties featureLayerProperties;
-				auto feature = Features[i]->AsObject();
-				//get the properties field associated with the individual feature
-				auto properties = feature->GetObjectField("properties");
-
-				/*outfield can be set in the scene on bp_feature
-				this loop will take each outfield set in the scene and check to see if the outfield exists
-				if it does exist, it will return the result of the outfield associated with this feature
-				if it does not exist, it will return and error message in the scene*/
-				for (auto outfield : WebLink.OutFields)
+				//Get every feature property and add them to an array
+				//These properties show up in the editor and automatically change when the user changes the link, assuming the link is valid
+				//The user may click on these properties from the drop down in order to select which ones they would like to get.
+				auto properties = Features[0]->AsObject()->GetObjectField("properties");
+				auto propertyFields = properties->Values;
+			
+				for (auto key : propertyFields)
 				{
-					featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
+					WebLink.OutFields.Add(key.Key);
 				}
-				//this will get the type of feature
-				auto type = feature->GetObjectField("geometry")->GetStringField("type");
-				//this will get the geometry or coordinates of the feature
-				auto coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
-
-				//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
-				//if not, it will return an error
-				//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
-				if(type.ToLower() == "point")
-				{
-					for (const auto Coordinate : coordinates)
-					{
-						featureLayerProperties.GeoProperties.Add(Coordinate->AsNumber());
-					}
-					bCoordinatesErrorReturn = false;
-				}
-				else
-				{
-					bCoordinatesErrorReturn = true;
-				}
-				//Add the data recieved into the object and load the object into an array for use later.
-				FeatureData.Add(featureLayerProperties);
+				bNewLink = false;
 			}
-		}	
-	}
-	else
-	{
-		bLinkReturnError = true;
+			else
+			{
+				//parse through the features in order to get individual properties associated with the features
+				for (int i = 0; i != Features.Num(); i++)
+				{
+					//create a new feature object to store the data received associated with this feature iteration
+					FFeatureLayerProperties featureLayerProperties;
+					auto feature = Features[i]->AsObject();
+					//get the properties field associated with the individual feature
+
+					/*outfield can be set in the scene on bp_feature
+					this loop will take each outfield set in the scene and check to see if the outfield exists
+					if it does exist, it will return the result of the outfield associated with this feature
+					if it does not exist, it will return and error message in the scene*/
+					for (auto outfield : WebLink.OutFields)
+					{
+						featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
+					}
+					//this will get the type of feature
+					auto type = feature->GetObjectField("geometry")->GetStringField("type");
+					//this will get the geometry or coordinates of the feature
+					auto coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
+
+					//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
+					//if not, it will return an error
+					//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
+					if(type.ToLower() == "point")
+					{
+						for (const auto Coordinate : coordinates)
+						{
+							featureLayerProperties.GeoProperties.Add(Coordinate->AsNumber());
+						}
+						bCoordinatesErrorReturn = false;
+					}
+					else
+					{
+						bCoordinatesErrorReturn = true;
+					}
+					//Add the data recieved into the object and load the object into an array for use later.
+					FeatureData.Add(featureLayerProperties);
+				}
+			}	
+		}
+		else
+		{
+			bLinkReturnError = true;
+		}
 	}
 }
 
@@ -111,38 +127,8 @@ bool AFeatureLayer::ErrorCheck()
 //create the link for the user
 void AFeatureLayer::CreateLink()
 {
-	if(!WebLink.Link.Contains("outfields="))
-	{
-		if(WebLink.OutFields.IsEmpty())
-		{
-			if(WebLink.RequestHeaders.Last() == "&where=1=1")
-			{
-				WebLink.RequestHeaders.Add("&outfields=*");
-			}
-			else
-			{
-				WebLink.RequestHeaders.Last() = "&outfields=*";
-			}
-		}
-		else
-		{
-			FString outfieldHeader = "&outfields=";
-			for (auto outfield : WebLink.OutFields)
-			{
-				outfieldHeader += outfield + ",";
-			}
-			
-			if(WebLink.RequestHeaders.Last() == "&where=1=1")
-			{
-				WebLink.RequestHeaders.Add(outfieldHeader);	
-			}
-			else
-			{
-				WebLink.RequestHeaders.Last() = outfieldHeader;
-			}
-		}	
-	}
-	
+	bNewLink = true;
+	WebLink.OutFields.Empty();
 	for (auto header : WebLink.RequestHeaders)
 	{
 		
@@ -156,7 +142,7 @@ void AFeatureLayer::CreateLink()
 		}
 	}
 	
-	if(WebLink.Link.Contains("outfields="))
+	if(WebLink.Link.EndsWith("outfields=*"))
 	{
 		bButtonActive = true;	
 	}
@@ -164,6 +150,7 @@ void AFeatureLayer::CreateLink()
 	{
 		bButtonActive = false;
 	}
+	ProcessWebRequest();
 }
 
 //Process the request in order to get the data
