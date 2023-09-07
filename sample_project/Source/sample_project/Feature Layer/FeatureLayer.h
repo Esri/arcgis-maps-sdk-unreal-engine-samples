@@ -62,12 +62,14 @@ public:
 	void CreateLink();
 	AFeatureLayer();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bButtonActive;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bCoordinatesErrorReturn;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bGetAllFeatures = true;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bGetAllOutfields = true;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bLinkReturnError;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
@@ -78,6 +80,8 @@ public:
 	TArray<FFeatureLayerProperties> FeatureData;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int LastValue;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> OutFieldsToGet;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int StartValue;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)

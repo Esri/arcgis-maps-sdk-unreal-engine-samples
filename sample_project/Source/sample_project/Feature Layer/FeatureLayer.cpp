@@ -38,21 +38,8 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 			//get the array field features
 			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
 
-			if(bNewLink)
-			{
-				//Get every feature property and add them to an array
-				//These properties show up in the editor and automatically change when the user changes the link, assuming the link is valid
-				//The user may click on these properties from the drop down in order to select which ones they would like to get.
-				auto properties = Features[0]->AsObject()->GetObjectField("properties");
-				auto propertyFields = properties->Values;
-			
-				for (auto key : propertyFields)
-				{
-					WebLink.OutFields.Add(key.Key);
-				}
-				bNewLink = false;
-			}
-			else
+
+			if(!bNewLink)
 			{
 				//parse through the features in order to get individual properties associated with the features
 				for (int i = 0; i != Features.Num(); i++)
@@ -66,9 +53,19 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					this loop will take each outfield set in the scene and check to see if the outfield exists
 					if it does exist, it will return the result of the outfield associated with this feature
 					if it does not exist, it will return and error message in the scene*/
-					for (auto outfield : WebLink.OutFields)
+					if(bGetAllOutfields)
 					{
-						featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
+						for (auto outfield : WebLink.OutFields)
+						{
+							featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
+						}	
+					}
+					else
+					{
+						for (auto outfield : OutFieldsToGet)
+						{
+							featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
+						}
 					}
 					//this will get the type of feature
 					auto type = feature->GetObjectField("geometry")->GetStringField("type");
@@ -93,7 +90,20 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					//Add the data recieved into the object and load the object into an array for use later.
 					FeatureData.Add(featureLayerProperties);
 				}
-			}	
+			}
+			else
+			{
+				//Get every feature property and add them to an array
+				//These properties show up in the editor and automatically change when the user changes the link, assuming the link is valid
+				//The user may click on these properties from the drop down in order to select which ones they would like to get.
+				auto properties = Features[0]->AsObject()->GetObjectField("properties");
+				auto propertyFields = properties->Values;
+			
+				for (auto key : propertyFields)
+				{
+					WebLink.OutFields.Add(key.Key);
+				}
+			}
 		}
 		else
 		{
