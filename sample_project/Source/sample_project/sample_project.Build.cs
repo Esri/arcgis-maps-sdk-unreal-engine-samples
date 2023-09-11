@@ -25,7 +25,7 @@ public class sample_project : ModuleRules
 			"HTTP", "Json","JsonUtilities", "EnhancedInput", "ArcGISMapsSDK", "ArcGISSamples"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { "WebSockets" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
