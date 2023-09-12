@@ -57,15 +57,31 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					{
 						for (auto outfield : WebLink.OutFields)
 						{
-							featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
+							auto propertyOutfield = feature->GetObjectField("properties")->GetStringField(outfield);
+							if(propertyOutfield.IsEmpty())
+							{
+								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField("properties")->GetIntegerField(outfield)));
+							}
+							else
+							{
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));	
+							}
 						}	
 					}
 					else
 					{
 						for (auto outfield : OutFieldsToGet)
 						{
-							featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));
-						}
+							auto propertyOutfield = feature->GetObjectField("properties")->GetStringField(outfield);
+							if(propertyOutfield.IsEmpty())
+							{
+								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField("properties")->GetIntegerField(outfield)));
+							}
+							else
+							{
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));	
+							}
+						}	
 					}
 					//this will get the type of feature
 					auto type = feature->GetObjectField("geometry")->GetStringField("type");
@@ -138,7 +154,6 @@ bool AFeatureLayer::ErrorCheck()
 void AFeatureLayer::CreateLink()
 {
 	bNewLink = true;
-	WebLink.OutFields.Empty();
 	for (auto header : WebLink.RequestHeaders)
 	{
 		
@@ -160,7 +175,6 @@ void AFeatureLayer::CreateLink()
 	{
 		bButtonActive = false;
 	}
-	ProcessWebRequest();
 }
 
 //Process the request in order to get the data
