@@ -2,7 +2,6 @@
 
 
 #include "StreamLayerQuery.h"
-#include "IWebSocket.h"
 #include "Json.h"
 #include "WebSocketsModule.h"
 
@@ -16,31 +15,23 @@ AStreamLayerQuery::AStreamLayerQuery()
 
 void AStreamLayerQuery::Connect()
 {
-	const FString ServerURL = TEXT("wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/subscribe");
-	const FString ServerProtocol = TEXT("wss");
-	TSharedPtr<IWebSocket> Socket = FWebSocketsModule::Get().CreateWebSocket(ServerURL, ServerProtocol);
+	WebSocket = FWebSocketsModule::Get().CreateWebSocket("wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/subscribe");
 	
-	Socket->OnConnected().AddLambda([]() -> void {
-		// This code will run once connected.
+	WebSocket->OnConnected().AddLambda([]() -> void
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "Successfully Connected");
 	});
     
-	Socket->OnConnectionError().AddLambda([](const FString & Error) -> void {
-		// This code will run if the connection failed. Check Error to see what happened.
+	WebSocket->OnConnectionError().AddLambda([](const FString & Error) -> void
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "Not Connected");
 	});
 	
-	Socket->OnMessage().AddLambda([](const FString & Message) -> void {
+	WebSocket->OnMessage().AddLambda([](const FString & Message) -> void {
 		// This code will run when we receive a string message from the server.
 	});
 	
-	Socket->Connect();
-	if(Socket->IsConnected())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("connected"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("not connected"));
-	}
+	WebSocket->Connect();
 }
 
 

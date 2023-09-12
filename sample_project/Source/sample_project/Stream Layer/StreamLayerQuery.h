@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "IWebSocket.h"
 #include "StreamLayerQuery.generated.h"
 
 UCLASS()
@@ -15,6 +16,8 @@ public:
 	// Sets default values for this actor's properties
 	AStreamLayerQuery();
 	void Connect();
+
+	TSharedPtr<IWebSocket> WebSocket;
 
 protected:
 	// Called when the game starts or when spawned
