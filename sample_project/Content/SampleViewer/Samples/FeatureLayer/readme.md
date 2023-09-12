@@ -37,7 +37,7 @@ Note: You can use `UE_LOG` to print log messages in the **Output Log** window an
 
 ## About the data
 
-Data for Park Trees [Feature Layer](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/ParkTrees/FeatureServer) hosted by Esri. (Format the request URL for the [query](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/ParkTrees/FeatureServer/0/query?f=geojson&where=1=1&outfields=*.)
+Data for Park Trees [Feature Layer](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/ParkTrees/FeatureServer) hosted by Esri. (Format the request URL for the [query](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/ParkTrees/FeatureServer/0/query?f=geojson&where=1=1&outfields=*).)
 
 Elevation data is loaded from the [Terrain 3D elevation layer](https://www.arcgis.com/home/item.html?id=7029fb60158543ad845c7e1527af11e4) hosted by Esri.
 
