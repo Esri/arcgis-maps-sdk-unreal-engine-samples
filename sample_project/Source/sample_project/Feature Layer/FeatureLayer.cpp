@@ -25,7 +25,7 @@ AFeatureLayer::AFeatureLayer()
 
 void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
-	if(bConnectedSucessfully)
+	if (bConnectedSucessfully)
 	{
 		bLinkReturnError = false;
 		TSharedPtr<FJsonObject> ResponseObj;
@@ -39,7 +39,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
 
 
-			if(!bNewLink)
+			if (!bNewLink)
 			{
 				//parse through the features in order to get individual properties associated with the features
 				for (int i = 0; i != Features.Num(); i++)
@@ -49,16 +49,16 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					auto feature = Features[i]->AsObject();
 					//get the properties field associated with the individual feature
 
-					/*outfield can be set in the scene on bp_feature
-					this loop will take each outfield set in the scene and check to see if the outfield exists
-					if it does exist, it will return the result of the outfield associated with this feature
-					if it does not exist, it will return and error message in the scene*/
-					if(bGetAllOutfields)
+					//outfield can be set in the scene on bp_feature
+					//this loop will take each outfield set in the scene and check to see if the outfield exists
+					//if it does exist, it will return the result of the outfield associated with this feature
+					//if it does not exist, it will return and error message in the scene
+					if (bGetAllOutfields)
 					{
 						for (auto outfield : WebLink.OutFields)
 						{
 							auto propertyOutfield = feature->GetObjectField("properties")->GetStringField(outfield);
-							if(propertyOutfield.IsEmpty())
+							if (propertyOutfield.IsEmpty())
 							{
 								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField("properties")->GetIntegerField(outfield)));
 							}
@@ -73,7 +73,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 						for (auto outfield : OutFieldsToGet)
 						{
 							auto propertyOutfield = feature->GetObjectField("properties")->GetStringField(outfield);
-							if(propertyOutfield.IsEmpty())
+							if (propertyOutfield.IsEmpty())
 							{
 								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField("properties")->GetIntegerField(outfield)));
 							}
@@ -91,7 +91,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
 					//if not, it will return an error
 					//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
-					if(type.ToLower() == "point")
+					if (type.ToLower() == "point")
 					{
 						for (const auto Coordinate : coordinates)
 						{
@@ -157,7 +157,7 @@ void AFeatureLayer::CreateLink()
 	for (auto header : WebLink.RequestHeaders)
 	{
 		
-		if(!WebLink.Link.Contains(header))
+		if (!WebLink.Link.Contains(header))
 		{
 			WebLink.Link += header;
 		}
@@ -167,7 +167,7 @@ void AFeatureLayer::CreateLink()
 		}
 	}
 	
-	if(WebLink.Link.EndsWith("outfields=*"))
+	if (WebLink.Link.EndsWith("outfields=*"))
 	{
 		bButtonActive = true;	
 	}
