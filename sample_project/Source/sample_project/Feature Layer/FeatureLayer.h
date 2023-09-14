@@ -67,13 +67,15 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bCoordinatesErrorReturn;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bGetAllFeatures = true;
+	bool bGetAllFeatures;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bGetAllOutfields = true;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bLinkReturnError;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bNewLink;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bGetAll;
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	AArcGISPawn* ArcGISPawn;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
