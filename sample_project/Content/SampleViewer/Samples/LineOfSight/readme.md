@@ -2,7 +2,7 @@
 
 Determine if the line of sight is obstructed by any object in the scene.
 
-![Image of line of sight](LineOfSight.jpg)
+![Image of line of sight](LineOfSight.png)
 
 ## How to use the sample
 

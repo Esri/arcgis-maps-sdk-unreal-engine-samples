@@ -2,7 +2,7 @@
 
 Query objects from the feature layer provided, or provide your own, in order to show them on the map.
 
-![Image of Feature Layer Sample](FeatureLayer.jpg)
+![Image of Feature Layer Sample](FeatureLayer.png)
 
 ## How to Setup (Feature Layer Level)
 

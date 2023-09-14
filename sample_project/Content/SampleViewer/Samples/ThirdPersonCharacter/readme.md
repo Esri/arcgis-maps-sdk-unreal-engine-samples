@@ -2,7 +2,7 @@
 
 Allows users to explore a city/map from the perspective of a Third Person Character.
 
-![Image of Third Person Controller](3rdPersonDemo.png)
+![Image of Third Person Controller](ThirdPersonController.png)
 
 ## How to use the sample
 
