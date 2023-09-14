@@ -2,7 +2,7 @@
 
 Query objects from a feature layer and show them on the map.
 
-![Image of Feature Layer Sample](FeatureLayer.jpg)
+![Image of Feature Layer Sample](FeatureLayer.png)
 
 ## How to use the sample
 
