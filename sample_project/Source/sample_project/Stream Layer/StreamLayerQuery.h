@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "IWebSocket.h"
+#include "DeadReckoning.h"
 #include "StreamLayerQuery.generated.h"
 
 USTRUCT(BlueprintType)
@@ -60,6 +61,8 @@ public:
 	void Connect();
 	void TryParseAndUpdatePlane(FString data);
 	void PredictLocation(double intervalMilliseconds);
+
+	ADeadReckoning DeadReckoning;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FPlaneFeature> PlaneFeatures;
 	TSharedPtr<IWebSocket> WebSocket;
