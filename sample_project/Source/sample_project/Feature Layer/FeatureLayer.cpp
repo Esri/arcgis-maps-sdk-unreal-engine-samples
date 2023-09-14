@@ -206,7 +206,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 //check for errors that could result in a crash or null return
 bool AFeatureLayer::ErrorCheck()
 {
-	if(FeatureData.IsEmpty())
+	if (FeatureData.IsEmpty())
 	{
 		bLinkReturnError = true;
 		return false;
