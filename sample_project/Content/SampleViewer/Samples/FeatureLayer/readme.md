@@ -19,9 +19,12 @@ Query objects from the feature layer provided, or provide your own, in order to 
 
 ## How to Use
 
-1. Already available is a Feature Layer of trees, hitting the process button in the UI will query the feature layer and create 3D objects in the scene to visualize where the data is. 
-2. Clicking on any of these objects under the **Outliner** in unreal to see it's latatude, longitude, and any properties recieved by the query
-3. Under the outfields drop down, by default it will be set to "Get All Outfields". Clicking on any of the other outfields will deselect "Get All Outfields" and will only get the one selected. Multi-select is supported.
+1. Already available is a Feature Layer of park trees, upon running the scene, these feature items will be spawned in at their default latitude and longitude and with all of the properties associated with that feature item. 
+2. Clicking on any of these objects under the **Outliner** in unreal to see it's latatude, longitude, and any properties recieved by the query.
+3. Under the outfields drop down, by default it will be set to "Get All Outfields". Clicking on any of the other outfields will deselect "Get All Outfields" and will only get the outfield selected. Multi-select is supported. Outfields are the properties associated with the individual features.
+
+## Important Note
+If the user would like to change the default link, they may place the link into the input field on screen. However if the link they plan to use has different **Request Headers** than the default ones we have set (/0/, query?, f=geojson, where=1=1, outfields=*), then the user will need to change them on the bp_feature game object in the **Outliner**. Each header has a different job for the link and gets added to the link once the user enters it into the input field.
 
 ## How it works
 
@@ -37,7 +40,7 @@ Note: You can use `UE_LOG` to print log messages in the **Output Log** window an
 
 ## About the data
 
-Data for Park Trees [Feature Layer](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/ParkTrees/FeatureServer) hosted by Esri. (Format the request URL for the [query](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/ParkTrees/FeatureServer/0/query?f=geojson&where=1=1&outfields=*).)
+Data for all Major League Baseball Stadiums in the United States [Feature Layer](https://www.arcgis.com/home/item.html?id=f60004d3037e42ad93cb03b9590cafec) hosted by Esri. (Format the request URL for the [query](https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Major_League_Baseball_Stadiums/FeatureServer/0/query?f=geojson&where=1=1&outfields=TEAM,NAME,LEAGUE).)
 
 Elevation data is loaded from the [Terrain 3D elevation layer](https://www.arcgis.com/home/item.html?id=7029fb60158543ad845c7e1527af11e4) hosted by Esri.
 
