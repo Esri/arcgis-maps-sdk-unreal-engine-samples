@@ -19,10 +19,11 @@
 #include "GameFramework/Actor.h"
 #include "Http.h"
 #include "ArcGISSamples/Public/ArcGISPawn.h"
+#include "Engine/DataTable.h"
 #include "FeatureLayer.generated.h"
 
 USTRUCT(BlueprintType)
-struct SAMPLE_PROJECT_API FWebLink
+struct SAMPLE_PROJECT_API FWebLink : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
@@ -30,7 +31,7 @@ public:
 	FString Link;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> RequestHeaders;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FString> OutFields;
 	FString Headers;
 	FString OutFieldHeader;
@@ -61,20 +62,28 @@ public:
 	void CreateLink();
 	AFeatureLayer();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bButtonActive;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bCoordinatesErrorReturn;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bGetAllFeatures = true;
+	bool bGetAllFeatures;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bGetAllOutfields = true;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bLinkReturnError;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bNewLink;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bGetAll;
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	AArcGISPawn* ArcGISPawn;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FFeatureLayerProperties> FeatureData;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int LastValue;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> OutFieldsToGet;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int StartValue;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
