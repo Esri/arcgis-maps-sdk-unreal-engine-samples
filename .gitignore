@@ -119,6 +119,7 @@ xr_sample_project/**/*.opensdf
 xr_sample_project/**/*.sdf
 xr_sample_project/**/*.VC.db
 xr_sample_project/**/*.VC.opendb
+xr_sample_project/**/*.vsconfig
 
 # Precompiled Assets
 xr_sample_project/SourceArt/**/*.png
