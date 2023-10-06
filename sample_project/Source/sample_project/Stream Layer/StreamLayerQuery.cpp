@@ -65,6 +65,14 @@ void AStreamLayerQuery::DisplayPlaneData()
 {
 	for (auto plane : PlaneFeatures)
 	{
+		if(FindObject<APlaneController>(NULL, *plane.attributes.Name, true))
+		{
+			
+		}
+		else
+		{
+			
+		}
 		FActorSpawnParameters SpawnInfo;
 		auto gObj = GetWorld()->SpawnActor<APlaneController>
 		(
@@ -89,14 +97,13 @@ void AStreamLayerQuery::BeginPlay()
 	Super::BeginPlay();
 	PlaneController = NewObject<APlaneController>();
 	Connect();
-	FTimerHandle TimerHandle;
-	GetWorldTimerManager().SetTimer(TimerHandle, this, &AStreamLayerQuery::DisplayPlaneData, 1.0f, true);
 }
 
 // Called every frame
 void AStreamLayerQuery::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	DisplayPlaneData();
 }
 
 void AStreamLayerQuery::EndPlay(const EEndPlayReason::Type EndPlayReason)

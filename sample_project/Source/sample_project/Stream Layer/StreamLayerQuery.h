@@ -19,6 +19,7 @@ public:
 	void Connect();
 	void TryParseAndUpdatePlane(FString data);
 	void DisplayPlaneData();
+	void UpdatePlanePosition();
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FPlaneFeature> PlaneFeatures;
