@@ -5,50 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "IWebSocket.h"
-#include "DeadReckoning.h"
+#include "PlaneController.h"
 #include "StreamLayerQuery.generated.h"
-
-USTRUCT(BlueprintType)
-struct FPlaneProperties
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString Name;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float heading;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float speed;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FDateTime dateTimeStamp;
-};
-
-USTRUCT(BlueprintType)
-struct FPlaneGeometry
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	double x;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	double y;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	double z;
-};
-
-
-USTRUCT(BlueprintType)
-struct FPlaneFeature
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FPlaneProperties attributes;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FPlaneGeometry Geometry;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FPlaneGeometry predictedPoint;
-};
 
 UCLASS()
 class SAMPLE_PROJECT_API AStreamLayerQuery : public AActor
@@ -60,12 +18,16 @@ public:
 	AStreamLayerQuery();
 	void Connect();
 	void TryParseAndUpdatePlane(FString data);
-	void PredictLocation(double intervalMilliseconds);
-
-	ADeadReckoning DeadReckoning;
+	void DisplayPlaneData();
+	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FPlaneFeature> PlaneFeatures;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TSubclassOf<AActor> PlaneBlueprint;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<AActor*> planes;
 	TSharedPtr<IWebSocket> WebSocket;
+	APlaneController* PlaneController;
 
 protected:
 	// Called when the game starts or when spawned
@@ -76,5 +38,5 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	
 };

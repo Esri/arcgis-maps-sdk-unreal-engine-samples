@@ -60,11 +60,6 @@ TArray<double> ADeadReckoning::MoveByDistanceAndHeading(TArray<double> currentPo
 
 double ADeadReckoning::InitialBearingTo(TArray<double> orgPoint, TArray<double> dstPoint)
 {
-	if (orgPoint[0] == dstPoint[0] && orgPoint[1] == dstPoint[1])
-	{
-		return double.NaN;
-	}
-
 	// see mathforum.org/library/drmath/view/55417.html for derivation
 
 	double phi1 = ToRadians(orgPoint[1]);
@@ -80,10 +75,16 @@ double ADeadReckoning::InitialBearingTo(TArray<double> orgPoint, TArray<double> 
 	return Wrap360(bearing);
 }
 
-double ADeadReckoning::Wrap360(double degrees)
+double ADeadReckoning::Wrap360(int degrees)
 {
-	if (0 <= degrees && degrees < 360) return degrees; // avoid rounding due to arithmetic ops if within range
-	return (degrees % 360 + 360) % 360; // sawtooth wave p:360, a:360
+	if (0 <= degrees && degrees < 360)
+	{
+		return degrees; // avoid rounding due to arithmetic ops if within range
+	}
+	else
+	{
+		return (degrees % 360 + 360) % 360; // sawtooth wave p:360, a:360
+	} // sawtooth wave p:360, a:360
 }
 
 TArray<double> ADeadReckoning::MoveTowards(TArray<double> targetLocation, TArray<double> currentLocation, double maxDistanceDelta)

@@ -4,6 +4,7 @@
 #include "StreamLayerQuery.h"
 #include "Json.h"
 #include "WebSocketsModule.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 
 // Sets default values
 AStreamLayerQuery::AStreamLayerQuery()
@@ -42,51 +43,60 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString data)
 	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(data);
 	if (FJsonSerializer::Deserialize(JsonReader, JsonParsed))
 	{
-		FPlaneFeature feature;
 		auto attributes = JsonParsed->GetObjectField("attributes");
 		auto coordinates = JsonParsed->GetObjectField("geometry");
-		feature.Geometry.x = coordinates->GetNumberField("x");
-		feature.Geometry.y = coordinates->GetNumberField("y");
-		feature.Geometry.z = coordinates->GetNumberField("z");
-		feature.attributes.Name = attributes->GetStringField("ACID");
-		feature.attributes.heading = attributes->GetNumberField("Heading");
-		feature.attributes.speed = attributes->GetNumberField("GroundSpeedKnots");
+		auto x = coordinates->GetNumberField("x");
+		auto y = coordinates->GetNumberField("y");
+		auto z = coordinates->GetNumberField("z");
+		auto Name = attributes->GetStringField("ACID");
+		auto heading = attributes->GetNumberField("Heading");
+		auto speed = attributes->GetNumberField("GroundSpeedKnots");
+		auto dateTimeStamp = FDateTime::Now();
+		auto planeFeature = FPlaneFeature::Create(Name, x, y, z, heading, speed, dateTimeStamp);
 		
-		//DateTimeStamp
 		if(PlaneFeatures.Num() < 10)
 		{
-			PlaneFeatures.Add(feature);
+			PlaneFeatures.Add(planeFeature);
 		}
 	}
 }
 
-void AStreamLayerQuery::PredictLocation(double intervalMilliseconds)
+void AStreamLayerQuery::DisplayPlaneData()
 {
-	FPlaneFeature feature;
-	auto cGroundSpeedKnots = feature.attributes.speed;
-	auto metersPerSec = cGroundSpeedKnots * 0.51444444444;
-	auto simulationSpeedFactor = 1.5;
-	auto timespanSec = (intervalMilliseconds / 1000.0) * simulationSpeedFactor;
-	TArray<double> currentPoint = { feature.predictedPoint.x, feature.predictedPoint.y, feature.predictedPoint.z };
-	auto headingDegrees = feature.attributes.heading;
-	auto drPoint = DeadReckoning.DeadReckoningPoint(metersPerSec, timespanSec, currentPoint, headingDegrees);
-	feature.predictedPoint.x = drPoint[0];
-	feature.predictedPoint.y = drPoint[1];
-	feature.predictedPoint.z = currentPoint[2];
+	for (auto plane : PlaneFeatures)
+	{
+		FActorSpawnParameters SpawnInfo;
+		auto gObj = GetWorld()->SpawnActor<APlaneController>
+		(
+			APlaneController::StaticClass(),
+			GetActorLocation(),
+			GetActorRotation(),
+			SpawnInfo
+		);
+		gObj->featureData = plane;
+		planes.Add(gObj);
+		gObj->SetActorLabel(*plane.attributes.Name);
+		gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+		plane.Geometry.x, plane.Geometry.y, plane.Geometry.z,
+		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+	}
 }
+
 
 // Called when the game starts or when spawned
 void AStreamLayerQuery::BeginPlay()
 {
 	Super::BeginPlay();
+	PlaneController = NewObject<APlaneController>();
 	Connect();
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &AStreamLayerQuery::DisplayPlaneData, 1.0f, true);
 }
 
 // Called every frame
 void AStreamLayerQuery::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AStreamLayerQuery::EndPlay(const EEndPlayReason::Type EndPlayReason)
