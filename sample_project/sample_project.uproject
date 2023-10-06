@@ -7,10 +7,7 @@
 		{
 			"Name": "sample_project",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"Engine"
-			]
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
