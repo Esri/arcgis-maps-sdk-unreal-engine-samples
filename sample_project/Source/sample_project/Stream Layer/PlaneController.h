@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "GameFramework/Actor.h"
+#include "Components/StaticMeshComponent.h"
 #include "PlaneController.generated.h"
 
 USTRUCT(BlueprintType)
@@ -62,6 +63,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FPlaneFeature featureData;
 	UArcGISLocationComponent* LocationComponent;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UStaticMesh* planeModel = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
 	
 protected:
 	// Called when the game starts or when spawned

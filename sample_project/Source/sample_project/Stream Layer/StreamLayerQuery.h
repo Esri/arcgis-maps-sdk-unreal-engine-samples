@@ -23,12 +23,9 @@ public:
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FPlaneFeature> PlaneFeatures;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TSubclassOf<AActor> PlaneBlueprint;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<AActor*> planes;
 	TSharedPtr<IWebSocket> WebSocket;
-	APlaneController* PlaneController;
 
 protected:
 	// Called when the game starts or when spawned

@@ -10,8 +10,10 @@ APlaneController::APlaneController()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	UStaticMeshComponent* mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Plane Mesh"));
+	mesh->SetStaticMesh(planeModel);
+	mesh->SetupAttachment(RootComponent);
 	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
-
 }
 
 void APlaneController::PredictPoint(double intervalMilliseconds)

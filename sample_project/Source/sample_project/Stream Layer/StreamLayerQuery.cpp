@@ -2,9 +2,13 @@
 
 
 #include "StreamLayerQuery.h"
+
+#include <string>
+
 #include "Json.h"
 #include "WebSocketsModule.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AStreamLayerQuery::AStreamLayerQuery()
@@ -63,30 +67,35 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString data)
 
 void AStreamLayerQuery::DisplayPlaneData()
 {
-	for (auto plane : PlaneFeatures)
+	for (auto i = 0; i < PlaneFeatures.Num(); i++)
 	{
-		if(FindObject<APlaneController>(NULL, *plane.attributes.Name, true))
+		FString name = "PlaneController_" + FString::FromInt(i);
+		if(auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, false))
 		{
-			
+			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 1000);
+
+			Plane->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+			PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
+			UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 		}
 		else
 		{
-			
+			FActorSpawnParameters SpawnInfo;
+			auto gObj = GetWorld()->SpawnActor<APlaneController>
+			(
+				APlaneController::StaticClass(),
+				GetActorLocation(),
+				GetActorRotation(),
+				SpawnInfo
+			);
+			gObj->featureData = PlaneFeatures[i];
+			planes.Add(gObj);
+			gObj->SetActorLabel(*PlaneFeatures[i].attributes.Name);
+			gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+			PlaneFeatures[i].Geometry.x, PlaneFeatures[i].Geometry.y, PlaneFeatures[i].Geometry.z,
+			UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+			UE_LOG(LogTemp, Warning, TEXT("name: %s"), *gObj->GetName());	
 		}
-		FActorSpawnParameters SpawnInfo;
-		auto gObj = GetWorld()->SpawnActor<APlaneController>
-		(
-			APlaneController::StaticClass(),
-			GetActorLocation(),
-			GetActorRotation(),
-			SpawnInfo
-		);
-		gObj->featureData = plane;
-		planes.Add(gObj);
-		gObj->SetActorLabel(*plane.attributes.Name);
-		gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		plane.Geometry.x, plane.Geometry.y, plane.Geometry.z,
-		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 	}
 }
 
@@ -95,7 +104,6 @@ void AStreamLayerQuery::DisplayPlaneData()
 void AStreamLayerQuery::BeginPlay()
 {
 	Super::BeginPlay();
-	PlaneController = NewObject<APlaneController>();
 	Connect();
 }
 
