@@ -18,17 +18,16 @@ APlaneController::APlaneController()
 
 void APlaneController::PredictPoint(double intervalMilliseconds)
 {
-	FPlaneFeature feature;
-	auto cGroundSpeedKnots = feature.attributes.speed;
+	auto cGroundSpeedKnots = featureData.attributes.speed;
 	auto metersPerSec = cGroundSpeedKnots * 0.51444444444;
 	auto simulationSpeedFactor = 1.5;
 	auto timespanSec = (intervalMilliseconds / 1000.0) * simulationSpeedFactor;
-	TArray<double> currentPoint = { feature.predictedPoint.x, feature.predictedPoint.y, feature.predictedPoint.z };
-	auto headingDegrees = feature.attributes.heading;
+	TArray<double> currentPoint = { featureData.predictedPoint.x, featureData.predictedPoint.y, featureData.predictedPoint.z };
+	auto headingDegrees = featureData.attributes.heading;
 	auto drPoint = ADeadReckoning::DeadReckoningPoint(metersPerSec, timespanSec, currentPoint, headingDegrees);
-	feature.predictedPoint.x = drPoint[0];
-	feature.predictedPoint.y = drPoint[1];
-	feature.predictedPoint.z = currentPoint[2];
+	featureData.predictedPoint.x = drPoint[0];
+	featureData.predictedPoint.y = drPoint[1];
+	featureData.predictedPoint.z = currentPoint[2];
 }
 
 FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, float heading, float speed, FDateTime dateTimeStamp)

@@ -16,15 +16,16 @@ class SAMPLE_PROJECT_API AStreamLayerQuery : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AStreamLayerQuery();
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<FPlaneFeature> PlaneFeatures;
+	
+private:
 	void Connect();
 	void TryParseAndUpdatePlane(FString data);
 	void DisplayPlaneData();
-	void UpdatePlanePosition();
 	
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FPlaneFeature> PlaneFeatures;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<AActor*> planes;
+	float timeToLive = 3.0f;
 	TSharedPtr<IWebSocket> WebSocket;
 
 protected:

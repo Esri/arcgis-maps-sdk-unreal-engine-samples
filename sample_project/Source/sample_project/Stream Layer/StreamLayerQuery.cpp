@@ -34,8 +34,8 @@ void AStreamLayerQuery::Connect()
 	
 	WebSocket->OnMessage().AddLambda([this](const FString & Message) -> void
 	{
-		const auto Data = Message;
-		TryParseAndUpdatePlane(Data);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, Message);
+		TryParseAndUpdatePlane(Message);
 	});
 	
 	WebSocket->Connect();
@@ -55,13 +55,11 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString data)
 		auto Name = attributes->GetStringField("ACID");
 		auto heading = attributes->GetNumberField("Heading");
 		auto speed = attributes->GetNumberField("GroundSpeedKnots");
-		auto dateTimeStamp = FDateTime::Now();
+		long timestampMS = attributes->GetNumberField("DateTimeStamp");
+		FDateTime datetimeOffset = FDateTime::FromUnixTimestamp(timestampMS);
+		auto dateTimeStamp = datetimeOffset.GetDate();
 		auto planeFeature = FPlaneFeature::Create(Name, x, y, z, heading, speed, dateTimeStamp);
-		
-		if(PlaneFeatures.Num() < 10)
-		{
-			PlaneFeatures.Add(planeFeature);
-		}
+		PlaneFeatures.Add(planeFeature);
 	}
 }
 
@@ -70,8 +68,15 @@ void AStreamLayerQuery::DisplayPlaneData()
 	for (auto i = 0; i < PlaneFeatures.Num(); i++)
 	{
 		FString name = "PlaneController_" + FString::FromInt(i);
-		if(auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, false))
+		if(auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, true))
 		{
+			FTimespan timespan = FDateTime::Now() - PlaneFeatures[i].attributes.dateTimeStamp.UtcNow();
+
+			if (timespan.GetTotalMinutes() > timeToLive)
+			{
+				
+			}
+			
 			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 1000);
 
 			Plane->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
