@@ -15,7 +15,6 @@ AVRCharacterController::AVRCharacterController()
 	VRCamera = CreateDefaultSubobject<UArcGISCameraComponent>(TEXT("FollowCamera"));
 	VRCamera->SetupAttachment(VROrigin);
 	VRCamera->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
-	VRCamera->bUsePawnControlRotation = true;
 	
 	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
 	LocationComponent->SetupAttachment(RootComponent);
@@ -46,15 +45,8 @@ void AVRCharacterController::MoveForward(const FInputActionValue& value)
 	FRotator Rotation = Controller->GetControlRotation();
 	FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
 	FVector Direction = GetActorForwardVector();
-	
-	if (GetCharacterMovement()->IsFlying())
-	{
-		AddMovementInput(Direction, inputValue);
-	}
-	else
-	{
-		AddMovementInput(Direction, inputValue);
-	}
+
+	AddMovementInput(Direction, inputValue * 1000.0f);
 }
 
 void AVRCharacterController::MoveRight(const FInputActionValue& value)
@@ -63,56 +55,54 @@ void AVRCharacterController::MoveRight(const FInputActionValue& value)
 	FRotator Rotation = Controller->GetControlRotation();
 	FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
 	FVector Direction = GetActorRightVector();
-	
-	if (GetCharacterMovement()->IsFlying())
-	{
-		AddMovementInput(Direction, inputValue);
-	}
-	else
-	{
-		AddMovementInput(Direction, inputValue);
-	}
+	AddMovementInput(Direction, inputValue * MoveSpeed);
 }
 
 void AVRCharacterController::MoveUp(const FInputActionValue& value)
 {
 	auto inputValue = value.Get<float>();
-	
-	if (GetCharacterMovement()->IsFlying())
+	if (abs(inputValue) > 0.2f) 
 	{
-		AddMovementInput(GetActorUpVector(), inputValue * 10000.0f);
+		AddMovementInput(GetActorUpVector(), inputValue * UpSpeed);
 	}
 }
 
 void AVRCharacterController::SmoothTurn(const FInputActionValue& value)
 {
-	auto InputValue = value.Get<float>();
-
+	auto InputValue = value.Get<float>() * RotationSpeed;
+	
 	if(abs(InputValue) > TurnDeadZone)
 	{
-		const auto RotationAngle = SnapRotationDegrees;
-		SetActorRotation(FRotator(0.0f, 0.0f, GetActorRotation().Yaw * RotationSpeed + RotationAngle));
+		SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + InputValue, 0.0f));
 	}
 }  
-
 
 void AVRCharacterController::SnapTurn(const FInputActionValue& value)
 {
 	auto InputValue = value.Get<float>();
 	auto RotationAngle = 0.0f;
-	
+	FTimerHandle RotateHandle;
+
 	if(abs(InputValue) > TurnDeadZone)
 	{
 		RotationAngle = SnapRotationDegrees;
-		SetActorRotation(FRotator(0.0f, 0.0f, GetActorRotation().Yaw + RotationAngle));
+		FTimerDelegate TimerDel;
+		TimerDel.BindLambda(this, SnapTurning, RotationAngle);
+		GetWorldTimerManager().SetTimer(RotateHandle, TimerDel, 0.2f, true);
 	}
 	else
 	{
 		RotationAngle = SnapRotationDegrees * -1.0f;
-		SetActorRotation(FRotator(0.0f, 0.0f, GetActorRotation().Yaw + RotationAngle));
+		FTimerDelegate TimerDel;
+		TimerDel.BindLambda(this, &AVRCharacterController::SnapTurning, RotationAngle);
+		GetWorldTimerManager().SetTimer(RotateHandle, TimerDel, 0.2f, true);
 	}
 }
 
+void AVRCharacterController::SnapTurning(float value)
+{
+	AddActorLocalRotation(FRotator(0.0f, GetActorRotation().Yaw + value, 0.0f));
+}
 
 void AVRCharacterController::UpdateRoomScaleMovement()
 {
@@ -156,6 +146,7 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		EnhancedInputComponent->BindAction(Move_X, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveRight);
 		EnhancedInputComponent->BindAction(Move_Y, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveForward);
 		EnhancedInputComponent->BindAction(Move_Z, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveUp);
+
 		if(bUseSmoothTurn)
 		{
 			EnhancedInputComponent->BindAction(Turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);

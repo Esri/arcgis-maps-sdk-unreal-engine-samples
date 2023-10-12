@@ -51,13 +51,17 @@ public:
 	UInputAction* Move_Z = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_MoveUp.IA_MoveUp"));
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 	UInputAction* Turn = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_Turn.IA_Turn"));
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Variables")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	bool bUseSmoothTurn = true;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Variables")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Variables")
 	float RotationSpeed = 1.0f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Variables")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	float SnapRotationDegrees = 30.0f;
-	float TurnDeadZone = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	float MoveSpeed = 10000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	float UpSpeed = 100000.0f;
+	float TurnDeadZone = 0.2f;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -76,5 +80,6 @@ private:
 	void MoveUp(const FInputActionValue& value);
 	void SmoothTurn(const FInputActionValue& value);
 	void SnapTurn(const FInputActionValue& value);
+	void SnapTurning(float value);
 	void UpdateRoomScaleMovement();
 };
