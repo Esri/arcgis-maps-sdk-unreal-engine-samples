@@ -80,6 +80,8 @@ private:
 	void MoveUp(const FInputActionValue& value);
 	void SmoothTurn(const FInputActionValue& value);
 	void SnapTurn(const FInputActionValue& value);
-	void SnapTurning(float value);
+	void ResetDoOnce();
 	void UpdateRoomScaleMovement();
+
+	bool bDoOnce = true;
 };

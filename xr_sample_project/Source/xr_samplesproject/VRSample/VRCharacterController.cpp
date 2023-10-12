@@ -36,31 +36,34 @@ AVRCharacterController::AVRCharacterController()
 	RightHandMesh->RegisterComponent();
 	RightHandMesh->SetSkeletalMesh(RightMesh);
 	RightHandMesh->SetRelativeRotation(FRotator(90.0f, -90.0f, 0.0f));  
-
 }
 
 void AVRCharacterController::MoveForward(const FInputActionValue& value)
 {
 	const auto inputValue = value.Get<float>();
-	FRotator Rotation = Controller->GetControlRotation();
-	FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
-	FVector Direction = GetActorForwardVector();
-
-	AddMovementInput(Direction, inputValue * 1000.0f);
+	FVector Direction = VRCamera->GetForwardVector();
+	
+	if(abs(inputValue) > 0.2f)
+	{
+		AddMovementInput(Direction, inputValue * MoveSpeed);	
+	}
 }
 
 void AVRCharacterController::MoveRight(const FInputActionValue& value)
 {
 	const auto inputValue = value.Get<float>();
-	FRotator Rotation = Controller->GetControlRotation();
-	FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
-	FVector Direction = GetActorRightVector();
-	AddMovementInput(Direction, inputValue * MoveSpeed);
+	FVector Direction = VRCamera->GetRightVector();
+	
+	if(abs(inputValue) > 0.2f)
+	{
+		AddMovementInput(Direction, inputValue * MoveSpeed);	
+	}
 }
 
 void AVRCharacterController::MoveUp(const FInputActionValue& value)
 {
 	auto inputValue = value.Get<float>();
+	
 	if (abs(inputValue) > 0.2f) 
 	{
 		AddMovementInput(GetActorUpVector(), inputValue * UpSpeed);
@@ -80,28 +83,30 @@ void AVRCharacterController::SmoothTurn(const FInputActionValue& value)
 void AVRCharacterController::SnapTurn(const FInputActionValue& value)
 {
 	auto InputValue = value.Get<float>();
-	auto RotationAngle = 0.0f;
-	FTimerHandle RotateHandle;
 
-	if(abs(InputValue) > TurnDeadZone)
+	if(bDoOnce)
 	{
-		RotationAngle = SnapRotationDegrees;
-		FTimerDelegate TimerDel;
-		TimerDel.BindLambda(this, SnapTurning, RotationAngle);
-		GetWorldTimerManager().SetTimer(RotateHandle, TimerDel, 0.2f, true);
-	}
-	else
-	{
-		RotationAngle = SnapRotationDegrees * -1.0f;
-		FTimerDelegate TimerDel;
-		TimerDel.BindLambda(this, &AVRCharacterController::SnapTurning, RotationAngle);
-		GetWorldTimerManager().SetTimer(RotateHandle, TimerDel, 0.2f, true);
+		auto RotationAngle = 0.0f;
+		if(abs(InputValue) > TurnDeadZone)
+		{
+			RotationAngle = SnapRotationDegrees;
+			SetActorRotation(FRotator(0.0f, 0.0f, GetActorRotation().Yaw + RotationAngle));
+		}
+		else
+		{
+			RotationAngle = SnapRotationDegrees * -1.0f;
+			SetActorRotation(FRotator(0.0f, 0.0f, GetActorRotation().Yaw + RotationAngle));
+		}
+		bDoOnce = false;
 	}
 }
 
-void AVRCharacterController::SnapTurning(float value)
+void AVRCharacterController::ResetDoOnce()
 {
-	AddActorLocalRotation(FRotator(0.0f, GetActorRotation().Yaw + value, 0.0f));
+	if(!bDoOnce)
+	{
+		bDoOnce = true;
+	}
 }
 
 void AVRCharacterController::UpdateRoomScaleMovement()
@@ -110,7 +115,6 @@ void AVRCharacterController::UpdateRoomScaleMovement()
 	AddActorWorldOffset(FVector(Offset.X, Offset.Y, 0.0f));
 	VROrigin->AddWorldOffset(UKismetMathLibrary::NegateVector(FVector(Offset.X, Offset.Y, 0.0f)));
 }
-
 
 // Called when the game starts or when spawned
 void AVRCharacterController::BeginPlay()
@@ -129,6 +133,8 @@ void AVRCharacterController::BeginPlay()
 
 	FTimerHandle UpdateHeight;
 	GetWorldTimerManager().SetTimer(UpdateHeight, this, &AVRCharacterController::UpdateRoomScaleMovement, 0.3f, true);
+	FTimerHandle ResetDoOnce;
+	GetWorldTimerManager().SetTimer(ResetDoOnce, this, &AVRCharacterController::ResetDoOnce, 0.2f, true);
 }
 
 // Called every frame
@@ -156,6 +162,4 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 			EnhancedInputComponent->BindAction(Turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SnapTurn);
 		}
 	}
-
 }
-
