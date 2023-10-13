@@ -4,13 +4,16 @@
 
 #include "ArcGISMapsSDK/Components/ArcGISCameraComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "CoreMinimal.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "IHeadMountedDisplay.h"
 #include "InputCoreTypes.h"
+#include "IXRTrackingSystem.h"
 #include "InputMappingContext.h"
 #include "MotionControllerComponent.h"
 #include "VRCharacterController.generated.h"
@@ -53,15 +56,20 @@ public:
 	UInputAction* Turn = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_Turn.IA_Turn"));
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	bool bUseSmoothTurn = true;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Variables")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	bool bMoveInLookDirection = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	float MovementDeadzone = 0.2f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	float MoveSpeed = 10000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	float RotationDeadzone = 0.2f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	float RotationSpeed = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	float SnapRotationDegrees = 30.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
-	float MoveSpeed = 10000.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	float UpSpeed = 100000.0f;
-	float TurnDeadZone = 0.2f;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -75,13 +83,16 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+	void InitializeCapsuleHeight();
 	void MoveForward(const FInputActionValue& value);
 	void MoveRight(const FInputActionValue& value);
 	void MoveUp(const FInputActionValue& value);
 	void SmoothTurn(const FInputActionValue& value);
 	void SnapTurn(const FInputActionValue& value);
 	void ResetDoOnce();
+	void SetCapsuleHeight();
 	void UpdateRoomScaleMovement();
 
 	bool bDoOnce = true;
+	float capsuleHalfHeight;
 };

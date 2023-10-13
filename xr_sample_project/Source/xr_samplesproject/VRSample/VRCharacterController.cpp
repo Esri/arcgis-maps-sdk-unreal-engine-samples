@@ -41,22 +41,42 @@ AVRCharacterController::AVRCharacterController()
 void AVRCharacterController::MoveForward(const FInputActionValue& value)
 {
 	const auto inputValue = value.Get<float>();
-	FVector Direction = VRCamera->GetForwardVector();
 	
-	if(abs(inputValue) > 0.2f)
+	if (abs(inputValue) > MovementDeadzone)
 	{
-		AddMovementInput(Direction, inputValue * MoveSpeed);	
+		if (bMoveInLookDirection)
+		{
+			FVector Direction = VRCamera->GetForwardVector();
+			AddMovementInput(Direction, inputValue * MoveSpeed);
+		}
+		else 
+		{
+			FRotator Rotation = Controller->GetControlRotation();
+			FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
+			FVector Direction = GetActorForwardVector();
+			AddMovementInput(Direction, inputValue * MoveSpeed);
+		}
 	}
 }
 
 void AVRCharacterController::MoveRight(const FInputActionValue& value)
 {
 	const auto inputValue = value.Get<float>();
-	FVector Direction = VRCamera->GetRightVector();
 	
-	if(abs(inputValue) > 0.2f)
+	if (abs(inputValue) > MovementDeadzone)
 	{
-		AddMovementInput(Direction, inputValue * MoveSpeed);	
+		if (bMoveInLookDirection)
+		{
+			FVector Direction = VRCamera->GetRightVector();
+			AddMovementInput(Direction, inputValue * MoveSpeed);
+		}
+		else
+		{
+			FRotator Rotation = Controller->GetControlRotation();
+			FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
+			FVector Direction = GetActorRightVector();
+			AddMovementInput(Direction, inputValue * MoveSpeed);
+		}
 	}
 }
 
@@ -64,7 +84,7 @@ void AVRCharacterController::MoveUp(const FInputActionValue& value)
 {
 	auto inputValue = value.Get<float>();
 	
-	if (abs(inputValue) > 0.2f) 
+	if (abs(inputValue) > MovementDeadzone)
 	{
 		AddMovementInput(GetActorUpVector(), inputValue * UpSpeed);
 	}
@@ -74,7 +94,7 @@ void AVRCharacterController::SmoothTurn(const FInputActionValue& value)
 {
 	auto InputValue = value.Get<float>() * RotationSpeed;
 	
-	if(abs(InputValue) > TurnDeadZone)
+	if(abs(InputValue) > RotationDeadzone)
 	{
 		SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + InputValue, 0.0f));
 	}
@@ -84,18 +104,18 @@ void AVRCharacterController::SnapTurn(const FInputActionValue& value)
 {
 	auto InputValue = value.Get<float>();
 
-	if(bDoOnce)
+	if(bDoOnce && abs(InputValue) > RotationDeadzone)
 	{
 		auto RotationAngle = 0.0f;
-		if(abs(InputValue) > TurnDeadZone)
+		if(InputValue > 0.0f)
 		{
 			RotationAngle = SnapRotationDegrees;
-			SetActorRotation(FRotator(0.0f, 0.0f, GetActorRotation().Yaw + RotationAngle));
+			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
 		}
 		else
 		{
 			RotationAngle = SnapRotationDegrees * -1.0f;
-			SetActorRotation(FRotator(0.0f, 0.0f, GetActorRotation().Yaw + RotationAngle));
+			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
 		}
 		bDoOnce = false;
 	}
@@ -109,9 +129,25 @@ void AVRCharacterController::ResetDoOnce()
 	}
 }
 
+void AVRCharacterController::InitializeCapsuleHeight() 
+{
+	capsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+}
+
+void AVRCharacterController::SetCapsuleHeight() 
+{
+	FVector DevicePosition;
+	FQuat DeviceRotation;
+	GEngine->XRSystem->GetCurrentPose(IXRTrackingSystem::HMDDeviceId, DeviceRotation, DevicePosition);
+	GetCapsuleComponent()->SetCapsuleSize(GetCapsuleComponent()->GetScaledCapsuleRadius(), capsuleHalfHeight, true);
+	auto halfHeight = DevicePosition.Z / 2.0f + 10.0f;
+	VROrigin->AddRelativeLocation(FVector(0.0f, 0.0f, capsuleHalfHeight - halfHeight));
+	capsuleHalfHeight = halfHeight;
+}
+
 void AVRCharacterController::UpdateRoomScaleMovement()
 {
-	FVector Offset = VRCamera->GetComponentLocation() - VROrigin->GetComponentLocation();
+	FVector Offset = VRCamera->GetComponentLocation() - GetActorLocation();
 	AddActorWorldOffset(FVector(Offset.X, Offset.Y, 0.0f));
 	VROrigin->AddWorldOffset(UKismetMathLibrary::NegateVector(FVector(Offset.X, Offset.Y, 0.0f)));
 }
@@ -120,7 +156,12 @@ void AVRCharacterController::UpdateRoomScaleMovement()
 void AVRCharacterController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GEngine->XRSystem->SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
+	InitializeCapsuleHeight();
+	FTimerHandle UpdateHeight;
+	GetWorldTimerManager().SetTimer(UpdateHeight, this, &AVRCharacterController::SetCapsuleHeight, 0.35f, true);
 	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
@@ -131,10 +172,11 @@ void AVRCharacterController::BeginPlay()
 		}
 	}
 
-	FTimerHandle UpdateHeight;
-	GetWorldTimerManager().SetTimer(UpdateHeight, this, &AVRCharacterController::UpdateRoomScaleMovement, 0.3f, true);
-	FTimerHandle ResetDoOnce;
-	GetWorldTimerManager().SetTimer(ResetDoOnce, this, &AVRCharacterController::ResetDoOnce, 0.2f, true);
+	auto DeviceType = GEngine->XRSystem->GetHMDDevice()->GetHMDName().ToString();
+	GEngine->AddOnScreenDebugMessage(1, 5.0f, FColor::Green, "Type: " + DeviceType);
+
+	FTimerHandle UpdateCapsuleLocation;
+	GetWorldTimerManager().SetTimer(UpdateCapsuleLocation, this, &AVRCharacterController::UpdateRoomScaleMovement, 0.3f, true);
 }
 
 // Called every frame
@@ -160,6 +202,7 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		else
 		{
 			EnhancedInputComponent->BindAction(Turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SnapTurn);
+			EnhancedInputComponent->BindAction(Turn, ETriggerEvent::Completed, this, &AVRCharacterController::ResetDoOnce);
 		}
 	}
 }
