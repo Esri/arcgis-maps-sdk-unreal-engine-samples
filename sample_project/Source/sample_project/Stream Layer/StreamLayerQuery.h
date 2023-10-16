@@ -14,7 +14,6 @@ class SAMPLE_PROJECT_API AStreamLayerQuery : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AStreamLayerQuery();
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FPlaneFeature> PlaneFeatures;
@@ -29,13 +28,6 @@ private:
 	TSharedPtr<IWebSocket> WebSocket;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	//called when the game ends or when destroyed
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;	
 };

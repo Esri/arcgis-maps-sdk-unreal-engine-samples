@@ -57,7 +57,6 @@ class SAMPLE_PROJECT_API APlaneController : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	APlaneController();
 	void PredictPoint(double intervalMilliseconds);
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
@@ -65,13 +64,4 @@ public:
 	UArcGISLocationComponent* LocationComponent;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UStaticMesh* planeModel = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
-	
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 };

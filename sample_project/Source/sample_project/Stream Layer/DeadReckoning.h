@@ -22,16 +22,5 @@ public:
 	static double InitialBearingTo(TArray<double> orgPoint, TArray<double> dstPoint);
 	static double Wrap360(int degrees);
 	static TArray<double> MoveTowards(TArray<double> targetLocation, TArray<double> currentLocation, double maxDistanceDelta);
-	
 	inline static double earthRadiusMeters = 6356752.3142;
-	
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 };

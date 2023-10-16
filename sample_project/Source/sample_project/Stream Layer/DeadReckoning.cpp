@@ -3,10 +3,8 @@
 
 #include "DeadReckoning.h"
 
-// Sets default values
 ADeadReckoning::ADeadReckoning()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 }
@@ -96,20 +94,5 @@ TArray<double> ADeadReckoning::MoveTowards(TArray<double> targetLocation, TArray
 		distance = maxDistanceDelta;
 	}
 	return MoveByDistanceAndHeading(currentLocation, distance, iBearing);
-}
-
-
-// Called when the game starts or when spawned
-void ADeadReckoning::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void ADeadReckoning::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 

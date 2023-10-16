@@ -4,10 +4,8 @@
 #include "PlaneController.h"
 #include "DeadReckoning.h"
 
-// Sets default values
 APlaneController::APlaneController()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	UStaticMeshComponent* mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Plane Mesh"));
@@ -44,17 +42,5 @@ FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, 
 	planeFeature.predictedPoint.y = planeFeature.Geometry.y;
 	planeFeature.predictedPoint.z = planeFeature.Geometry.z;
 	return planeFeature;
-}
-
-// Called when the game starts or when spawned
-void APlaneController::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-// Called every frame
-void APlaneController::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 

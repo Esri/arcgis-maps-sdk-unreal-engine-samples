@@ -2,18 +2,11 @@
 
 
 #include "StreamLayerQuery.h"
-
-#include <string>
-
-#include "Json.h"
 #include "WebSocketsModule.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
-#include "Kismet/GameplayStatics.h"
 
-// Sets default values
 AStreamLayerQuery::AStreamLayerQuery()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 }
@@ -24,7 +17,7 @@ void AStreamLayerQuery::Connect()
 	
 	WebSocket->OnConnected().AddLambda([]() -> void
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "Successfully Connected");
+		
 	});
     
 	WebSocket->OnConnectionError().AddLambda([](const FString & Error) -> void
@@ -34,7 +27,6 @@ void AStreamLayerQuery::Connect()
 	
 	WebSocket->OnMessage().AddLambda([this](const FString & Message) -> void
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, Message);
 		TryParseAndUpdatePlane(Message);
 	});
 	
@@ -71,14 +63,7 @@ void AStreamLayerQuery::DisplayPlaneData()
 		if(auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, true))
 		{
 			FTimespan timespan = FDateTime::Now() - PlaneFeatures[i].attributes.dateTimeStamp.UtcNow();
-
-			if (timespan.GetTotalMinutes() > timeToLive)
-			{
-				
-			}
-			
 			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 1000);
-
 			Plane->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 			PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
 			UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
@@ -99,24 +84,16 @@ void AStreamLayerQuery::DisplayPlaneData()
 			gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 			PlaneFeatures[i].Geometry.x, PlaneFeatures[i].Geometry.y, PlaneFeatures[i].Geometry.z,
 			UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
-			UE_LOG(LogTemp, Warning, TEXT("name: %s"), *gObj->GetName());	
 		}
 	}
 }
 
-
-// Called when the game starts or when spawned
 void AStreamLayerQuery::BeginPlay()
 {
 	Super::BeginPlay();
 	Connect();
-}
-
-// Called every frame
-void AStreamLayerQuery::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	DisplayPlaneData();
+	FTimerHandle SpawnPlanes;
+	GetWorldTimerManager().SetTimer(SpawnPlanes, this, &AStreamLayerQuery::DisplayPlaneData, 0.5f, true);
 }
 
 void AStreamLayerQuery::EndPlay(const EEndPlayReason::Type EndPlayReason)
