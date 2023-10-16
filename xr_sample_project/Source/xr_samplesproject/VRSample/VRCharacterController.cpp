@@ -41,7 +41,7 @@ AVRCharacterController::AVRCharacterController()
 void AVRCharacterController::MoveForward(const FInputActionValue& value)
 {
 	const auto inputValue = value.Get<float>();
-	
+
 	if (abs(inputValue) > MovementDeadzone)
 	{
 		if (bMoveInLookDirection)
@@ -62,7 +62,7 @@ void AVRCharacterController::MoveForward(const FInputActionValue& value)
 void AVRCharacterController::MoveRight(const FInputActionValue& value)
 {
 	const auto inputValue = value.Get<float>();
-	
+
 	if (abs(inputValue) > MovementDeadzone)
 	{
 		if (bMoveInLookDirection)
@@ -92,22 +92,22 @@ void AVRCharacterController::MoveUp(const FInputActionValue& value)
 
 void AVRCharacterController::SmoothTurn(const FInputActionValue& value)
 {
-	auto InputValue = value.Get<float>() * RotationSpeed;
-	
-	if(abs(InputValue) > RotationDeadzone)
+	auto inputValue = value.Get<float>() * RotationSpeed;
+
+	if (abs(inputValue) > RotationDeadzone)
 	{
-		SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + InputValue, 0.0f));
+		SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + inputValue, 0.0f));
 	}
-}  
+}
 
 void AVRCharacterController::SnapTurn(const FInputActionValue& value)
 {
-	auto InputValue = value.Get<float>();
+	auto inputValue = value.Get<float>();
 
-	if(bDoOnce && abs(InputValue) > RotationDeadzone)
+	if(bDoOnce && abs(inputValue) > RotationDeadzone)
 	{
 		auto RotationAngle = 0.0f;
-		if(InputValue > 0.0f)
+		if(inputValue > 0.0f)
 		{
 			RotationAngle = SnapRotationDegrees;
 			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
@@ -160,8 +160,6 @@ void AVRCharacterController::BeginPlay()
 	GEngine->XRSystem->SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
 	InitializeCapsuleHeight();
-	FTimerHandle UpdateHeight;
-	GetWorldTimerManager().SetTimer(UpdateHeight, this, &AVRCharacterController::SetCapsuleHeight, 0.35f, true);
 	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
@@ -173,8 +171,9 @@ void AVRCharacterController::BeginPlay()
 	}
 
 	auto DeviceType = GEngine->XRSystem->GetHMDDevice()->GetHMDName().ToString();
-	GEngine->AddOnScreenDebugMessage(1, 5.0f, FColor::Green, "Type: " + DeviceType);
-
+	UE_LOG(LogTemp, Warning, TEXT("Device Type: %s"), *DeviceType);
+	FTimerHandle UpdateHeight;
+	GetWorldTimerManager().SetTimer(UpdateHeight, this, &AVRCharacterController::SetCapsuleHeight, 0.35f, true);
 	FTimerHandle UpdateCapsuleLocation;
 	GetWorldTimerManager().SetTimer(UpdateCapsuleLocation, this, &AVRCharacterController::UpdateRoomScaleMovement, 0.3f, true);
 }
@@ -183,6 +182,14 @@ void AVRCharacterController::BeginPlay()
 void AVRCharacterController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (GetCharacterMovement()->Velocity.Size() > 1000)
+	{
+		VRCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 1.0;
+	}
+	else 
+	{
+		VRCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 0.0;
+	}
 
 }
 
