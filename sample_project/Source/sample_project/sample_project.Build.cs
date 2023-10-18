@@ -22,7 +22,7 @@ public class sample_project : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG",
-			"HTTP", "Json","JsonUtilities", "EnhancedInput", "ArcGISMapsSDK", "ArcGISSamples", "WebSockets"
+			"HTTP", "Json","JsonUtilities", "EnhancedInput", "ArcGISMapsSDK", "ArcGISSamples"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
