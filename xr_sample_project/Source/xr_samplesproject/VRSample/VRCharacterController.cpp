@@ -10,32 +10,34 @@ AVRCharacterController::AVRCharacterController()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
-	VROrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
-	VROrigin->SetupAttachment(RootComponent);
-	VRCamera = CreateDefaultSubobject<UArcGISCameraComponent>(TEXT("FollowCamera"));
-	VRCamera->SetupAttachment(VROrigin);
-	VRCamera->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+	vrOrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
+	vrOrigin->SetupAttachment(RootComponent);
+	vrCamera = CreateDefaultSubobject<UArcGISCameraComponent>(TEXT("FollowCamera"));
+	vrCamera->SetupAttachment(vrOrigin);
+	vrCamera->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	
-	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
-	LocationComponent->SetupAttachment(RootComponent);
+	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
+	locationComponent->SetupAttachment(RootComponent);
 
-	LeftMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionController"));
-	LeftMotionController->SetupAttachment(VROrigin);
-	LeftMotionController->SetTrackingSource(EControllerHand::Left);
-	LeftHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Left Hand Mesh"));
-	LeftHandMesh->SetupAttachment(LeftMotionController);
-	LeftHandMesh->RegisterComponent();
-	LeftHandMesh->SetSkeletalMesh(LeftMesh);
-	LeftHandMesh->SetRelativeRotation(FRotator(-90.0f, -90.0f, 0.0f));
+	leftMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionController"));
+	leftMotionController->SetupAttachment(vrOrigin);
+	leftMotionController->SetTrackingSource(EControllerHand::Left);
+	leftHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Left Hand Mesh"));
+	leftHandMesh->SetupAttachment(leftMotionController);
+	leftHandMesh->RegisterComponent();
+	leftHandMesh->SetSkeletalMesh(handMesh);
+	leftHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	leftHandMesh->SetAnimClass(handAnimBP->GeneratedClass);
 	
-	RightMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionController"));
-	RightMotionController->SetupAttachment(VROrigin);
-	RightMotionController->SetTrackingSource(EControllerHand::Right);
-	RightHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Right Hand Mesh"));
-	RightHandMesh->SetupAttachment(RightMotionController);
-	RightHandMesh->RegisterComponent();
-	RightHandMesh->SetSkeletalMesh(RightMesh);
-	RightHandMesh->SetRelativeRotation(FRotator(90.0f, -90.0f, 0.0f));  
+	rightMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionController"));
+	rightMotionController->SetupAttachment(vrOrigin);
+	rightMotionController->SetTrackingSource(EControllerHand::Right);
+	rightHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Right Hand Mesh"));
+	rightHandMesh->SetupAttachment(rightMotionController);
+	rightHandMesh->RegisterComponent();
+	rightHandMesh->SetSkeletalMesh(handMesh);
+	rightHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	rightHandMesh->SetAnimClass(handAnimBP->GeneratedClass);
 }
 
 void AVRCharacterController::MoveForward(const FInputActionValue& value)
@@ -46,7 +48,7 @@ void AVRCharacterController::MoveForward(const FInputActionValue& value)
 	{
 		if (bMoveInLookDirection)
 		{
-			FVector Direction = VRCamera->GetForwardVector();
+			FVector Direction = vrCamera->GetForwardVector();
 			AddMovementInput(Direction, inputValue * MoveSpeed);
 		}
 		else 
@@ -67,7 +69,7 @@ void AVRCharacterController::MoveRight(const FInputActionValue& value)
 	{
 		if (bMoveInLookDirection)
 		{
-			FVector Direction = VRCamera->GetRightVector();
+			FVector Direction = vrCamera->GetRightVector();
 			AddMovementInput(Direction, inputValue * MoveSpeed);
 		}
 		else
@@ -141,15 +143,47 @@ void AVRCharacterController::SetCapsuleHeight()
 	GEngine->XRSystem->GetCurrentPose(IXRTrackingSystem::HMDDeviceId, DeviceRotation, DevicePosition);
 	GetCapsuleComponent()->SetCapsuleSize(GetCapsuleComponent()->GetScaledCapsuleRadius(), capsuleHalfHeight, true);
 	auto halfHeight = DevicePosition.Z / 2.0f + 10.0f;
-	VROrigin->AddRelativeLocation(FVector(0.0f, 0.0f, capsuleHalfHeight - halfHeight));
+	vrOrigin->AddRelativeLocation(FVector(0.0f, 0.0f, capsuleHalfHeight - halfHeight));
 	capsuleHalfHeight = halfHeight;
+}
+
+void AVRCharacterController::SetLeftGripAxis(const FInputActionValue& value)
+{
+	if (leftAnimInstance)
+	{
+		leftAnimInstance->GripAxis = value.Get<float>();
+	}
+}
+
+void AVRCharacterController::SetRightGripAxis(const FInputActionValue& value)
+{
+	if (rightAnimInstance)
+	{
+		rightAnimInstance->GripAxis = value.Get<float>();
+	}
+}
+
+void AVRCharacterController::SetLeftTriggerAxis(const FInputActionValue& value)
+{
+	if (leftAnimInstance)
+	{
+		leftAnimInstance->TriggerAxis = value.Get<float>();
+	}
+}
+
+void AVRCharacterController::SetRightTriggerAxis(const FInputActionValue& value)
+{	
+	if (rightAnimInstance)
+	{
+		rightAnimInstance->TriggerAxis = value.Get<float>();
+	}
 }
 
 void AVRCharacterController::UpdateRoomScaleMovement()
 {
-	FVector Offset = VRCamera->GetComponentLocation() - GetActorLocation();
+	FVector Offset = vrCamera->GetComponentLocation() - GetActorLocation();
 	AddActorWorldOffset(FVector(Offset.X, Offset.Y, 0.0f));
-	VROrigin->AddWorldOffset(UKismetMathLibrary::NegateVector(FVector(Offset.X, Offset.Y, 0.0f)));
+	vrOrigin->AddWorldOffset(UKismetMathLibrary::NegateVector(FVector(Offset.X, Offset.Y, 0.0f)));
 }
 
 // Called when the game starts or when spawned
@@ -161,12 +195,17 @@ void AVRCharacterController::BeginPlay()
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
 	InitializeCapsuleHeight();
 	
+	leftAnimInstanceBase = leftHandMesh->GetAnimInstance();
+	leftAnimInstance = Cast<UVRHandAnimInstance>(leftAnimInstanceBase);
+	rightAnimInstanceBase = rightHandMesh->GetAnimInstance();
+	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
+
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
 			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
-			Subsystem->AddMappingContext(MappingContext, 0);
+			Subsystem->AddMappingContext(mappingContext, 0);
 		}
 	}
 
@@ -182,13 +221,14 @@ void AVRCharacterController::BeginPlay()
 void AVRCharacterController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	if (GetCharacterMovement()->Velocity.Size() > 1000)
 	{
-		VRCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 1.0;
+		vrCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 1.0;
 	}
 	else 
 	{
-		VRCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 0.0;
+		vrCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 0.0;
 	}
 
 }
@@ -198,18 +238,22 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(Move_X, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveRight);
-		EnhancedInputComponent->BindAction(Move_Y, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveForward);
-		EnhancedInputComponent->BindAction(Move_Z, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveUp);
+		EnhancedInputComponent->BindAction(move_X, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveRight);
+		EnhancedInputComponent->BindAction(move_Y, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveForward);
+		EnhancedInputComponent->BindAction(move_Z, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveUp);
+		EnhancedInputComponent->BindAction(grip_L, ETriggerEvent::Triggered, this, &AVRCharacterController::SetLeftGripAxis);
+		EnhancedInputComponent->BindAction(grip_R, ETriggerEvent::Triggered, this, &AVRCharacterController::SetRightGripAxis);
+		EnhancedInputComponent->BindAction(trigger_L, ETriggerEvent::Triggered, this, &AVRCharacterController::SetLeftTriggerAxis);
+		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Triggered, this, &AVRCharacterController::SetRightTriggerAxis);
 
 		if(bUseSmoothTurn)
 		{
-			EnhancedInputComponent->BindAction(Turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);
+			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);
 		}
 		else
 		{
-			EnhancedInputComponent->BindAction(Turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SnapTurn);
-			EnhancedInputComponent->BindAction(Turn, ETriggerEvent::Completed, this, &AVRCharacterController::ResetDoOnce);
+			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SnapTurn);
+			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Completed, this, &AVRCharacterController::ResetDoOnce);
 		}
 	}
 }
