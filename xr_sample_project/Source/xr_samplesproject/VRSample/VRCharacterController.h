@@ -15,7 +15,7 @@
 #include "InputCoreTypes.h"
 #include "IXRTrackingSystem.h"
 #include "InputMappingContext.h"
-#include "MotionControllerComponent.h"
+#include "VRHand.h"
 #include "VRCharacterController.generated.h"
 
 UCLASS()
@@ -26,22 +26,19 @@ class XR_SAMPLESPROJECT_API AVRCharacterController : public ACharacter
 public:
 	// Sets default values for this character's properties
 	AVRCharacterController();
+
+	TSubclassOf<AVRHand> LeftHandClass;
+	TSubclassOf<AVRHand> RightHandClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	AVRHand* lefthand;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	AVRHand* rightHand;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	UArcGISCameraComponent* VRCamera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	UArcGISLocationComponent* LocationComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-	UMotionControllerComponent* LeftMotionController;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-	USkeletalMeshComponent* LeftHandMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-	USkeletalMesh* LeftMesh = LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Samples/VRSample/Hands/Meshes/SKM_MannyXR_left.SKM_MannyXR_left"));
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-	USkeletalMeshComponent* RightHandMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-	USkeletalMesh* RightMesh = LoadObject<USkeletalMesh>(nullptr,TEXT("/Game/Samples/VRSample/Hands/Meshes/SKM_MannyXR_right.SKM_MannyXR_right"));
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-	UMotionControllerComponent* RightMotionController;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	USceneComponent* VROrigin;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")

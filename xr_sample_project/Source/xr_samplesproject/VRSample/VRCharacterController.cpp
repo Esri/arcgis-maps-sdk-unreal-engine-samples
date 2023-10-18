@@ -15,27 +15,29 @@ AVRCharacterController::AVRCharacterController()
 	VRCamera = CreateDefaultSubobject<UArcGISCameraComponent>(TEXT("FollowCamera"));
 	VRCamera->SetupAttachment(VROrigin);
 	VRCamera->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+
+	UChildActorComponent* leftHandComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("Left Hand"));
+	leftHandComponent->SetChildActorClass(LeftHandClass);
+	leftHandComponent->SetupAttachment(VROrigin);
+	leftHandComponent->RegisterComponent();
+	lefthand = Cast<AVRHand>(leftHandComponent->GetChildActorClass());
+	if(lefthand)
+	{
+		lefthand->bIsLeft = true;
+	}
+
+	UChildActorComponent* rightHandComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("right Hand"));
+	rightHandComponent->SetChildActorClass(RightHandClass);
+	rightHandComponent->SetupAttachment(VROrigin);
+	rightHandComponent->RegisterComponent();
+	rightHand = Cast<AVRHand>(rightHandComponent->GetChildActorClass());
+	if(rightHand)
+	{
+		rightHand->bIsLeft = false;
+	}
 	
 	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
 	LocationComponent->SetupAttachment(RootComponent);
-
-	LeftMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionController"));
-	LeftMotionController->SetupAttachment(VROrigin);
-	LeftMotionController->SetTrackingSource(EControllerHand::Left);
-	LeftHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Left Hand Mesh"));
-	LeftHandMesh->SetupAttachment(LeftMotionController);
-	LeftHandMesh->RegisterComponent();
-	LeftHandMesh->SetSkeletalMesh(LeftMesh);
-	LeftHandMesh->SetRelativeRotation(FRotator(-90.0f, -90.0f, 0.0f));
-	
-	RightMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionController"));
-	RightMotionController->SetupAttachment(VROrigin);
-	RightMotionController->SetTrackingSource(EControllerHand::Right);
-	RightHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Right Hand Mesh"));
-	RightHandMesh->SetupAttachment(RightMotionController);
-	RightHandMesh->RegisterComponent();
-	RightHandMesh->SetSkeletalMesh(RightMesh);
-	RightHandMesh->SetRelativeRotation(FRotator(90.0f, -90.0f, 0.0f));  
 }
 
 void AVRCharacterController::MoveForward(const FInputActionValue& value)
