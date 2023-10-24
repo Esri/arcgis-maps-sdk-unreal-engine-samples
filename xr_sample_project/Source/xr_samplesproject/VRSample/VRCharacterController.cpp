@@ -53,10 +53,8 @@ void AVRCharacterController::MoveForward(const FInputActionValue& value)
 		}
 		else 
 		{
-			FRotator Rotation = Controller->GetControlRotation();
-			FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
-			FVector Direction = GetActorForwardVector();
-			AddMovementInput(Direction, inputValue * MoveSpeed);
+			FVector direction = rightMotionController->GetForwardVector();
+			AddMovementInput(direction, inputValue * MoveSpeed);
 		}
 	}
 }
@@ -74,10 +72,8 @@ void AVRCharacterController::MoveRight(const FInputActionValue& value)
 		}
 		else
 		{
-			FRotator Rotation = Controller->GetControlRotation();
-			FRotator YawRotation(0.0f, Rotation.Yaw, 0.0f);
-			FVector Direction = GetActorRightVector();
-			AddMovementInput(Direction, inputValue * MoveSpeed);
+			FVector direction = rightMotionController->GetRightVector();
+			AddMovementInput(direction, inputValue * MoveSpeed);
 		}
 	}
 }
@@ -254,7 +250,7 @@ void AVRCharacterController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetCharacterMovement()->Velocity.Size() > 1000)
+	if (GetCharacterMovement()->Velocity.Size() > 100)
 	{
 		vrCamera->PostProcessSettings.WeightedBlendables.Array[0].Weight = 1.0;
 	}

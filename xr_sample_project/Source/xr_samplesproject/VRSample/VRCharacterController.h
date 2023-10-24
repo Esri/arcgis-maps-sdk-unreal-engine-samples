@@ -31,7 +31,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	bool bUseSmoothTurn = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
-	bool bMoveInLookDirection = false;
+	bool bMoveInLookDirection = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	float MovementDeadzone = 0.2f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
