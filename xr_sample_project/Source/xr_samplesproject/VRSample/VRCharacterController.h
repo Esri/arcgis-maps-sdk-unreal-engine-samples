@@ -63,6 +63,10 @@ private:
 	void SetLeftTriggerAxis(const FInputActionValue& value);
 	void SetRightGripAxis(const FInputActionValue& value);
 	void SetRightTriggerAxis(const FInputActionValue& value);
+	void ResetLeftGripAxis();
+	void ResetLeftTriggerAxis();
+	void ResetRightGripAxis();
+	void ResetRightTriggerAxis();
 	void SmoothTurn(const FInputActionValue& value);
 	void SnapTurn(const FInputActionValue& value);
 	void UpdateRoomScaleMovement();
@@ -75,8 +79,11 @@ private:
 	UInputAction* grip_R = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_RightGrip.IA_RightGrip"));
 	UVRHandAnimInstance* leftAnimInstance;
 	UAnimInstance* leftAnimInstanceBase;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UMotionControllerComponent* leftMotionController;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* leftHandMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UArcGISLocationComponent* locationComponent;
 	UInputMappingContext* mappingContext = LoadObject<UInputMappingContext>(nullptr, TEXT("/Game/Samples/VRSample/Input/IMC_Default.IMC_Default"));
 	UInputAction* move_X = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_MoveX.IA_MoveX"));
@@ -84,11 +91,15 @@ private:
 	UInputAction* move_Z = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_MoveUp.IA_MoveUp"));
 	UVRHandAnimInstance* rightAnimInstance;
 	UAnimInstance* rightAnimInstanceBase;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* rightHandMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UMotionControllerComponent* rightMotionController;
 	UInputAction* trigger_L = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_LeftTrigger.IA_LeftTrigger"));
 	UInputAction* trigger_R = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_RightTrigger.IA_RightTrigger"));
 	UInputAction* turn = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_Turn.IA_Turn"));
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UArcGISCameraComponent* vrCamera;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* vrOrigin;
 };

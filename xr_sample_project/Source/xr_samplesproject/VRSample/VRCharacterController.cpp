@@ -179,6 +179,38 @@ void AVRCharacterController::SetRightTriggerAxis(const FInputActionValue& value)
 	}
 }
 
+void AVRCharacterController::ResetLeftGripAxis()
+{
+	if (leftAnimInstance)
+	{
+		leftAnimInstance->GripAxis = 0.0f;
+	}
+}
+
+void AVRCharacterController::ResetRightGripAxis()
+{
+	if (rightAnimInstance)
+	{
+		rightAnimInstance->GripAxis = 0.0f;
+	}
+}
+
+void AVRCharacterController::ResetLeftTriggerAxis()
+{
+	if (leftAnimInstance)
+	{
+		leftAnimInstance->TriggerAxis = 0.0f;
+	}
+}
+
+void AVRCharacterController::ResetRightTriggerAxis()
+{
+	if (rightAnimInstance)
+	{
+		rightAnimInstance->TriggerAxis = 0.0f;
+	}
+}
+
 void AVRCharacterController::UpdateRoomScaleMovement()
 {
 	FVector Offset = vrCamera->GetComponentLocation() - GetActorLocation();
@@ -241,10 +273,21 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		EnhancedInputComponent->BindAction(move_X, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveRight);
 		EnhancedInputComponent->BindAction(move_Y, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveForward);
 		EnhancedInputComponent->BindAction(move_Z, ETriggerEvent::Triggered, this, &AVRCharacterController::MoveUp);
+		//Update Hand Animations
 		EnhancedInputComponent->BindAction(grip_L, ETriggerEvent::Triggered, this, &AVRCharacterController::SetLeftGripAxis);
 		EnhancedInputComponent->BindAction(grip_R, ETriggerEvent::Triggered, this, &AVRCharacterController::SetRightGripAxis);
 		EnhancedInputComponent->BindAction(trigger_L, ETriggerEvent::Triggered, this, &AVRCharacterController::SetLeftTriggerAxis);
 		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Triggered, this, &AVRCharacterController::SetRightTriggerAxis);
+		//Reset Hand Animations on Cancelled Action
+		EnhancedInputComponent->BindAction(grip_L, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetLeftGripAxis);
+		EnhancedInputComponent->BindAction(grip_R, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetRightGripAxis);
+		EnhancedInputComponent->BindAction(trigger_L, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetLeftTriggerAxis);
+		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetRightTriggerAxis);
+		//Reset Hand Animations on Completed Action
+		EnhancedInputComponent->BindAction(grip_L, ETriggerEvent::Completed, this, &AVRCharacterController::ResetLeftGripAxis);
+		EnhancedInputComponent->BindAction(grip_R, ETriggerEvent::Completed, this, &AVRCharacterController::ResetRightGripAxis);
+		EnhancedInputComponent->BindAction(trigger_L, ETriggerEvent::Completed, this, &AVRCharacterController::ResetLeftTriggerAxis);
+		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Completed, this, &AVRCharacterController::ResetRightTriggerAxis);
 
 		if(bUseSmoothTurn)
 		{
