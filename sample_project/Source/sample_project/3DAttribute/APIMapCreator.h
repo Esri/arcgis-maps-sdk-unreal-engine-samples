@@ -26,8 +26,13 @@ class SAMPLE_PROJECT_API AAPIMapCreator : public AArcGISActor
 	// @@Start(mapcreator)
 	public:
 	AAPIMapCreator();
-
-	UPROPERTY(EditAnywhere, Category = "ArcGISSamples|SampleAPIMapCreator")
+	
+	UFUNCTION(BlueprintCallable)
+	void HideDirections();
+	UFUNCTION(BlueprintCallable)
+	void SetVisualType(FString type);
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ArcGISSamples|SampleAPIMapCreator")
 	FString APIKey;
 	// @@End(mapcreator)
 
@@ -42,15 +47,21 @@ class SAMPLE_PROJECT_API AAPIMapCreator : public AArcGISActor
 	// @@End(SubListener)
 
 	// @@Start(createmap)
+	UFUNCTION(BlueprintCallable)
 	void CreateArcGISMap();
 	// @@End(createmap)
 
 	private:
 	UPROPERTY(Category = "ArcGISSamples|SampleAPIMapCreator", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAttributeComponent> AttributeComponent;
-
 	UPROPERTY(Category = "ArcGISSamples|SampleAPIMapCreator", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UViewStateLoggingComponent> ViewStateLogging;
+	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UUserWidget* UIWidget;
+	UFunction* HideInstructions;
+	
+protected:
+	virtual void BeginPlay() override;
 };
 // @@End(Class)
 // @@End(Script)

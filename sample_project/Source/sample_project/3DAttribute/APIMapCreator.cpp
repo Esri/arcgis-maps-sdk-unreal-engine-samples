@@ -28,6 +28,7 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapType.h"
 
 #include "ArcGISPawn.h"
+#include "Blueprint/UserWidget.h"
 // @@End(Header)
 
 // Set default values
@@ -37,8 +38,53 @@ AAPIMapCreator::AAPIMapCreator()
 	PrimaryActorTick.bCanEverTick = false;
 
 	ViewStateLogging = CreateDefaultSubobject<UViewStateLoggingComponent>(TEXT("ArcGISViewStateLoggingComponent"));
+
+	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/3DAttribute/UserInterface/WBP_3DAttribute.WBP_3DAttribute_c"));
+	if (WidgetAsset.Succeeded())
+	{
+		UIWidgetClass = WidgetAsset.Object;
+	}
 }
 // @@End(CallTick)
+
+void AAPIMapCreator::BeginPlay()
+{
+	if (UIWidgetClass != nullptr)
+	{
+		AActor* self = this;
+		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+		if (UIWidget)
+		{
+			UIWidget->AddToViewport();
+			HideInstructions = UIWidget->FindFunction(FName("PlayAnim"));
+		}
+	}
+}
+
+void AAPIMapCreator::HideDirections()
+{
+	AActor* self = this;
+	if (HideInstructions) {
+		UIWidget->ProcessEvent(HideInstructions, &self);
+	}
+}
+
+void AAPIMapCreator::SetVisualType(FString type)
+{
+	if(type == "Building")
+	{
+		AttributeComponent->AttributeType = VisualizationType::BuildingName;
+	}
+	else if (type == "Construction")
+	{
+		AttributeComponent->AttributeType = VisualizationType::ConstructionYear;
+	}
+	else
+	{
+		AttributeComponent->AttributeType = VisualizationType::None;
+	}
+}
+
 
 // @@Start(SubListener)
 void AAPIMapCreator::OnArcGISMapComponentChanged(UArcGISMapComponent* InMapComponent)
