@@ -142,18 +142,6 @@ void AAPIMapCreator::CreateArcGISMap()
 
 	// @@Start(AddLayer)
 	// Create layers
-	auto layer_1 = UArcGISImageLayer::CreateArcGISImageLayerWithProperties(
-		"https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/UrbanObservatory_NYC_TransitFrequency/MapServer",
-		"NYTransitFrequencyTiles", 1.0f, true, "");
-	map->GetLayers()->Add(layer_1);
-
-	auto layer_2 = UArcGISImageLayer::CreateArcGISImageLayerWithProperties(
-		"https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/New_York_Industrial/MapServer", "NYIndustrialTiles", 1.0f, true, "");
-	map->GetLayers()->Add(layer_2);
-
-	auto layer_3 = UArcGISImageLayer::CreateArcGISImageLayerWithProperties(
-		"https://tiles.arcgis.com/tiles/4yjifSiIG17X0gW4/arcgis/rest/services/NewYorkCity_PopDensity/MapServer", "NYPopDensityTiles", 1.0f, true, "");
-	map->GetLayers()->Add(layer_3);
 
 	auto buildingLayer = UArcGIS3DObjectSceneLayer::CreateArcGIS3DObjectSceneLayerWithProperties(
 		"https://tiles.arcgis.com/tiles/P3ePLMYs2RVChkJx/arcgis/rest/services/Buildings_NewYork_17/SceneServer", "NYScene", 1.0f, true, "");
@@ -167,13 +155,6 @@ void AAPIMapCreator::CreateArcGISMap()
 	{
 		AttributeComponent->Setup3DAttributes(buildingLayer);
 	}
-
-	// Remove a layer
-	auto index = map->GetLayers()->IndexOf(layer_3);
-	map->GetLayers()->Remove(index);
-	// Update properties
-	layer_1->SetOpacity(0.9f);
-	layer_2->SetOpacity(0.6f);
 
 	// @@Start(Extent)
 	// Create extent
