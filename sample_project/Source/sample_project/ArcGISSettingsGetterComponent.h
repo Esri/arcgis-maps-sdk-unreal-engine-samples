@@ -33,7 +33,4 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "ArcGISMapsSDK|ArcGISDefaultSettings")
 	ECollisionEnabledInEditorWorld GetDefaultCollisionEnabled();
-	
-	UFUNCTION(BlueprintCallable, Category = "ArcGISMapsSDK|ArcGISDefaultSettings")
-	bool GetDefaultUseStaticMesh();
 };

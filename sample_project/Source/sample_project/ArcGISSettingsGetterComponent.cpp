@@ -37,12 +37,3 @@ ECollisionEnabledInEditorWorld UArcGISSettingsGetterComponent::GetDefaultCollisi
 	}
 	return ECollisionEnabledInEditorWorld::HonorMapSettings;
 }
-
-bool UArcGISSettingsGetterComponent::GetDefaultUseStaticMesh()
-{
-	if (auto settings = GetDefault<UArcGISMapsSDKProjectSettings>())
-	{
-		return settings->bUseStaticMesh;
-	}
-	return false;
-}
