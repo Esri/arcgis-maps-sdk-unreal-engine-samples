@@ -17,7 +17,7 @@ void AStreamLayerQuery::Connect()
 	
 	WebSocket->OnConnected().AddLambda([]() -> void
 	{
-		
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "Connected");
 	});
     
 	WebSocket->OnConnectionError().AddLambda([](const FString & Error) -> void
