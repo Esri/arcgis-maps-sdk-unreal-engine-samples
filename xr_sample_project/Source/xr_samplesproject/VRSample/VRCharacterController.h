@@ -97,9 +97,9 @@ private:
 	UMotionControllerComponent* rightMotionController;
 	UInputAction* trigger_L = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_LeftTrigger.IA_LeftTrigger"));
 	UInputAction* trigger_R = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_RightTrigger.IA_RightTrigger"));
-	UInputAction* turn = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_Turn.IA_Turn"));
+	UInputAction* turn = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Turn.IA_Turn'"));
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
-	UArcGISCameraComponent* vrCamera;
+	UCameraComponent* vrCamera;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* vrOrigin;
 };

@@ -12,9 +12,10 @@ AVRCharacterController::AVRCharacterController()
 	
 	vrOrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
 	vrOrigin->SetupAttachment(RootComponent);
-	vrCamera = CreateDefaultSubobject<UArcGISCameraComponent>(TEXT("FollowCamera"));
+	vrCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	vrCamera->SetupAttachment(vrOrigin);
 	vrCamera->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+	vrCamera->AddOrUpdateBlendable(LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Samples/VRSample/M_vignette.M_vignette'")), 0.0f);
 	
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
 	locationComponent->SetupAttachment(RootComponent);
