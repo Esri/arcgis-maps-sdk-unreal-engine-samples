@@ -56,6 +56,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+	void ActivateMenu();
 	void InitializeCapsuleHeight();
 	void MoveForward(const FInputActionValue& value);
 	void MoveRight(const FInputActionValue& value);
@@ -70,12 +71,19 @@ private:
 	void ResetLeftTriggerAxis();
 	void ResetRightGripAxis();
 	void ResetRightTriggerAxis();
+	void SimulateClickLeft();
+	void SimulateClickRight();
+	void ResetClickLeft();
+	void ResetClickRight();
 	void SmoothTurn(const FInputActionValue& value);
 	void SnapTurn(const FInputActionValue& value);
 	void UpdateRoomScaleMovement();
 
 	bool bDoOnce = true;
+	bool bMenuActive = true;
 	float capsuleHalfHeight;
+	UInputAction* clickLeft = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Menu_Cursor_Left.IA_Menu_Cursor_Left'"));
+	UInputAction* clickRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Menu_Cursor_Right.IA_Menu_Cursor_Right'"));
 	UAnimBlueprint* handAnimBP = LoadObject<UAnimBlueprint>(nullptr, TEXT("/Game/Samples/VRSample/Hands/Animations/ABP_Hand.ABP_Hand"));
 	USkeletalMesh* handMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Samples/VRSample/Hands/Meshes/SKM_MannyXR_left.SKM_MannyXR_left"));
 	UInputAction* grip_L = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_LeftGrip.IA_LeftGrip"));
@@ -93,6 +101,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UArcGISLocationComponent* locationComponent;
 	UInputMappingContext* mappingContext = LoadObject<UInputMappingContext>(nullptr, TEXT("/Game/Samples/VRSample/Input/IMC_Default.IMC_Default"));
+	UInputMappingContext* menuMappingContext = LoadObject<UInputMappingContext>(nullptr, TEXT("InputMappingContext'/Game/Samples/VRSample/Input/IMC_Menu.IMC_Menu'"));
+	UInputAction* menu_Left = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Menu_Toggle_Left.IA_Menu_Toggle_Left'"));
+	UInputAction* menu_Right = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Menu_Toggle_Right.IA_Menu_Toggle_Right'"));
 	UInputAction* move_X = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_MoveX.IA_MoveX"));
 	UInputAction* move_Y = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_MoveY.IA_MoveY"));
 	UInputAction* move_Z = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_MoveUp.IA_MoveUp"));

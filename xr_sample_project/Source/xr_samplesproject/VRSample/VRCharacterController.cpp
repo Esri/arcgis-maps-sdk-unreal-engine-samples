@@ -57,6 +57,19 @@ AVRCharacterController::AVRCharacterController()
 	rightInteraction->SetupAttachment(rightMotionControllerInteractor);
 }
 
+void AVRCharacterController::ActivateMenu()
+{
+	if(vrWidget->bHiddenInGame)
+	{
+		vrWidget->SetHiddenInGame(true);
+	}
+	else
+	{
+		vrWidget->SetHiddenInGame(false);
+	}
+}
+
+
 void AVRCharacterController::MoveForward(const FInputActionValue& value)
 {
 	const auto inputValue = value.Get<float>();
@@ -224,6 +237,26 @@ void AVRCharacterController::ResetRightTriggerAxis()
 	}
 }
 
+void AVRCharacterController::SimulateClickLeft()
+{
+	leftInteraction->PressPointerKey(EKeys::LeftMouseButton);
+}
+
+void AVRCharacterController::SimulateClickRight()
+{
+	rightInteraction->PressPointerKey(EKeys::LeftMouseButton);
+}
+
+void AVRCharacterController::ResetClickLeft()
+{
+	leftInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
+}
+
+void AVRCharacterController::ResetClickRight()
+{
+	rightInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
+}
+
 void AVRCharacterController::UpdateRoomScaleMovement()
 {
 	FVector Offset = vrCamera->GetComponentLocation() - GetActorLocation();
@@ -244,13 +277,15 @@ void AVRCharacterController::BeginPlay()
 	leftAnimInstance = Cast<UVRHandAnimInstance>(leftAnimInstanceBase);
 	rightAnimInstanceBase = rightHandMesh->GetAnimInstance();
 	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
-
+	vrWidget->SetHiddenInGame(true);
+	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
 			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(mappingContext, 0);
+			Subsystem->AddMappingContext(menuMappingContext, 0);
 		}
 	}
 
@@ -302,6 +337,18 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		EnhancedInputComponent->BindAction(trigger_L, ETriggerEvent::Completed, this, &AVRCharacterController::ResetLeftTriggerAxis);
 		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Completed, this, &AVRCharacterController::ResetRightTriggerAxis);
 
+		//Menu Activation
+		EnhancedInputComponent->BindAction(menu_Left, ETriggerEvent::Triggered, this, &AVRCharacterController::ActivateMenu);
+		EnhancedInputComponent->BindAction(menu_Right, ETriggerEvent::Triggered, this, &AVRCharacterController::ActivateMenu);
+
+		//Simulate Mouse Click
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Triggered, this, &AVRCharacterController::SimulateClickLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetClickLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Completed, this, &AVRCharacterController::ResetClickLeft);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Triggered, this, &AVRCharacterController::SimulateClickRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetClickRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Completed, this, &AVRCharacterController::ResetClickRight);
+		
 		if(bUseSmoothTurn)
 		{
 			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);
