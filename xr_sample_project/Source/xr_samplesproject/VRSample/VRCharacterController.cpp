@@ -16,6 +16,10 @@ AVRCharacterController::AVRCharacterController()
 	vrCamera->SetupAttachment(vrOrigin);
 	vrCamera->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	vrCamera->AddOrUpdateBlendable(LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Samples/VRSample/M_vignette.M_vignette'")), 0.0f);
+	springArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	springArmComponent->SetupAttachment(vrOrigin);
+	vrWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HUD"));
+	vrWidget->SetupAttachment(springArmComponent);
 	
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
 	locationComponent->SetupAttachment(RootComponent);
@@ -39,6 +43,18 @@ AVRCharacterController::AVRCharacterController()
 	rightHandMesh->SetSkeletalMesh(handMesh);
 	rightHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	rightHandMesh->SetAnimClass(handAnimBP->GeneratedClass);
+
+	leftMotionControllerInteractor = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionControllerInteractor"));
+	leftMotionControllerInteractor->SetupAttachment(vrOrigin);
+	leftMotionControllerInteractor->SetTrackingSource(EControllerHand::Left);
+	leftInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Left Interactor"));
+	leftInteraction->SetupAttachment(leftMotionControllerInteractor);
+	
+	rightMotionControllerInteractor = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionControllerInteractor"));
+	rightMotionControllerInteractor->SetupAttachment(vrOrigin);
+	rightMotionControllerInteractor->SetTrackingSource(EControllerHand::Right);
+	rightInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Right Interactor"));
+	rightInteraction->SetupAttachment(rightMotionControllerInteractor);
 }
 
 void AVRCharacterController::MoveForward(const FInputActionValue& value)

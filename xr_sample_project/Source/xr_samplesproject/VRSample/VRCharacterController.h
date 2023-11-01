@@ -6,6 +6,7 @@
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "CoreMinimal.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -17,6 +18,8 @@
 #include "InputMappingContext.h"
 #include "MotionControllerComponent.h"
 #include "VRHandAnimInstance.h"
+#include "Components/WidgetComponent.h"
+#include "Components/WidgetInteractionComponent.h"
 #include "VRCharacterController.generated.h"
 
 UCLASS()
@@ -80,7 +83,11 @@ private:
 	UVRHandAnimInstance* leftAnimInstance;
 	UAnimInstance* leftAnimInstanceBase;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UWidgetInteractionComponent* leftInteraction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UMotionControllerComponent* leftMotionController;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UMotionControllerComponent* leftMotionControllerInteractor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* leftHandMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
@@ -94,7 +101,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* rightHandMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UWidgetInteractionComponent* rightInteraction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UMotionControllerComponent* rightMotionController;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UMotionControllerComponent* rightMotionControllerInteractor;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	USpringArmComponent* springArmComponent;
 	UInputAction* trigger_L = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_LeftTrigger.IA_LeftTrigger"));
 	UInputAction* trigger_R = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_RightTrigger.IA_RightTrigger"));
 	UInputAction* turn = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Turn.IA_Turn'"));
@@ -102,4 +115,6 @@ private:
 	UCameraComponent* vrCamera;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* vrOrigin;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UWidgetComponent* vrWidget;
 };
