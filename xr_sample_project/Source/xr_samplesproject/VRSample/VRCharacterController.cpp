@@ -61,11 +61,11 @@ void AVRCharacterController::ActivateMenu()
 {
 	if(vrWidget->bHiddenInGame)
 	{
-		vrWidget->SetHiddenInGame(true);
+		vrWidget->SetHiddenInGame(false);
 	}
 	else
 	{
-		vrWidget->SetHiddenInGame(false);
+		vrWidget->SetHiddenInGame(true);
 	}
 }
 
@@ -121,31 +121,30 @@ void AVRCharacterController::MoveUp(const FInputActionValue& value)
 void AVRCharacterController::SmoothTurn(const FInputActionValue& value)
 {
 	auto inputValue = value.Get<float>() * RotationSpeed;
-
-	if (abs(inputValue) > RotationDeadzone)
+	if (bUseSmoothTurn) 
 	{
-		SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + inputValue, 0.0f));
+		if (abs(inputValue) > RotationDeadzone)
+		{
+			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + inputValue, 0.0f));
+		}
 	}
-}
-
-void AVRCharacterController::SnapTurn(const FInputActionValue& value)
-{
-	auto inputValue = value.Get<float>();
-
-	if(bDoOnce && abs(inputValue) > RotationDeadzone)
+	else 
 	{
-		auto RotationAngle = 0.0f;
-		if(inputValue > 0.0f)
+		if (bDoOnce && abs(inputValue) > RotationDeadzone)
 		{
-			RotationAngle = SnapRotationDegrees;
-			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
+			auto RotationAngle = 0.0f;
+			if (inputValue > 0.0f)
+			{
+				RotationAngle = SnapRotationDegrees;
+				SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
+			}
+			else
+			{
+				RotationAngle = SnapRotationDegrees * -1.0f;
+				SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
+			}
+			bDoOnce = false;
 		}
-		else
-		{
-			RotationAngle = SnapRotationDegrees * -1.0f;
-			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
-		}
-		bDoOnce = false;
 	}
 }
 
@@ -277,7 +276,7 @@ void AVRCharacterController::BeginPlay()
 	leftAnimInstance = Cast<UVRHandAnimInstance>(leftAnimInstanceBase);
 	rightAnimInstanceBase = rightHandMesh->GetAnimInstance();
 	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
-	vrWidget->SetHiddenInGame(true);
+	vrWidget->SetHiddenInGame(false);
 	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
@@ -338,8 +337,8 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Completed, this, &AVRCharacterController::ResetRightTriggerAxis);
 
 		//Menu Activation
-		EnhancedInputComponent->BindAction(menu_Left, ETriggerEvent::Triggered, this, &AVRCharacterController::ActivateMenu);
-		EnhancedInputComponent->BindAction(menu_Right, ETriggerEvent::Triggered, this, &AVRCharacterController::ActivateMenu);
+		EnhancedInputComponent->BindAction(menu_Left, ETriggerEvent::Started, this, &AVRCharacterController::ActivateMenu);
+		EnhancedInputComponent->BindAction(menu_Right, ETriggerEvent::Started, this, &AVRCharacterController::ActivateMenu);
 
 		//Simulate Mouse Click
 		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Triggered, this, &AVRCharacterController::SimulateClickLeft);
@@ -348,15 +347,8 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Triggered, this, &AVRCharacterController::SimulateClickRight);
 		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetClickRight);
 		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Completed, this, &AVRCharacterController::ResetClickRight);
-		
-		if(bUseSmoothTurn)
-		{
-			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);
-		}
-		else
-		{
-			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SnapTurn);
-			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Completed, this, &AVRCharacterController::ResetDoOnce);
-		}
+
+		EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);
+		EnhancedInputComponent->BindAction(turn, ETriggerEvent::Completed, this, &AVRCharacterController::ResetDoOnce);
 	}
 }

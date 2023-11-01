@@ -38,15 +38,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	float MovementDeadzone = 0.2f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
-	float MoveSpeed = 10000.0f;
+	int MoveSpeed = 10000;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	float RotationDeadzone = 0.2f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	float RotationSpeed = 1.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
-	float SnapRotationDegrees = 30.0f;
+	int SnapRotationDegrees = 30;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
-	float UpSpeed = 100000.0f;
+	int UpSpeed = 100000;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -76,7 +76,6 @@ private:
 	void ResetClickLeft();
 	void ResetClickRight();
 	void SmoothTurn(const FInputActionValue& value);
-	void SnapTurn(const FInputActionValue& value);
 	void UpdateRoomScaleMovement();
 
 	bool bDoOnce = true;
