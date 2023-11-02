@@ -17,7 +17,7 @@ AVRCharacterController::AVRCharacterController()
 	vrCamera->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	vrCamera->AddOrUpdateBlendable(LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Samples/VRSample/M_vignette.M_vignette'")), 0.0f);
 	springArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	springArmComponent->SetupAttachment(vrOrigin);
+	springArmComponent->SetupAttachment(RootComponent);
 	vrWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HUD"));
 	vrWidget->SetupAttachment(springArmComponent);
 	
