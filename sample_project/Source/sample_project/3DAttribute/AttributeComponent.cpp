@@ -84,7 +84,7 @@ void UAttributeComponent::Setup3DAttributesFloatAndIntegerType(UArcGIS3DObjectSc
 	// In Unreal Engine, open this material in the Material Editor to view the shader graph
 	// In general, you can use this function in other scripts to change the material thats used to render the buildings
 	Layer->SetMaterialReference(
-		LoadObject<UMaterial>(this, TEXT("/Game/SampleViewer/Samples/3DAttribute/Materials/ConstructionYearRenderer.ConstructionYearRenderer")));
+		LoadObject<UMaterial>(this, TEXT("Material'/Game/SampleViewer/Samples/MaterialByAttribute/Materials/ConstructionYearRenderer.ConstructionYearRenderer'")));
 }
 
 // This function is an example of how to use attributes WITH the attribute processor
@@ -137,7 +137,7 @@ void UAttributeComponent::Setup3DAttributesOtherType(UArcGIS3DObjectSceneLayer* 
 	// In Unreal Engine, open this material in the Material Editor to view the shader graph
 	// In general, you can use this function in other scripts to change the material thats used to render the buildings
 	Layer->SetMaterialReference(
-		LoadObject<UMaterial>(this, TEXT("/Game/SampleViewer/Samples/3DAttribute/Materials/BuildingNameRenderer.BuildingNameRenderer")));
+		LoadObject<UMaterial>(this, TEXT("Material'/Game/SampleViewer/Samples/MaterialByAttribute/Materials/BuildingNameRenderer.BuildingNameRenderer'")));
 }
 
 // ForEachString takes care of converting the attribute buffer into a readable string value
