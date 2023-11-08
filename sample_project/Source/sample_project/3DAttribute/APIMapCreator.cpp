@@ -39,7 +39,7 @@ AAPIMapCreator::AAPIMapCreator()
 
 	ViewStateLogging = CreateDefaultSubobject<UViewStateLoggingComponent>(TEXT("ArcGISViewStateLoggingComponent"));
 
-	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/3DAttribute/UserInterface/WBP_3DAttribute.WBP_3DAttribute_c"));
+	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/MaterialByAttribute/UserInterface/WBP_3DAttribute.WBP_3DAttribute_c"));
 	if (WidgetAsset.Succeeded())
 	{
 		UIWidgetClass = WidgetAsset.Object;
