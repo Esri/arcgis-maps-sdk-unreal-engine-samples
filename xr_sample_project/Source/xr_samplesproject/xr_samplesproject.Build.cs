@@ -8,10 +8,10 @@ public class xr_samplesproject : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", 
-			"EnhancedInput", "ArcGISMapsSDK", "ArcGISSamples", "UMG", "HeadMountedDisplay"});
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Json" , "HTTP",
+			"EnhancedInput", "ArcGISMapsSDK", "ArcGISSamples", "UMG", "HeadMountedDisplay", "UMGEditor"});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

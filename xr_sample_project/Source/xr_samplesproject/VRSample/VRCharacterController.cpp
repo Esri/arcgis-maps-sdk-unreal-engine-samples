@@ -62,10 +62,12 @@ void AVRCharacterController::ActivateMenu()
 	if(vrWidget->bHiddenInGame)
 	{
 		vrWidget->SetHiddenInGame(false);
+		vrWidget->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
 	else
 	{
 		vrWidget->SetHiddenInGame(true);
+		vrWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
 
@@ -112,7 +114,7 @@ void AVRCharacterController::MoveUp(const FInputActionValue& value)
 {
 	auto inputValue = value.Get<float>();
 	
-	if (abs(inputValue) > MovementDeadzone)
+	if (abs(inputValue) > 0.5f)
 	{
 		AddMovementInput(GetActorUpVector(), inputValue * UpSpeed);
 	}
@@ -243,7 +245,17 @@ void AVRCharacterController::SimulateClickLeft()
 
 void AVRCharacterController::SimulateClickRight()
 {
-	rightInteraction->PressPointerKey(EKeys::LeftMouseButton);
+	if(rightInteraction->IsOverInteractableWidget())
+	{
+		rightInteraction->PressPointerKey(EKeys::LeftMouseButton);	
+	}
+	else
+	{
+		if(GeoCoder != nullptr)
+		{
+			GeoCoder->SelectLocation(rightInteraction->GetComponentLocation(), rightInteraction->GetForwardVector());	
+		}
+	}
 }
 
 void AVRCharacterController::ResetClickLeft()
@@ -271,6 +283,7 @@ void AVRCharacterController::BeginPlay()
 	GEngine->XRSystem->SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
 	InitializeCapsuleHeight();
+	GeoCoder = Cast<AGeocoder>(UGameplayStatics::GetActorOfClass(GetWorld(), AGeocoder::StaticClass()));
 	
 	leftAnimInstanceBase = leftHandMesh->GetAnimInstance();
 	leftAnimInstance = Cast<UVRHandAnimInstance>(leftAnimInstanceBase);
@@ -341,10 +354,10 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		EnhancedInputComponent->BindAction(menu_Right, ETriggerEvent::Started, this, &AVRCharacterController::ActivateMenu);
 
 		//Simulate Mouse Click
-		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Triggered, this, &AVRCharacterController::SimulateClickLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Started, this, &AVRCharacterController::SimulateClickLeft);
 		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetClickLeft);
 		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Completed, this, &AVRCharacterController::ResetClickLeft);
-		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Triggered, this, &AVRCharacterController::SimulateClickRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Started, this, &AVRCharacterController::SimulateClickRight);
 		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetClickRight);
 		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Completed, this, &AVRCharacterController::ResetClickRight);
 

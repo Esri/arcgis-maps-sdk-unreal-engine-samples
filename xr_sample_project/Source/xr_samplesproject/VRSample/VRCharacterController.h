@@ -20,6 +20,8 @@
 #include "VRHandAnimInstance.h"
 #include "Components/WidgetComponent.h"
 #include "Components/WidgetInteractionComponent.h"
+#include "xr_samplesproject/Geocoding/Geocoder.h"
+#include "WidgetBlueprint.h"
 #include "VRCharacterController.generated.h"
 
 UCLASS()
@@ -47,7 +49,9 @@ public:
 	int SnapRotationDegrees = 30;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	int UpSpeed = 100000;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
+	AGeocoder* GeoCoder;
+
 protected:
 	virtual void BeginPlay() override;
 
