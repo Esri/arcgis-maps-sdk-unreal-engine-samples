@@ -2,9 +2,23 @@
 
 ![image](arcgis-maps-sdk-unreal-engine-samples.png)
 
-Here is an Unreal Engine 5 project containing a set of samples showing you how to accomplish various things using the combined features of Unreal Engine 5 and the ArcGIS Maps SDK for Unreal Engine. The `main` branch is configured to work with our most recent release (1.2.0) if you want to use the sample repo with an older release check out the corresponding tag of the sample repo, `git checkout 1.0.0` for the sample repo that worked with our 1.0.0 release.
+Here is an Unreal Engine 5 project containing a set of samples showing you how to accomplish various things using the combined features of Unreal Engine 5 and the ArcGIS Maps SDK for Unreal Engine. The `main` branch is configured to work with our most recent release (1.3.0) if you want to use the sample repo with an older release check out the corresponding tag of the sample repo, `git checkout 1.0.0` for the sample repo that worked with our 1.0.0 release.
 
-## Features
+### Note
+This repository is made up of two seperate Unreal Engine projects. If you would like to see the samples made for regular use such as Feature Layer and Routing, please use and setup the **sample_project**. If you are interested in XR Samples such as, Virtual Reality Sample and a XR version of our Table Top Sample (coming soon), please use and setup the **xr_sample_project**. Both projects may be used and setup simultaneously, but they do not have the same samples. 
+
+### Requirements for Sample Project
+* Computer Running Windows or MacOS
+* The minimum version of Unreal Engine supported for the project is 5.0 but works with 5.1, 5.2, and 5.3
+* ArcGISMaps SDK for Unreal Engine
+
+### Requirements for XR Sample Project
+* Computer Running Windows (OpenXR is not supported on MacOS)
+* The minimum version of Unreal Engine supported for the project is 5.3 but will support new versions as they come out
+* ArcGISMaps SDK for Unreal Engine
+* A VR Headset and the necessary software to through Desktop Mode
+
+## Features in Sample Project
 
 * [Feature Layer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/FeatureLayer) - Query objects from a feature layer and show them on the map in Unreal Engine.
 * [Geocoding](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Geocoding) - Search for an address or click on the surface to get the address of that location.
@@ -14,6 +28,9 @@ Here is an Unreal Engine 5 project containing a set of samples showing you how t
 * [Measure](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Measure) - Click on the map to get real world distances between points.
 * [Routing](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Routing) - Show a route between two points on a map using Esri's routing service REST API.
 * [Third Person Character Controller](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/ThirdPersonCharacter) - See how to run around a virtual city in Unreal Engine.
+
+## Features in XR Sample Project
+* [VR Sample](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/xr_sample_project/Content/Samples/VRSample/readme.md) - Explore different cities using Virtual Reality.
 
 ## Instructions
 
