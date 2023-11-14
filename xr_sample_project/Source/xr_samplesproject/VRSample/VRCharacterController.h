@@ -61,6 +61,8 @@ public:
 
 private:
 	void ActivateMenu();
+	void HideLeftMenu();
+	void HideRightMenu();
 	void InitializeCapsuleHeight();
 	void MoveForward(const FInputActionValue& value);
 	void MoveRight(const FInputActionValue& value);
@@ -89,6 +91,8 @@ private:
 	UInputAction* clickRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Menu_Cursor_Right.IA_Menu_Cursor_Right'"));
 	UAnimBlueprint* handAnimBP = LoadObject<UAnimBlueprint>(nullptr, TEXT("/Game/Samples/VRSample/Hands/Animations/ABP_Hand.ABP_Hand"));
 	USkeletalMesh* handMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/Samples/VRSample/Hands/Meshes/SKM_MannyXR_left.SKM_MannyXR_left"));
+	UInputAction* hideLeftMenu = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_ShowLeftHandMenu.IA_ShowLeftHandMenu'"));
+	UInputAction* hideRightMenu = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_ShowRightHandMenu.IA_ShowRightHandMenu'"));
 	UInputAction* grip_L = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_LeftGrip.IA_LeftGrip"));
 	UInputAction* grip_R = LoadObject<UInputAction>(nullptr, TEXT("/Game/Samples/VRSample/Input/IA_RightGrip.IA_RightGrip"));
 	UVRHandAnimInstance* leftAnimInstance;
@@ -131,4 +135,8 @@ private:
 	USceneComponent* vrOrigin;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UWidgetComponent* vrWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UWidgetComponent* widgetLeft;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UWidgetComponent* widgetRight;
 };

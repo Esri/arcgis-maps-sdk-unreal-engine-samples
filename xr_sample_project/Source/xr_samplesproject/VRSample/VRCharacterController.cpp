@@ -33,6 +33,8 @@ AVRCharacterController::AVRCharacterController()
 	leftHandMesh->SetSkeletalMesh(handMesh);
 	leftHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	leftHandMesh->SetAnimClass(handAnimBP->GeneratedClass);
+	widgetLeft = CreateDefaultSubobject<UWidgetComponent>(TEXT("Left Helper"));
+	widgetLeft->SetupAttachment(leftHandMesh);
 	
 	rightMotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionController"));
 	rightMotionController->SetupAttachment(vrOrigin);
@@ -43,6 +45,8 @@ AVRCharacterController::AVRCharacterController()
 	rightHandMesh->SetSkeletalMesh(handMesh);
 	rightHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	rightHandMesh->SetAnimClass(handAnimBP->GeneratedClass);
+	widgetRight = CreateDefaultSubobject<UWidgetComponent>(TEXT("Right Helper"));
+	widgetRight->SetupAttachment(rightHandMesh);
 
 	leftMotionControllerInteractor = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionControllerInteractor"));
 	leftMotionControllerInteractor->SetupAttachment(vrOrigin);
@@ -68,6 +72,30 @@ void AVRCharacterController::ActivateMenu()
 	{
 		vrWidget->SetHiddenInGame(true);
 		vrWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AVRCharacterController::HideLeftMenu()
+{
+	if (widgetLeft->IsVisible()) 
+	{
+		widgetLeft->SetHiddenInGame(true);
+	}
+	else
+	{
+		widgetLeft->SetHiddenInGame(false);
+	}
+}
+
+void AVRCharacterController::HideRightMenu()
+{
+	if (widgetRight->IsVisible())
+	{
+		widgetRight->SetHiddenInGame(true);
+	}
+	else
+	{
+		widgetRight->SetHiddenInGame(false);
 	}
 }
 
@@ -363,5 +391,8 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 
 		EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);
 		EnhancedInputComponent->BindAction(turn, ETriggerEvent::Completed, this, &AVRCharacterController::ResetDoOnce);
+
+		EnhancedInputComponent->BindAction(hideLeftMenu, ETriggerEvent::Started, this, &AVRCharacterController::HideLeftMenu);
+		EnhancedInputComponent->BindAction(hideRightMenu, ETriggerEvent::Started, this, &AVRCharacterController::HideRightMenu);
 	}
 }
