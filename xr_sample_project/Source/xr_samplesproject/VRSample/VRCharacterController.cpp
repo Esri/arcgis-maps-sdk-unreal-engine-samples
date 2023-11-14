@@ -12,9 +12,14 @@ AVRCharacterController::AVRCharacterController()
 	
 	vrOrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
 	vrOrigin->SetupAttachment(RootComponent);
-	vrCamera = CreateDefaultSubobject<UArcGISCameraComponent>(TEXT("FollowCamera"));
+	vrCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	vrCamera->SetupAttachment(vrOrigin);
 	vrCamera->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+	vrCamera->AddOrUpdateBlendable(LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/Samples/VRSample/M_vignette.M_vignette'")), 0.0f);
+	springArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	springArmComponent->SetupAttachment(RootComponent);
+	vrWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HUD"));
+	vrWidget->SetupAttachment(springArmComponent);
 	
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
 	locationComponent->SetupAttachment(RootComponent);
@@ -38,7 +43,34 @@ AVRCharacterController::AVRCharacterController()
 	rightHandMesh->SetSkeletalMesh(handMesh);
 	rightHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	rightHandMesh->SetAnimClass(handAnimBP->GeneratedClass);
+
+	leftMotionControllerInteractor = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionControllerInteractor"));
+	leftMotionControllerInteractor->SetupAttachment(vrOrigin);
+	leftMotionControllerInteractor->SetTrackingSource(EControllerHand::Left);
+	leftInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Left Interactor"));
+	leftInteraction->SetupAttachment(leftMotionControllerInteractor);
+	
+	rightMotionControllerInteractor = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionControllerInteractor"));
+	rightMotionControllerInteractor->SetupAttachment(vrOrigin);
+	rightMotionControllerInteractor->SetTrackingSource(EControllerHand::Right);
+	rightInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Right Interactor"));
+	rightInteraction->SetupAttachment(rightMotionControllerInteractor);
 }
+
+void AVRCharacterController::ActivateMenu()
+{
+	if(vrWidget->bHiddenInGame)
+	{
+		vrWidget->SetHiddenInGame(false);
+		vrWidget->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	else
+	{
+		vrWidget->SetHiddenInGame(true);
+		vrWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
 
 void AVRCharacterController::MoveForward(const FInputActionValue& value)
 {
@@ -82,7 +114,7 @@ void AVRCharacterController::MoveUp(const FInputActionValue& value)
 {
 	auto inputValue = value.Get<float>();
 	
-	if (abs(inputValue) > MovementDeadzone)
+	if (abs(inputValue) > 0.5f)
 	{
 		AddMovementInput(GetActorUpVector(), inputValue * UpSpeed);
 	}
@@ -91,31 +123,30 @@ void AVRCharacterController::MoveUp(const FInputActionValue& value)
 void AVRCharacterController::SmoothTurn(const FInputActionValue& value)
 {
 	auto inputValue = value.Get<float>() * RotationSpeed;
-
-	if (abs(inputValue) > RotationDeadzone)
+	if (bUseSmoothTurn) 
 	{
-		SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + inputValue, 0.0f));
+		if (abs(inputValue) > RotationDeadzone)
+		{
+			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + inputValue, 0.0f));
+		}
 	}
-}
-
-void AVRCharacterController::SnapTurn(const FInputActionValue& value)
-{
-	auto inputValue = value.Get<float>();
-
-	if(bDoOnce && abs(inputValue) > RotationDeadzone)
+	else 
 	{
-		auto RotationAngle = 0.0f;
-		if(inputValue > 0.0f)
+		if (bDoOnce && abs(inputValue) > RotationDeadzone)
 		{
-			RotationAngle = SnapRotationDegrees;
-			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
+			auto RotationAngle = 0.0f;
+			if (inputValue > 0.0f)
+			{
+				RotationAngle = SnapRotationDegrees;
+				SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
+			}
+			else
+			{
+				RotationAngle = SnapRotationDegrees * -1.0f;
+				SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
+			}
+			bDoOnce = false;
 		}
-		else
-		{
-			RotationAngle = SnapRotationDegrees * -1.0f;
-			SetActorRotation(FRotator(0.0f, GetActorRotation().Yaw + RotationAngle, 0.0f));
-		}
-		bDoOnce = false;
 	}
 }
 
@@ -207,6 +238,36 @@ void AVRCharacterController::ResetRightTriggerAxis()
 	}
 }
 
+void AVRCharacterController::SimulateClickLeft()
+{
+	leftInteraction->PressPointerKey(EKeys::LeftMouseButton);
+}
+
+void AVRCharacterController::SimulateClickRight()
+{
+	if(rightInteraction->IsOverInteractableWidget())
+	{
+		rightInteraction->PressPointerKey(EKeys::LeftMouseButton);	
+	}
+	else
+	{
+		if(GeoCoder != nullptr)
+		{
+			GeoCoder->SelectLocation(rightInteraction->GetComponentLocation(), rightInteraction->GetForwardVector());	
+		}
+	}
+}
+
+void AVRCharacterController::ResetClickLeft()
+{
+	leftInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
+}
+
+void AVRCharacterController::ResetClickRight()
+{
+	rightInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
+}
+
 void AVRCharacterController::UpdateRoomScaleMovement()
 {
 	FVector Offset = vrCamera->GetComponentLocation() - GetActorLocation();
@@ -222,18 +283,21 @@ void AVRCharacterController::BeginPlay()
 	GEngine->XRSystem->SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
 	InitializeCapsuleHeight();
+	GeoCoder = Cast<AGeocoder>(UGameplayStatics::GetActorOfClass(GetWorld(), AGeocoder::StaticClass()));
 	
 	leftAnimInstanceBase = leftHandMesh->GetAnimInstance();
 	leftAnimInstance = Cast<UVRHandAnimInstance>(leftAnimInstanceBase);
 	rightAnimInstanceBase = rightHandMesh->GetAnimInstance();
 	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
-
+	vrWidget->SetHiddenInGame(false);
+	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
 			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(mappingContext, 0);
+			Subsystem->AddMappingContext(menuMappingContext, 0);
 		}
 	}
 
@@ -285,14 +349,19 @@ void AVRCharacterController::SetupPlayerInputComponent(UInputComponent* PlayerIn
 		EnhancedInputComponent->BindAction(trigger_L, ETriggerEvent::Completed, this, &AVRCharacterController::ResetLeftTriggerAxis);
 		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Completed, this, &AVRCharacterController::ResetRightTriggerAxis);
 
-		if(bUseSmoothTurn)
-		{
-			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);
-		}
-		else
-		{
-			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SnapTurn);
-			EnhancedInputComponent->BindAction(turn, ETriggerEvent::Completed, this, &AVRCharacterController::ResetDoOnce);
-		}
+		//Menu Activation
+		EnhancedInputComponent->BindAction(menu_Left, ETriggerEvent::Started, this, &AVRCharacterController::ActivateMenu);
+		EnhancedInputComponent->BindAction(menu_Right, ETriggerEvent::Started, this, &AVRCharacterController::ActivateMenu);
+
+		//Simulate Mouse Click
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Started, this, &AVRCharacterController::SimulateClickLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetClickLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Completed, this, &AVRCharacterController::ResetClickLeft);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Started, this, &AVRCharacterController::SimulateClickRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Canceled, this, &AVRCharacterController::ResetClickRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Completed, this, &AVRCharacterController::ResetClickRight);
+
+		EnhancedInputComponent->BindAction(turn, ETriggerEvent::Triggered, this, &AVRCharacterController::SmoothTurn);
+		EnhancedInputComponent->BindAction(turn, ETriggerEvent::Completed, this, &AVRCharacterController::ResetDoOnce);
 	}
 }
