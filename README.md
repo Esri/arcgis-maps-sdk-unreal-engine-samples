@@ -5,15 +5,15 @@
 Here is an Unreal Engine 5 project containing a set of samples showing you how to accomplish various things using the combined features of Unreal Engine 5 and the ArcGIS Maps SDK for Unreal Engine. The `main` branch is configured to work with our most recent release (1.3.0) if you want to use the sample repo with an older release check out the corresponding tag of the sample repo, `git checkout 1.0.0` for the sample repo that worked with our 1.0.0 release.
 
 ### Note
-This repository is made up of two seperate Unreal Engine projects. If you would like to see the samples made for regular use such as Feature Layer and Routing, please use and setup the **sample_project**. If you are interested in XR Samples such as, Virtual Reality Sample and a XR version of our Table Top Sample (coming soon), please use and setup the **xr_sample_project**. Both projects may be used and setup simultaneously, but they do not have the same samples. 
+This repository is made up of two seperate Unity projects. If you would like to see the samples made for regular use such as Feature Layer and Routing, please use and set up the **sample_project**. If you are interested in XR Samples such as, the Virtual Reality Sample and the XR version of our Table Top Sample (coming soon), please use and set up the **xr_sample_project**. Both projects may be used and set up simultaneously, but they do not contain the same samples. 
 
 ### Requirements for Sample Project
-* Computer Running Windows or MacOS
+* Computer running Windows or macOS
 * The minimum version of Unreal Engine supported for the project is 5.0 but works with 5.1, 5.2, and 5.3
 * ArcGISMaps SDK for Unreal Engine
 
 ### Requirements for XR Sample Project
-* Computer Running Windows (OpenXR is not supported on MacOS)
+* Computer running Windows (OpenXR is not supported on macOS)
 * The minimum version of Unreal Engine supported for the project is 5.3 but will support new versions as they come out
 * ArcGISMaps SDK for Unreal Engine
 * A VR Headset and the necessary software to through Desktop Mode
