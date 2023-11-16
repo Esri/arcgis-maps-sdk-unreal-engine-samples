@@ -16,7 +16,7 @@ This repository is composed of two separate Unity projects. If you would like to
 * Computer running Windows (OpenXR is not supported on macOS)
 * The minimum version of Unreal Engine supported for the project is 5.3 but will support new versions as they come out
 * ArcGISMaps SDK for Unreal Engine
-* A VR Headset and the necessary software to through Desktop Mode
+* A VR Headset and the necessary software to run through Desktop Mode
 
 ## Features in Sample Project
 
