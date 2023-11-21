@@ -12,22 +12,22 @@ UCLASS()
 class SAMPLE_PROJECT_API AStreamLayerQuery : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	AStreamLayerQuery();
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FPlaneFeature> PlaneFeatures;
-	
+
 private:
 	void Connect();
 	void TryParseAndUpdatePlane(FString data);
 	void DisplayPlaneData();
-	
+
 	TArray<AActor*> planes;
 	float timeToLive = 3.0f;
 	TSharedPtr<IWebSocket> WebSocket;
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;	
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

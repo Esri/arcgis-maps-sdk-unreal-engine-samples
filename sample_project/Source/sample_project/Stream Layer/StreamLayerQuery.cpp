@@ -8,28 +8,24 @@
 AStreamLayerQuery::AStreamLayerQuery()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 void AStreamLayerQuery::Connect()
 {
 	WebSocket = FWebSocketsModule::Get().CreateWebSocket("wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/subscribe");
-	
-	WebSocket->OnConnected().AddLambda([]() -> void
-	{
+
+	WebSocket->OnConnected().AddLambda([]() -> void {
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "Connected");
 	});
-    
-	WebSocket->OnConnectionError().AddLambda([](const FString & Error) -> void
-	{
+
+	WebSocket->OnConnectionError().AddLambda([](const FString& Error) -> void {
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "Not Connected" + Error);
 	});
-	
-	WebSocket->OnMessage().AddLambda([this](const FString & Message) -> void
-	{
+
+	WebSocket->OnMessage().AddLambda([this](const FString& Message) -> void {
 		TryParseAndUpdatePlane(Message);
 	});
-	
+
 	WebSocket->Connect();
 }
 
@@ -60,8 +56,9 @@ void AStreamLayerQuery::DisplayPlaneData()
 	for (auto i = 0; i < PlaneFeatures.Num(); i++)
 	{
 		FString name = "PlaneController_" + FString::FromInt(i);
-		if(auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, true))
+		if (auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, true))
 		{
+			//GetDeltaSeconds() * 1000 converts miliseconds to seconds
 			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 1000);
 			Plane->LocationComponent->SetPosition(Plane->predictedPoint);
 		}
@@ -69,18 +66,18 @@ void AStreamLayerQuery::DisplayPlaneData()
 		{
 			FActorSpawnParameters SpawnInfo;
 			auto gObj = GetWorld()->SpawnActor<APlaneController>
-			(
-				APlaneController::StaticClass(),
-				GetActorLocation(),
-				GetActorRotation(),
-				SpawnInfo
-			);
+				(
+					APlaneController::StaticClass(),
+					GetActorLocation(),
+					GetActorRotation(),
+					SpawnInfo
+					);
 			gObj->featureData = PlaneFeatures[i];
 			planes.Add(gObj);
 			gObj->SetActorLabel(*PlaneFeatures[i].attributes.Name);
 			gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-			PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
-			UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+				PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
+				UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 		}
 	}
 }
@@ -98,5 +95,3 @@ void AStreamLayerQuery::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	WebSocket->Close();
 	PlaneFeatures.Empty();
 }
-
-

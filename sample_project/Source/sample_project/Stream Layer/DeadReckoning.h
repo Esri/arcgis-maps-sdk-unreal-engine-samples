@@ -10,8 +10,8 @@ UCLASS()
 class SAMPLE_PROJECT_API ADeadReckoning : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ADeadReckoning();
 	static double ToRadians(double degrees);

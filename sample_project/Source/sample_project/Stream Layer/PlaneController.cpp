@@ -19,18 +19,19 @@ APlaneController::APlaneController()
 void APlaneController::PredictPoint(double intervalMilliseconds)
 {
 	auto cGroundSpeedKnots = featureData.attributes.speed;
+	//0.541 m/s = conversion rate for Ground speed Knots to meters per second
 	auto metersPerSec = cGroundSpeedKnots * 0.51444444444;
 	auto simulationSpeedFactor = 1.5;
 	auto timespanSec = (intervalMilliseconds / 1000.0) * simulationSpeedFactor;
-	TArray<double> currentPoint = { featureData.predictedPoint.x, featureData.predictedPoint.y, featureData.predictedPoint.z };
+	TArray<double> currentPoint = {featureData.predictedPoint.x, featureData.predictedPoint.y, featureData.predictedPoint.z};
 	auto headingDegrees = featureData.attributes.heading;
 	auto drPoint = ADeadReckoning::DeadReckoningPoint(metersPerSec, timespanSec, currentPoint, headingDegrees);
 	featureData.predictedPoint.x = drPoint[0];
 	featureData.predictedPoint.y = drPoint[1];
 	featureData.predictedPoint.z = currentPoint[2];
 	predictedPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-			featureData.predictedPoint.x, featureData.predictedPoint.y, featureData.predictedPoint.z,
-			UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
+		featureData.predictedPoint.x, featureData.predictedPoint.y, featureData.predictedPoint.z,
+		UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
 }
 
 FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, float heading, float speed, FDateTime dateTimeStamp)
@@ -48,4 +49,3 @@ FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, 
 	planeFeature.predictedPoint.z = planeFeature.Geometry.z;
 	return planeFeature;
 }
-

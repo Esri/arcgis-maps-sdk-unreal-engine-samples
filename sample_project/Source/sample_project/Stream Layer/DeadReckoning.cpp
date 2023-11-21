@@ -6,7 +6,6 @@
 ADeadReckoning::ADeadReckoning()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 double ADeadReckoning::ToRadians(double degrees)
@@ -25,8 +24,8 @@ double ADeadReckoning::DistanceFromLatLon(double lon1, double lat1, double lon2,
 	auto radLat1 = ToRadians(lat1);
 	auto radLon2 = ToRadians(lon2);
 	auto radLat2 = ToRadians(lat2);
-	return FMath::Acos(FMath::Sin(radLat1) * FMath::Sin(radLat2) + FMath::Cos(radLat1) * FMath::Cos(radLat2) * FMath::Cos(radLon2 - radLon1)) * earthRadiusMeters;
-	
+	return FMath::Acos(FMath::Sin(radLat1) * FMath::Sin(radLat2) + FMath::Cos(radLat1) * FMath::Cos(radLat2) * FMath::Cos(radLon2 - radLon1)) *
+	       earthRadiusMeters;
 }
 
 TArray<double> ADeadReckoning::DeadReckoningPoint(double speed, double timespan, TArray<double> currentPoint, double headingDegrees)
@@ -48,7 +47,8 @@ TArray<double> ADeadReckoning::MoveByDistanceAndHeading(TArray<double> currentPo
 	auto startLatSin = FMath::Sin(startLatRad);
 
 	auto endLatRads = FMath::Asin((startLatSin * distRatioCosine) + (startLatCos * distRatioSine * FMath::Cos(ToRadians(headingDegrees))));
-	auto endLonRads = startLonRad + FMath::Atan2(FMath::Sin(ToRadians(headingDegrees)) * distRatioSine * startLatCos, distRatioCosine - startLatSin * FMath::Sin(endLatRads));
+	auto endLonRads = startLonRad + FMath::Atan2(FMath::Sin(ToRadians(headingDegrees)) * distRatioSine * startLatCos,
+	                                             distRatioCosine - startLatSin * FMath::Sin(endLatRads));
 
 	auto newLong = ToDegrees(endLonRads);
 	auto newLat = ToDegrees(endLatRads);
@@ -95,4 +95,3 @@ TArray<double> ADeadReckoning::MoveTowards(TArray<double> targetLocation, TArray
 	}
 	return MoveByDistanceAndHeading(currentLocation, distance, iBearing);
 }
-

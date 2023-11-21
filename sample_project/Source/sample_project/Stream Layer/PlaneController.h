@@ -12,6 +12,7 @@ USTRUCT(BlueprintType)
 struct FPlaneProperties
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString Name;
@@ -27,6 +28,7 @@ USTRUCT(BlueprintType)
 struct FPlaneGeometry
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	double x;
@@ -40,6 +42,7 @@ USTRUCT(BlueprintType)
 struct FPlaneFeature
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FPlaneProperties attributes;
@@ -55,8 +58,8 @@ UCLASS()
 class SAMPLE_PROJECT_API APlaneController : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	APlaneController();
 	void PredictPoint(double intervalMilliseconds);
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
@@ -64,6 +67,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UArcGISLocationComponent* LocationComponent;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	UStaticMesh* planeModel = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
+	UStaticMesh* planeModel = LoadObject<UStaticMesh>(
+		nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
 	UArcGISPoint* predictedPoint;
 };
