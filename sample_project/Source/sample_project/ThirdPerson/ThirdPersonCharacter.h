@@ -23,6 +23,7 @@
 #include "ArcGISMapsSDK/Components/ArcGISCameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ThirdPersonCharacter.generated.h"
 
 UCLASS()
@@ -36,6 +37,8 @@ public:
 		USpringArmComponent* CameraBoom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UArcGISCameraComponent* FollowCamera;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		UArcGISLocationComponent* LocationComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 		UInputMappingContext* MappingContext;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")

@@ -39,6 +39,9 @@ AThirdPersonCharacter::AThirdPersonCharacter()
 	FollowCamera = CreateDefaultSubobject<UArcGISCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
+	LocationComponent->SetupAttachment(RootComponent);
 }
 
 void AThirdPersonCharacter::BeginPlay()
