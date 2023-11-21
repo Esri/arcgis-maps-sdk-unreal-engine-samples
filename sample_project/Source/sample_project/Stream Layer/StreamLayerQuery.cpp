@@ -62,11 +62,8 @@ void AStreamLayerQuery::DisplayPlaneData()
 		FString name = "PlaneController_" + FString::FromInt(i);
 		if(auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, true))
 		{
-			FTimespan timespan = FDateTime::Now() - PlaneFeatures[i].attributes.dateTimeStamp.UtcNow();
 			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 1000);
-			Plane->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-			PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
-			UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+			Plane->LocationComponent->SetPosition(Plane->predictedPoint);
 		}
 		else
 		{
@@ -82,7 +79,7 @@ void AStreamLayerQuery::DisplayPlaneData()
 			planes.Add(gObj);
 			gObj->SetActorLabel(*PlaneFeatures[i].attributes.Name);
 			gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-			PlaneFeatures[i].Geometry.x, PlaneFeatures[i].Geometry.y, PlaneFeatures[i].Geometry.z,
+			PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
 			UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 		}
 	}

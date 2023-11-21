@@ -2,6 +2,7 @@
 
 
 #include "PlaneController.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "DeadReckoning.h"
 
 APlaneController::APlaneController()
@@ -12,6 +13,7 @@ APlaneController::APlaneController()
 	mesh->SetStaticMesh(planeModel);
 	mesh->SetupAttachment(RootComponent);
 	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
+	LocationComponent->SetupAttachment(RootComponent);
 }
 
 void APlaneController::PredictPoint(double intervalMilliseconds)
@@ -26,6 +28,9 @@ void APlaneController::PredictPoint(double intervalMilliseconds)
 	featureData.predictedPoint.x = drPoint[0];
 	featureData.predictedPoint.y = drPoint[1];
 	featureData.predictedPoint.z = currentPoint[2];
+	predictedPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+			featureData.predictedPoint.x, featureData.predictedPoint.y, featureData.predictedPoint.z,
+			UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
 }
 
 FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, float heading, float speed, FDateTime dateTimeStamp)

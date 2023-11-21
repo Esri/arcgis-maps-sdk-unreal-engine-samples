@@ -61,7 +61,9 @@ public:
 	void PredictPoint(double intervalMilliseconds);
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FPlaneFeature featureData;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UArcGISLocationComponent* LocationComponent;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UStaticMesh* planeModel = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
+	UArcGISPoint* predictedPoint;
 };
