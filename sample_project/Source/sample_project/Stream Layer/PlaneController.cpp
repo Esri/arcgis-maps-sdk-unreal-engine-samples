@@ -11,7 +11,7 @@ APlaneController::APlaneController()
 
 	UStaticMeshComponent* mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Plane Mesh"));
 	mesh->SetStaticMesh(planeModel);
-	mesh->SetupAttachment(RootComponent);
+	RootComponent = mesh;
 	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
 	LocationComponent->SetupAttachment(RootComponent);
 }
