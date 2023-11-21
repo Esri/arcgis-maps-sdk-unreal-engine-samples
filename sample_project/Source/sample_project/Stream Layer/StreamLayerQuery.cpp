@@ -91,6 +91,7 @@ void AStreamLayerQuery::DisplayPlaneData()
 			gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 				PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
 				UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+			gObj->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(gObj->LocationComponent->GetRotation()->GetPitch(),gObj->LocationComponent->GetRotation()->GetRoll(),PlaneFeatures[i].attributes.heading));
 		}
 	}
 }
