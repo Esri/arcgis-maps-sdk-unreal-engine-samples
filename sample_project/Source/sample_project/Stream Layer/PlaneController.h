@@ -19,6 +19,8 @@
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "GameFramework/Actor.h"
 #include "Components/StaticMeshComponent.h"
+#include "Blueprint/WidgetBlueprintGeneratedClass.h"
+#include "Components/WidgetComponent.h"
 #include "PlaneController.generated.h"
 
 USTRUCT(BlueprintType)
@@ -35,6 +37,12 @@ public:
 	float speed;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FDateTime dateTimeStamp;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FTimespan totalTime;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FTimespan timeLeft;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bActive;
 };
 
 USTRUCT(BlueprintType)
@@ -80,7 +88,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UArcGISLocationComponent* LocationComponent;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UStaticMeshComponent* mesh;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UStaticMesh* planeModel = LoadObject<UStaticMesh>(
 		nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
 	UArcGISPoint* predictedPoint;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UWidgetComponent* TextComponent;
 };

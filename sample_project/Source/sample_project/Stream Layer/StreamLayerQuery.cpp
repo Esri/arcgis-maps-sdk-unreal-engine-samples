@@ -17,10 +17,15 @@
 #include "StreamLayerQuery.h"
 #include "WebSocketsModule.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "Blueprint/UserWidget.h"
 
 AStreamLayerQuery::AStreamLayerQuery()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("WidgetBlueprint'/Game/SampleViewer/Samples/StreamLayer/UserInterface/StreamLayer_wbp.StreamLayer_wbp_C'"));
+	if (WidgetAsset.Succeeded()) {
+		UIWidgetClass = WidgetAsset.Object;
+	}
 }
 
 void AStreamLayerQuery::Connect()
@@ -28,7 +33,6 @@ void AStreamLayerQuery::Connect()
 	WebSocket = FWebSocketsModule::Get().CreateWebSocket("wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/subscribe");
 
 	WebSocket->OnConnected().AddLambda([]() -> void {
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "Connected");
 	});
 
 	WebSocket->OnConnectionError().AddLambda([](const FString& Error) -> void {
@@ -56,8 +60,12 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString data)
 		auto Name = attributes->GetStringField("ACID");
 		auto heading = attributes->GetNumberField("Heading");
 		auto speed = attributes->GetNumberField("GroundSpeedKnots");
-		long timestampMS = attributes->GetNumberField("DateTimeStamp");
+		auto timestampMS = attributes->GetNumberField("DateTimeStamp");
+		auto departure = attributes->GetNumberField("EstDepartureTime");
+		auto arrival = attributes->GetNumberField("EstArrivalTime");
 		FDateTime datetimeOffset = FDateTime::FromUnixTimestamp(timestampMS);
+		FDateTime departureTime = FDateTime::FromUnixTimestamp(departure);
+		FDateTime arrivalTime = FDateTime::FromUnixTimestamp(arrival);
 		auto dateTimeStamp = datetimeOffset.GetDate();
 		auto planeFeature = FPlaneFeature::Create(Name, x, y, z, heading, speed, dateTimeStamp);
 		PlaneFeatures.Add(planeFeature);
@@ -69,13 +77,7 @@ void AStreamLayerQuery::DisplayPlaneData()
 	for (auto i = 0; i < PlaneFeatures.Num(); i++)
 	{
 		FString name = "PlaneController_" + FString::FromInt(i);
-		if (auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, true))
-		{
-			//GetDeltaSeconds() * 1000 converts miliseconds to seconds
-			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 1000);
-			Plane->LocationComponent->SetPosition(Plane->predictedPoint);
-		}
-		else
+		if (!FindObject<APlaneController>(ANY_PACKAGE, *name, true))
 		{
 			FActorSpawnParameters SpawnInfo;
 			auto gObj = GetWorld()->SpawnActor<APlaneController>
@@ -102,6 +104,29 @@ void AStreamLayerQuery::BeginPlay()
 	Connect();
 	FTimerHandle SpawnPlanes;
 	GetWorldTimerManager().SetTimer(SpawnPlanes, this, &AStreamLayerQuery::DisplayPlaneData, 0.5f, true);
+	// Create the UI and add it to the viewport
+	if (UIWidgetClass != nullptr)
+	{
+		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+		if (UIWidget)
+		{
+			UIWidget->AddToViewport();
+		}
+	}
+}
+
+void AStreamLayerQuery::Tick(float DeltaSeconds)
+{
+	for (auto i = 0; i < PlaneFeatures.Num(); i++)
+	{
+		FString name = "PlaneController_" + FString::FromInt(i);
+		if (auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, true))
+		{
+			//GetDeltaSeconds() * 10 controlls the speed at which plane movement updates
+			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 10);
+			Plane->LocationComponent->SetPosition(Plane->predictedPoint);
+		}
+	}
 }
 
 void AStreamLayerQuery::EndPlay(const EEndPlayReason::Type EndPlayReason)

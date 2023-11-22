@@ -30,6 +30,10 @@ public:
 	AStreamLayerQuery();
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FPlaneFeature> PlaneFeatures;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UUserWidget* UIWidget;
 
 private:
 	void Connect();
@@ -42,5 +46,6 @@ private:
 
 protected:
 	virtual void BeginPlay() override;
+	void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };
