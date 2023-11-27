@@ -35,9 +35,9 @@ APlaneController::APlaneController()
 	TextComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("TextComponent"));
 	TextComponent->SetupAttachment(rootComponent);
 	TextComponent->SetWidgetClass(Widget);
-	TextComponent->SetWorldLocation(FVector(0.0f, 0.0f, 1000.0f));
+	TextComponent->SetWorldLocation(FVector(0.0f, 0.0f, 500.0f));
 	TextComponent->SetWorldRotation(FRotator(0.0f, 180.0f, 0.0f));
-	TextComponent->SetDrawSize(FVector2d(600.0f, 200.0f));
+	TextComponent->SetDrawSize(FVector2d(300.0f, 100.0f));
 }
 
 void APlaneController::PredictPoint(double intervalMilliseconds)
