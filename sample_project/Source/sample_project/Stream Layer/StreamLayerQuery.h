@@ -28,19 +28,22 @@ class SAMPLE_PROJECT_API AStreamLayerQuery : public AActor
 
 public:
 	AStreamLayerQuery();
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<FPlaneFeature> PlaneFeatures;
+	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UUserWidget* UIWidget;
 
 private:
 	void Connect();
 	void TryParseAndUpdatePlane(FString data);
-	void DisplayPlaneData();
-
-	TArray<AActor*> planes;
-	float timeToLive = 3.0f;
+	void SpawnPlane(FPlaneFeature);
+	
 	TSharedPtr<IWebSocket> WebSocket;
+	TMap<FString, APlaneController*> planeData;
 
 protected:
 	virtual void BeginPlay() override;
+	void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

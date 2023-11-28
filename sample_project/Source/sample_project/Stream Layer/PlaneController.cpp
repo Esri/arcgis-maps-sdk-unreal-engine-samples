@@ -22,11 +22,22 @@ APlaneController::APlaneController()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	UStaticMeshComponent* mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Plane Mesh"));
+	USceneComponent* rootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent = rootComponent;
+	mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Plane Mesh"));
 	mesh->SetStaticMesh(planeModel);
-	RootComponent = mesh;
+	mesh->SetWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
+	mesh->SetupAttachment(rootComponent);
 	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
-	LocationComponent->SetupAttachment(RootComponent);
+	LocationComponent->SetupAttachment(rootComponent);
+
+	UWidgetBlueprintGeneratedClass* Widget = LoadObject<UWidgetBlueprintGeneratedClass>(nullptr, TEXT("WidgetBlueprint'/Game/SampleViewer/Samples/StreamLayer/UserInterface/wbp_PlaneLabel.wbp_PlaneLabel_c'"));
+	TextComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("TextComponent"));
+	TextComponent->SetupAttachment(rootComponent);
+	TextComponent->SetWidgetClass(Widget);
+	TextComponent->SetWorldLocation(FVector(0.0f, 0.0f, 500.0f));
+	TextComponent->SetWorldRotation(FRotator(0.0f, 180.0f, 0.0f));
+	TextComponent->SetDrawSize(FVector2d(300.0f, 100.0f));
 }
 
 void APlaneController::PredictPoint(double intervalMilliseconds)
