@@ -40,6 +40,7 @@ private:
 	void TryParseAndUpdatePlane(FString data);
 	void DisplayPlaneData();
 
+	int i;
 	TArray<AActor*> planes;
 	float timeToLive = 3.0f;
 	TSharedPtr<IWebSocket> WebSocket;

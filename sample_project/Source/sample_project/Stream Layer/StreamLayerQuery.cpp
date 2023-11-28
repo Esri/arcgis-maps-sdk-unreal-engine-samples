@@ -18,6 +18,7 @@
 #include "WebSocketsModule.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 AStreamLayerQuery::AStreamLayerQuery()
 {
@@ -74,28 +75,28 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString data)
 
 void AStreamLayerQuery::DisplayPlaneData()
 {
-	for (auto i = 0; i < PlaneFeatures.Num(); i++)
+	if(PlaneFeatures.IsEmpty())
 	{
-		FString name = "PlaneController_" + FString::FromInt(i);
-		if (!FindObject<APlaneController>(ANY_PACKAGE, *name, true))
-		{
-			FActorSpawnParameters SpawnInfo;
-			auto gObj = GetWorld()->SpawnActor<APlaneController>
-				(
-					APlaneController::StaticClass(),
-					GetActorLocation(),
-					GetActorRotation(),
-					SpawnInfo
-					);
-			gObj->featureData = PlaneFeatures[i];
-			planes.Add(gObj);
-			gObj->SetActorLabel(*PlaneFeatures[i].attributes.Name);
-			gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-				PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
-				UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
-			gObj->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(gObj->LocationComponent->GetRotation()->GetPitch(),gObj->LocationComponent->GetRotation()->GetRoll(),PlaneFeatures[i].attributes.heading));
-		}
+		return;
 	}
+	
+	FActorSpawnParameters SpawnInfo;
+	auto gObj = GetWorld()->SpawnActor<APlaneController>
+		(
+			APlaneController::StaticClass(),
+			GetActorLocation(),
+			GetActorRotation(),
+			SpawnInfo
+			);
+	gObj->featureData = PlaneFeatures[i];
+	planes.Add(gObj);
+	gObj->SetActorLabel(*PlaneFeatures[i].attributes.Name);
+	gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+		PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
+		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+	gObj->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(gObj->LocationComponent->GetRotation()->GetPitch(),
+		gObj->LocationComponent->GetRotation()->GetRoll(),PlaneFeatures[i].attributes.heading));
+	i++;
 }
 
 void AStreamLayerQuery::BeginPlay()
@@ -111,18 +112,22 @@ void AStreamLayerQuery::BeginPlay()
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
+			UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetInputMode(FInputModeUIOnly());
 		}
 	}
 }
 
 void AStreamLayerQuery::Tick(float DeltaSeconds)
 {
-	for (auto i = 0; i < PlaneFeatures.Num(); i++)
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlaneController::StaticClass(), result);
+
+	for (auto Actor : result)
 	{
-		FString name = "PlaneController_" + FString::FromInt(i);
-		if (auto Plane = FindObject<APlaneController>(ANY_PACKAGE, *name, true))
+		auto Plane = Cast<APlaneController>(Actor);
+		
+		if (Plane)
 		{
-			//GetDeltaSeconds() * 10 controlls the speed at which plane movement updates
 			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 10);
 			Plane->LocationComponent->SetPosition(Plane->predictedPoint);
 		}
