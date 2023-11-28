@@ -62,24 +62,31 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString data)
 		auto heading = attributes->GetNumberField("Heading");
 		auto speed = attributes->GetNumberField("GroundSpeedKnots");
 		auto timestampMS = attributes->GetNumberField("DateTimeStamp");
-		auto departure = attributes->GetNumberField("EstDepartureTime");
-		auto arrival = attributes->GetNumberField("EstArrivalTime");
 		FDateTime datetimeOffset = FDateTime::FromUnixTimestamp(timestampMS);
-		FDateTime departureTime = FDateTime::FromUnixTimestamp(departure);
-		FDateTime arrivalTime = FDateTime::FromUnixTimestamp(arrival);
 		auto dateTimeStamp = datetimeOffset.GetDate();
 		auto planeFeature = FPlaneFeature::Create(Name, x, y, z, heading, speed, dateTimeStamp);
-		PlaneFeatures.Add(planeFeature);
+		
+		if (planeData.Contains(Name))
+		{
+			planeData[Name]->featureData = planeFeature;
+			planeData[Name]->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+		planeData[Name]->featureData.predictedPoint.x, planeData[Name]->featureData.predictedPoint.y, planeData[Name]->featureData.predictedPoint.z,
+		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+			planeData[Name]->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(planeData[Name]->LocationComponent->GetRotation()->GetPitch(),
+		planeData[Name]->LocationComponent->GetRotation()->GetRoll(),planeData[Name]->featureData.attributes.heading));
+		}
+		else
+		{
+			if(planeData.Num() < 100)
+			{
+				SpawnPlane(planeFeature);	
+			}
+		}
 	}
 }
 
-void AStreamLayerQuery::DisplayPlaneData()
+void AStreamLayerQuery::SpawnPlane(FPlaneFeature PlaneFeature)
 {
-	if(PlaneFeatures.IsEmpty())
-	{
-		return;
-	}
-	
 	FActorSpawnParameters SpawnInfo;
 	auto gObj = GetWorld()->SpawnActor<APlaneController>
 		(
@@ -88,23 +95,21 @@ void AStreamLayerQuery::DisplayPlaneData()
 			GetActorRotation(),
 			SpawnInfo
 			);
-	gObj->featureData = PlaneFeatures[i];
-	planes.Add(gObj);
-	gObj->SetActorLabel(*PlaneFeatures[i].attributes.Name);
+	gObj->featureData = PlaneFeature;
+	gObj->SetActorLabel(*PlaneFeature.attributes.Name);
 	gObj->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		PlaneFeatures[i].predictedPoint.x, PlaneFeatures[i].predictedPoint.y, PlaneFeatures[i].predictedPoint.z,
+		PlaneFeature.predictedPoint.x, PlaneFeature.predictedPoint.y, PlaneFeature.predictedPoint.z,
 		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 	gObj->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(gObj->LocationComponent->GetRotation()->GetPitch(),
-		gObj->LocationComponent->GetRotation()->GetRoll(),PlaneFeatures[i].attributes.heading));
-	i++;
+		gObj->LocationComponent->GetRotation()->GetRoll(),PlaneFeature.attributes.heading));
+	planeData.Add(gObj->featureData.attributes.Name, gObj);
 }
 
 void AStreamLayerQuery::BeginPlay()
 {
 	Super::BeginPlay();
 	Connect();
-	FTimerHandle SpawnPlanes;
-	GetWorldTimerManager().SetTimer(SpawnPlanes, this, &AStreamLayerQuery::DisplayPlaneData, 0.5f, true);
+	
 	// Create the UI and add it to the viewport
 	if (UIWidgetClass != nullptr)
 	{
@@ -119,17 +124,12 @@ void AStreamLayerQuery::BeginPlay()
 
 void AStreamLayerQuery::Tick(float DeltaSeconds)
 {
-	TArray<AActor*> result;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlaneController::StaticClass(), result);
-
-	for (auto Actor : result)
-	{
-		auto Plane = Cast<APlaneController>(Actor);
-		
-		if (Plane)
+	for (auto Plane : planeData)
+	{		
+		if (Plane.Value)
 		{
-			Plane->PredictPoint(GetWorld()->GetDeltaSeconds() * 10);
-			Plane->LocationComponent->SetPosition(Plane->predictedPoint);
+			Plane.Value->PredictPoint(GetWorld()->GetDeltaSeconds() * 10);
+			Plane.Value->LocationComponent->SetPosition(Plane.Value->predictedPoint);
 		}
 	}
 }
@@ -137,5 +137,4 @@ void AStreamLayerQuery::Tick(float DeltaSeconds)
 void AStreamLayerQuery::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	WebSocket->Close();
-	PlaneFeatures.Empty();
 }
