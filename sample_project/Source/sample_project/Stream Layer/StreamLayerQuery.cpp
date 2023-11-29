@@ -34,11 +34,11 @@ void AStreamLayerQuery::Connect()
 	webSocket = FWebSocketsModule::Get().CreateWebSocket(Url);
 
 	webSocket->OnConnected().AddLambda([this]() -> void {
-		ConnectionStatus = "Server Status: Connected";
+		bConnectionStatus = true;
 	});
 
 	webSocket->OnConnectionError().AddLambda([this](const FString& Error) -> void {
-		ConnectionStatus = "Server Status: Not Connected";
+		bConnectionStatus = false;
 		UE_LOG(LogTemp, Error, TEXT("Connection Error: %s"), *Error);
 	});
 
@@ -106,7 +106,14 @@ void AStreamLayerQuery::BeginPlay()
 {
 	Super::BeginPlay();
 	Connect();
-	
+
+	// Make sure mouse cursor remains visible
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PC)
+	{
+		PC->bShowMouseCursor = true;
+		PC->bEnableClickEvents = true;
+	}
 	// Create the UI and add it to the viewport
 	if (UIWidgetClass != nullptr)
 	{
@@ -114,7 +121,7 @@ void AStreamLayerQuery::BeginPlay()
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
-			UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetInputMode(FInputModeUIOnly());
+			
 		}
 	}
 }

@@ -30,7 +30,7 @@ public:
 	AStreamLayerQuery();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FString ConnectionStatus;
+	bool bConnectionStatus;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
