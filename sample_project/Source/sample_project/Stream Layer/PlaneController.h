@@ -32,15 +32,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString Name;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float heading;
+	float Heading;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float speed;
+	float Speed;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FDateTime dateTimeStamp;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FTimespan totalTime;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FTimespan timeLeft;
+	FDateTime DateTimeStamp;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bActive;
 };
@@ -52,11 +48,11 @@ struct FPlaneGeometry
 
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	double x;
+	double X;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	double y;
+	double Y;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	double z;
+	double Z;
 };
 
 USTRUCT(BlueprintType)
@@ -66,11 +62,11 @@ struct FPlaneFeature
 
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FPlaneProperties attributes;
+	FPlaneProperties Attributes;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FPlaneGeometry Geometry;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FPlaneGeometry predictedPoint;
+	FPlaneGeometry PredictedPoint;
 
 	static FPlaneFeature Create(FString name, double x, double y, double z, float heading, float speed, FDateTime dateTimeStamp);
 };
@@ -84,15 +80,15 @@ public:
 	APlaneController();
 	void PredictPoint(double intervalMilliseconds);
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	FPlaneFeature featureData;
+	FPlaneFeature FeatureData;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UArcGISLocationComponent* LocationComponent;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	UStaticMeshComponent* mesh;
+	UStaticMeshComponent* Mesh;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	UStaticMesh* planeModel = LoadObject<UStaticMesh>(
+	UStaticMesh* PlaneModel = LoadObject<UStaticMesh>(
 		nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
-	UArcGISPoint* predictedPoint;
+	UArcGISPoint* PredictedPoint;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UWidgetComponent* TextComponent;
 };

@@ -24,10 +24,10 @@ APlaneController::APlaneController()
 
 	USceneComponent* rootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = rootComponent;
-	mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Plane Mesh"));
-	mesh->SetStaticMesh(planeModel);
-	mesh->SetWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
-	mesh->SetupAttachment(rootComponent);
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Plane Mesh"));
+	Mesh->SetStaticMesh(PlaneModel);
+	Mesh->SetWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
+	Mesh->SetupAttachment(rootComponent);
 	LocationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("Location Component"));
 	LocationComponent->SetupAttachment(rootComponent);
 
@@ -42,34 +42,34 @@ APlaneController::APlaneController()
 
 void APlaneController::PredictPoint(double intervalMilliseconds)
 {
-	auto cGroundSpeedKnots = featureData.attributes.speed;
-	//0.541 m/s = conversion rate for Ground speed Knots to meters per second
+	auto cGroundSpeedKnots = FeatureData.Attributes.Speed;
+	//0.51444444444 = conversion rate for ground speed knots to meters per second
 	auto metersPerSec = cGroundSpeedKnots * 0.51444444444;
 	auto simulationSpeedFactor = 1.5;
 	auto timespanSec = (intervalMilliseconds / 1000.0) * simulationSpeedFactor;
-	TArray<double> currentPoint = {featureData.predictedPoint.x, featureData.predictedPoint.y, featureData.predictedPoint.z};
-	auto headingDegrees = featureData.attributes.heading;
+	TArray<double> currentPoint = {FeatureData.PredictedPoint.X, FeatureData.PredictedPoint.Y, FeatureData.PredictedPoint.Z};
+	auto headingDegrees = FeatureData.Attributes.Heading;
 	auto drPoint = ADeadReckoning::DeadReckoningPoint(metersPerSec, timespanSec, currentPoint, headingDegrees);
-	featureData.predictedPoint.x = drPoint[0];
-	featureData.predictedPoint.y = drPoint[1];
-	featureData.predictedPoint.z = currentPoint[2];
-	predictedPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		featureData.predictedPoint.x, featureData.predictedPoint.y, featureData.predictedPoint.z,
+	FeatureData.PredictedPoint.X = drPoint[0];
+	FeatureData.PredictedPoint.Y = drPoint[1];
+	FeatureData.PredictedPoint.Z = currentPoint[2];
+	PredictedPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+		FeatureData.PredictedPoint.X, FeatureData.PredictedPoint.Y, FeatureData.PredictedPoint.Z,
 		UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
 }
 
 FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, float heading, float speed, FDateTime dateTimeStamp)
 {
 	FPlaneFeature planeFeature;
-	planeFeature.Geometry.x = x;
-	planeFeature.Geometry.y = y;
-	planeFeature.Geometry.z = z;
-	planeFeature.attributes.Name = name;
-	planeFeature.attributes.heading = heading;
-	planeFeature.attributes.speed = speed;
-	planeFeature.attributes.dateTimeStamp = dateTimeStamp;
-	planeFeature.predictedPoint.x = planeFeature.Geometry.x;
-	planeFeature.predictedPoint.y = planeFeature.Geometry.y;
-	planeFeature.predictedPoint.z = planeFeature.Geometry.z;
+	planeFeature.Geometry.X = x;
+	planeFeature.Geometry.Y = y;
+	planeFeature.Geometry.Z = z;
+	planeFeature.Attributes.Name = name;
+	planeFeature.Attributes.Heading = heading;
+	planeFeature.Attributes.Speed = speed;
+	planeFeature.Attributes.DateTimeStamp = dateTimeStamp;
+	planeFeature.PredictedPoint.X = planeFeature.Geometry.X;
+	planeFeature.PredictedPoint.Y = planeFeature.Geometry.Y;
+	planeFeature.PredictedPoint.Z = planeFeature.Geometry.Z;
 	return planeFeature;
 }

@@ -38,9 +38,11 @@ private:
 	void Connect();
 	void TryParseAndUpdatePlane(FString data);
 	void SpawnPlane(FPlaneFeature);
-	
-	TSharedPtr<IWebSocket> WebSocket;
 	TMap<FString, APlaneController*> planeData;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	float threshold = 100;
+	FString url = "wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/subscribe";
+	TSharedPtr<IWebSocket> webSocket;
 
 protected:
 	virtual void BeginPlay() override;
