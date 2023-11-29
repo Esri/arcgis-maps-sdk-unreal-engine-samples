@@ -43,7 +43,7 @@ private:
 	TMap<FString, APlaneController*> planeData;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	float PlaneCountThreshold = 100;
-	FString url = "wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/subscribe";
+	FString Url = "wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/subscribe";
 	TSharedPtr<IWebSocket> webSocket;
 
 protected:

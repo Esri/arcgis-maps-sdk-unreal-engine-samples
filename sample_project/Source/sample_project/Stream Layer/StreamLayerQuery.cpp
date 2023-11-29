@@ -31,7 +31,7 @@ AStreamLayerQuery::AStreamLayerQuery()
 
 void AStreamLayerQuery::Connect()
 {
-	webSocket = FWebSocketsModule::Get().CreateWebSocket(url);
+	webSocket = FWebSocketsModule::Get().CreateWebSocket(Url);
 
 	webSocket->OnConnected().AddLambda([this]() -> void {
 		ConnectionStatus = "Server Status: Connected";
