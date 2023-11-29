@@ -47,10 +47,10 @@ void AStreamLayerQuery::Connect()
 	webSocket->Connect();
 }
 
-void AStreamLayerQuery::TryParseAndUpdatePlane(FString data)
+void AStreamLayerQuery::TryParseAndUpdatePlane(FString Data)
 {
 	TSharedPtr<FJsonObject> JsonParsed;
-	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(data);
+	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(Data);
 	if (FJsonSerializer::Deserialize(JsonReader, JsonParsed))
 	{
 		auto attributes = JsonParsed->GetObjectField("attributes");
