@@ -39,6 +39,7 @@ void AStreamLayerQuery::Connect()
 
 	webSocket->OnConnectionError().AddLambda([this](const FString& Error) -> void {
 		ConnectionStatus = "Server Status: Not Connected";
+		UE_LOG(LogTemp, Error, TEXT("Connection Error: %s"), *Error);
 	});
 
 	webSocket->OnMessage().AddLambda([this](const FString& Message) -> void {
@@ -70,15 +71,10 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString Data)
 		if (planeData.Contains(name))
 		{
 			planeData[name]->FeatureData = planeFeature;
-			planeData[name]->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		planeData[name]->FeatureData.Geometry.X, planeData[name]->FeatureData.Geometry.Y, planeData[name]->FeatureData.Geometry.Z,
-		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
-			planeData[name]->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(planeData[name]->LocationComponent->GetRotation()->GetPitch(),
-		planeData[name]->LocationComponent->GetRotation()->GetRoll(),planeData[name]->FeatureData.Attributes.Heading));
 		}
 		else
 		{
-			if(planeData.Num() < threshold)
+			if(planeData.Num() < PlaneCountThreshold)
 			{
 				SpawnPlane(planeFeature);	
 			}
