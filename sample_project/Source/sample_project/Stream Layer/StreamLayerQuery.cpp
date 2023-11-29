@@ -33,11 +33,12 @@ void AStreamLayerQuery::Connect()
 {
 	webSocket = FWebSocketsModule::Get().CreateWebSocket(url);
 
-	webSocket->OnConnected().AddLambda([]() -> void {
+	webSocket->OnConnected().AddLambda([this]() -> void {
+		ConnectionStatus = "Server Status: Connected";
 	});
 
-	webSocket->OnConnectionError().AddLambda([](const FString& Error) -> void {
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "Not Connected" + Error);
+	webSocket->OnConnectionError().AddLambda([this](const FString& Error) -> void {
+		ConnectionStatus = "Server Status: Not Connected";
 	});
 
 	webSocket->OnMessage().AddLambda([this](const FString& Message) -> void {
@@ -70,7 +71,7 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString Data)
 		{
 			planeData[name]->FeatureData = planeFeature;
 			planeData[name]->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		planeData[name]->FeatureData.PredictedPoint.X, planeData[name]->FeatureData.PredictedPoint.Y, planeData[name]->FeatureData.PredictedPoint.Z,
+		planeData[name]->FeatureData.Geometry.X, planeData[name]->FeatureData.Geometry.Y, planeData[name]->FeatureData.Geometry.Z,
 		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 			planeData[name]->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(planeData[name]->LocationComponent->GetRotation()->GetPitch(),
 		planeData[name]->LocationComponent->GetRotation()->GetRoll(),planeData[name]->FeatureData.Attributes.Heading));
@@ -98,7 +99,7 @@ void AStreamLayerQuery::SpawnPlane(FPlaneFeature PlaneFeature)
 	planeActor->FeatureData = PlaneFeature;
 	planeActor->SetActorLabel(*PlaneFeature.Attributes.Name);
 	planeActor->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		PlaneFeature.PredictedPoint.X, PlaneFeature.PredictedPoint.Y, PlaneFeature.PredictedPoint.Y,
+		PlaneFeature.Geometry.X, PlaneFeature.Geometry.Y, PlaneFeature.Geometry.Y,
 		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 	planeActor->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(planeActor->LocationComponent->GetRotation()->GetPitch(),
 		planeActor->LocationComponent->GetRotation()->GetRoll(),PlaneFeature.Attributes.Heading));

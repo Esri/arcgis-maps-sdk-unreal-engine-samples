@@ -29,6 +29,8 @@ class SAMPLE_PROJECT_API AStreamLayerQuery : public AActor
 public:
 	AStreamLayerQuery();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FString ConnectionStatus;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
