@@ -1,6 +1,6 @@
 # Subscribe to a stream service
 
-Subscribe to the stream service's WebSocket and receive information through to update information in real-time.
+Subscribe to the stream service's WebSocket and receive information through to update information in real time.
 
 ![Stream layer](StreamLayer.png)
 
