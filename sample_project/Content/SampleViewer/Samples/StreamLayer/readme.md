@@ -16,7 +16,7 @@ The camera moves to the plane position and you see the flight number.
 
 ## How to use the sample (Sample Viewer)
 
-1. The **Sample Viewer** should be open by default. If not, open the **Sample Viewer Level**.
+1. The **Sample Viewer** should open by default. If not, open the **Sample Viewer Level**.
 2. Click play.
 3. Set your API Key in the window.
 4. Click the drop-down and select the Stream Layer sample from the list to open it.
