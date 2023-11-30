@@ -51,7 +51,7 @@ These new game objects are then used to populate the drop-down list, allowing yo
 
 ## About the data
 
-This sample uses the [plane location stream service](https://geoeventsample1.esri.com:6443/arcgis/rest/services/FAAStream/StreamServer) sample. This data was recorded in the past and played back in real-time. It is not a live update of the current air traffic. 
+This sample uses the [plane location stream service](https://geoeventsample1.esri.com:6443/arcgis/rest/services/FAAStream/StreamServer) sample. This data was recorded in the past and played back in real time. It is not a live update of the current air traffic. 
 
 To publish your own streams of data, please refer to the [ArcGIS GeoEvent Server](https://enterprise.arcgis.com/en/geoevent/latest/get-started/what-is-arcgis-geoevent-server.htm) documentation.
 
