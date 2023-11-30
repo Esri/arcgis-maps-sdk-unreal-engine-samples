@@ -35,7 +35,7 @@ wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/su
 
 In this sample, the ArcGIS GeoEvent Server returns information from flights over the United States, including location and flight number, to update game objects in real-time.
 
-The service of this sample uses mocked information so it is not accurate in real-time although the workflow is the same for using a service with real-time information.
+The service of this sample uses mocked information so it is not accurate in real time although the workflow is the same for using a service with real-time information.
 
 ### Making the connection
 
