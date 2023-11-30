@@ -29,11 +29,7 @@ public:
 	ADeadReckoning();
 	static double ToRadians(double degrees);
 	static double ToDegrees(double radians);
-	static double DistanceFromLatLon(double lon1, double lat1, double lon2, double lat2);
 	static TArray<double> DeadReckoningPoint(double speed, double timespan, TArray<double> currentPoint, double headingDegrees);
 	static TArray<double> MoveByDistanceAndHeading(TArray<double> currentPoint, double distanceMeters, double headingDegrees);
-	static double InitialBearingTo(TArray<double> orgPoint, TArray<double> dstPoint);
 	static double Wrap360(int degrees);
-	static TArray<double> MoveTowards(TArray<double> targetLocation, TArray<double> currentLocation, double maxDistanceDelta);
-	inline static double earthRadiusMeters = 6356752.3142;
 };

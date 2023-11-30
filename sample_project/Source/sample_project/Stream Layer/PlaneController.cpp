@@ -45,7 +45,7 @@ void APlaneController::PredictPoint(double intervalMilliseconds)
 	auto cGroundSpeedKnots = FeatureData.Attributes.Speed;
 	//0.51444444444 = conversion rate for ground speed knots to meters per second
 	auto metersPerSec = cGroundSpeedKnots * 0.51444444444;
-	auto simulationSpeedFactor = 1.5;
+	auto simulationSpeedFactor = 0.01;
 	auto timespanSec = (intervalMilliseconds / 1000.0) * simulationSpeedFactor;
 	TArray<double> currentPoint = {FeatureData.PredictedPoint.X, FeatureData.PredictedPoint.Y, FeatureData.PredictedPoint.Z};
 	auto headingDegrees = FeatureData.Attributes.Heading;

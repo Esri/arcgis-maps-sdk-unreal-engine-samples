@@ -17,10 +17,10 @@
 
 #include "CoreMinimal.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
-#include "GameFramework/Actor.h"
-#include "Components/StaticMeshComponent.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
+#include "Components/StaticMeshComponent.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/Actor.h"
 #include "PlaneController.generated.h"
 
 USTRUCT(BlueprintType)

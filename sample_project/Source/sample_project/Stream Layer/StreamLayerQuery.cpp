@@ -15,10 +15,10 @@
 
 
 #include "StreamLayerQuery.h"
-#include "WebSocketsModule.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "WebSocketsModule.h"
 
 AStreamLayerQuery::AStreamLayerQuery()
 {
@@ -84,13 +84,13 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString Data)
 
 void AStreamLayerQuery::SpawnPlane(FPlaneFeature PlaneFeature)
 {
-	FActorSpawnParameters SpawnInfo;
+	FActorSpawnParameters spawnInfo;
 	auto planeActor = GetWorld()->SpawnActor<APlaneController>
 		(
 			APlaneController::StaticClass(),
 			GetActorLocation(),
 			GetActorRotation(),
-			SpawnInfo
+			spawnInfo
 			);
 	planeActor->FeatureData = PlaneFeature;
 	planeActor->SetActorLabel(*PlaneFeature.Attributes.Name);
@@ -129,10 +129,10 @@ void AStreamLayerQuery::BeginPlay()
 void AStreamLayerQuery::Tick(float DeltaSeconds)
 {
 	for (auto Plane : planeData)
-	{		
+	{
 		if (Plane.Value)
 		{
-			Plane.Value->PredictPoint(GetWorld()->GetDeltaSeconds() * 10);
+			Plane.Value->PredictPoint(DeltaSeconds * 1000);
 			Plane.Value->LocationComponent->SetPosition(Plane.Value->PredictedPoint);
 		}
 	}
