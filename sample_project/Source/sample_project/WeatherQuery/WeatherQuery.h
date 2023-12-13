@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Http.h"
 #include "GameFramework/Actor.h"
+#include "sample_project/Geocoding/Geocoder.h"
 #include "WeatherQuery.generated.h"
 
 USTRUCT(BlueprintType)
@@ -31,6 +32,8 @@ public:
 	FString stationName;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString weather;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	float tempurature;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FCoordinates coordinates;
 };
@@ -49,19 +52,24 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bDataUpdate;
+	AGeocoder* Geocoder;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<FWeatherData> weather;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UUserWidget* UIWidget;
-
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<FString> CityNames;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
+	void GetCityNames();
 	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
-
+	void SendCityQuery(float X, float Y);
+	void ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	FString webLink = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?f=geojson&where=1=1&outfields=*";
 };
