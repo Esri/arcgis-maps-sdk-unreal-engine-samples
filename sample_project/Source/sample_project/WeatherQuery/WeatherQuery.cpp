@@ -105,7 +105,10 @@ void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpRespo
 	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 	{
 		auto address = ResponseObj->GetObjectField("address");
-		CityNames.Add(address->GetStringField("City"));
+		if (address->GetStringField("City").Len() > 0)
+		{
+			CityNames.Add(address->GetStringField("City") + ", " + address->GetStringField("RegionAbbr"));	
+		}
 	}
 }
 
@@ -115,6 +118,8 @@ void AWeatherQuery::GetCityNames()
 	{
 		SendCityQuery(Item.coordinates.longitude, Item.coordinates.latitude);
 	}
+
+	CityNames.Sort();
 }
 
 
