@@ -37,8 +37,6 @@ public:
 		USpringArmComponent* CameraBoom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UArcGISCameraComponent* FollowCamera;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UArcGISLocationComponent* LocationComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
 		UInputMappingContext* MappingContext;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enhanced Input")
