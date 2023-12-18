@@ -93,6 +93,9 @@ void AStreamLayerQuery::SpawnPlane(FPlaneFeature PlaneFeature)
 			spawnInfo
 			);
 	planeActor->FeatureData = PlaneFeature;
+#if WITH_EDITOR
+	planeActor->SetActorLabel(*PlaneFeature.Attributes.Name);
+#endif
 	planeActor->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 		PlaneFeature.Geometry.X, PlaneFeature.Geometry.Y, PlaneFeature.Geometry.Y,
 		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
