@@ -24,12 +24,12 @@ Get the ID for individual buildings in a Level.
 1. Create an ArcGIS Map.
 2. Add an **ArcGISPawn** to the Level.
 3. Within the HitTest folder, drag the ArcGISRaycast Blueprint into the Level.
-4. In the UI folder within the HitTest folder, drag the bp_featureId actor into the Level.
-5. In the outliner, click on the ArcGISRaycast Actor.
-6. Add a Speher Static Mesh Actor into the Level and call it 'HitLocation'.
-7. For each of these variables, click on the drop down and add the respective actor as it's reference.![Image of Variables](RaycastComponent.png)
-8. Enter your **APIKey** in the **APIMapCreator**.
-9. Hit play. Once the Level is running hold shift and click a building. The building's ID's will show up in a debug on screen. 
+4. In the UI folder within the HitTest folder, drag the bp_featureId Actor into the Level.
+5. Add a Speher Static Mesh Actor into the Level and call it 'HitLocation'.
+6. In the outliner, click on the ArcGISRaycast Actor.
+7. Navigate to the Default sections in the Details Panel. For each variable shown in the image, click on the drop-down and add the respective Actor as its reference.[Image of Variables](RaycastComponent.png)
+8. Enter your **APIKey** in the **Map Component**.
+9. Hit Play. Once the Level is running, hold Shift and click a building. The building's ID will show up in a debug on screen. 
 
 ## About the data
 
