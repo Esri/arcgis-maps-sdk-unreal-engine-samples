@@ -27,7 +27,7 @@ Get the ID for individual buildings in a Level.
 4. In the UI folder within the HitTest folder, drag the bp_featureId Actor into the Level.
 5. Add a Speher Static Mesh Actor into the Level and call it 'HitLocation'.
 6. In the outliner, click on the ArcGISRaycast Actor.
-7. Navigate to the Default sections in the Details Panel. For each variable shown in the image, click on the drop-down and add the respective Actor as its reference.[Image of Variables](RaycastComponent.png)
+7. Navigate to the Default sections in the Details Panel. For each variable shown in the image, click on the drop-down and add the respective Actor as its reference.![Image of Variables](RaycastComponent.png)
 8. Enter your **APIKey** in the **Map Component**.
 9. Hit Play. Once the Level is running, hold Shift and click a building. The building's ID will show up in a debug on screen. 
 
