@@ -23,12 +23,13 @@ Get the ID for individual buildings in a scene.
 
 1. Create an ArcGIS Map.
 2. Add an **ArcGISPawn** to the scene.
-3. Within the Level Blueprint, create an Input mapping. Off the **Pressed** node, drag off and create a **Line Trace by Channel**.
-4. Drag off the Exec node, and create an **ArcGISRaycast Hit**.
-5. Break the **ArcGISRaycast Hit Result** and drag off the **FeatureID** node.
-6. Convert this integer to a string, and connect it to a print node.
-7. Enter your **APIKey** in the **APIMapCreator**.
-8. Hit play. Once the scene is running click a building. The building's ID's will show up in a debug on screen. 
+3. Within the HitTest folder, drag the ArcGISRaycast Blueprint into the scene.
+4. In the UI folder within the HitTest folder, drag the bp_featureId actor into the scene.
+5. In the outliner, click on the ArcGISRaycast Actor.
+6. Add a Speher Static Mesh Actor into the scene and call it 'HitLocation'.
+7. For each of these variables, click on the drop down and add the respective actor as it's reference.
+8. Enter your **APIKey** in the **APIMapCreator**.
+9. Hit play. Once the scene is running hold shift and click a building. The building's ID's will show up in a debug on screen. 
 
 ## About the data
 
