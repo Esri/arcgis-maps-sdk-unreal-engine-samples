@@ -31,7 +31,7 @@ Get the ID for individual buildings in a Level.
 
 ![Image of Variables](RaycastComponent.png)
 
-8. Enter your **APIKey** in the **Map Component**.
+8. Select the **ArcGISMap** Actor in the Outliner panel, and enter your **APIKey** in the Authentication section in the Details panel.
 9. Hit Play. Once the Level is running, hold Shift and click a building. The building's ID will show up in a debug on screen. 
 
 ## About the data
