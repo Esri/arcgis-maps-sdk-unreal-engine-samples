@@ -36,7 +36,7 @@ Get the ID for individual buildings in a Level.
 
 ## About the data
 
-Building models for New York are loaded from a [3D object Level layer](https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/New_York_LoD2_3D_Buildings/LevelServer/layers/0) hosted by Esri.
+Building models for New York are loaded from a [3D object Level layer](https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/New_York_LoD2_3D_Buildings/SceneServer/layers/0) hosted by Esri.
 
 Elevation data is loaded from the [Terrain 3D elevation layer](https://www.arcgis.com/home/item.html?id=7029fb60158543ad845c7e1527af11e4) hosted by Esri.
 
