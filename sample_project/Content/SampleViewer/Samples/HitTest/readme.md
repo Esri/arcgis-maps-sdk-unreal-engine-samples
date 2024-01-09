@@ -25,7 +25,7 @@ Get the ID for individual buildings in a Level.
 2. Add an **ArcGISPawn** to the Level.
 3. Within the HitTest folder, drag the ArcGISRaycast Blueprint into the Level.
 4. In the UI folder within the HitTest folder, drag the bp_featureId Actor into the Level.
-5. Add a Speher Static Mesh Actor into the Level and call it 'HitLocation'.
+5. Add a Sphere Static Mesh Actor into the Level and call it 'HitLocation'.
 6. In the Outliner panel, select the ArcGISRaycast Actor.
 7. Navigate to the Default sections in the Details Panel. For each variable shown in the image, click on the drop-down and add the respective Actor as its reference.
 
