@@ -5,6 +5,7 @@
 
 #include "Blueprint/UserWidget.h"
 
+
 // Sets default values
 AWeatherQuery::AWeatherQuery()
 {
@@ -69,6 +70,7 @@ void AWeatherQuery::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 //Process the request in order to get the data
 void AWeatherQuery::ProcessWebRequest()
 {
+	weather.Empty();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AWeatherQuery::OnResponseRecieved);
 	Request->SetURL(webLink);
@@ -96,6 +98,7 @@ void AWeatherQuery::SendCityQuery(float X, float Y)
 
 void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
+	cityName = "";
 	// Check if the query was successful
 	TSharedPtr<FJsonObject> ResponseObj;
 	const auto ResponseBody = Response->GetContentAsString();
@@ -107,21 +110,10 @@ void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpRespo
 		auto address = ResponseObj->GetObjectField("address");
 		if (address->GetStringField("City").Len() > 0)
 		{
-			CityNames.Add(address->GetStringField("City") + ", " + address->GetStringField("RegionAbbr"));	
+			cityName = address->GetStringField("City") + ", " + address->GetStringField("RegionAbbr");	
 		}
 	}
 }
-
-void AWeatherQuery::GetCityNames()
-{
-	for (auto Item : weather)
-	{
-		SendCityQuery(Item.coordinates.longitude, Item.coordinates.latitude);
-	}
-
-	CityNames.Sort();
-}
-
 
 // Called when the game starts or when spawned
 void AWeatherQuery::BeginPlay()
@@ -129,8 +121,6 @@ void AWeatherQuery::BeginPlay()
 	Super::BeginPlay();
 	ProcessWebRequest();
 
-	FTimerHandle handle;
-	GetWorldTimerManager().SetTimer(handle, this, &AWeatherQuery::GetCityNames, 1.5f, false);
 	// Create the UI and add it to the viewport
 	if (UIWidgetClass != nullptr)
 	{
@@ -138,6 +128,9 @@ void AWeatherQuery::BeginPlay()
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
+			APlayerController* const PlayerController = UGameplayStatics::GetPlayerController(this,0);
+			PlayerController->SetInputMode(FInputModeGameAndUI());
+			PlayerController->SetShowMouseCursor(true);
 		}
 	}
 	
