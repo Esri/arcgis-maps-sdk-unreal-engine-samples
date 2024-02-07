@@ -1,6 +1,6 @@
-# Query a feature layer
+# Query Current Weather Conditions Across the U.S.A
 
-Query objects from the feature layer provided, or provide your own, in order to show them on the map.
+Query Weather Data from the Weather Stations feature layer provided in order to display weather conditions on the map.
 
 ![Image of Weather Sample](Weather.png)
 
