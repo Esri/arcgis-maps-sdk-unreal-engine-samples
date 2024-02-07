@@ -23,7 +23,6 @@
 #include "ArcGISMapsSDK/Components/ArcGISCameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ThirdPersonCharacter.generated.h"
 
 UCLASS()
