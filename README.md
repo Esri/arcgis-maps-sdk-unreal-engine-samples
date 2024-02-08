@@ -29,6 +29,7 @@ This repository is composed of two separate Unity projects. If you would like to
 * [Routing](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Routing) - Show a route between two points on a map using Esri's routing service REST API.
 * [Stream Layer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/StreamLayer) - See how to use web sockets to connect to an Esri real time service to update game objects locations in real time.
 * [Third Person Character Controller](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/ThirdPersonCharacter) - See how to run around a virtual city in Unreal Engine.
+* [Real Time Weather Query](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/RealTime_Weather) - Querry the current weather in a city using the feature layer query work flow.
 
 ## Features in XR Sample Project
 * [VR Sample](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/xr_sample_project/Content/Samples/VRSample/readme.md) - Explore different cities using Virtual Reality.
