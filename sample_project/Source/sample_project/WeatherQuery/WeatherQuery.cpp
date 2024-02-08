@@ -1,4 +1,17 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/* Copyright 2024 Esri
+*
+ * Licensed under the Apache License Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 
 #include "WeatherQuery.h"
@@ -45,21 +58,21 @@ void AWeatherQuery::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 						//this loop will take each outfield set in the scene and check to see if the outfield exists
 						//if it does exist, it will return the result of the outfield associated with this feature
 						//if it does not exist, it will return and error message in the scene
-						WeatherData.stationName = feature->GetObjectField("properties")->GetStringField("STATION_NAME");
-						WeatherData.country = feature->GetObjectField("properties")->GetStringField("COUNTRY");	
-						WeatherData.skyCondition = feature->GetObjectField("properties")->GetStringField("SKY_CONDTN");
-						WeatherData.tempurature = feature->GetObjectField("properties")->GetNumberField("TEMP");
-						WeatherData.weather = feature->GetObjectField("properties")->GetStringField("WEATHER");
+						WeatherData.StationName = feature->GetObjectField("properties")->GetStringField("STATION_NAME");
+						WeatherData.Country = feature->GetObjectField("properties")->GetStringField("COUNTRY");	
+						WeatherData.SkyCondition = feature->GetObjectField("properties")->GetStringField("SKY_CONDTN");
+						WeatherData.Tempurature = feature->GetObjectField("properties")->GetNumberField("TEMP");
+						WeatherData.Weather = feature->GetObjectField("properties")->GetStringField("WEATHER");
 						
 						//this will get the geometry or coordinates of the feature
 						auto coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
 						//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
 						//if not, it will return an error
 						//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
-						WeatherData.coordinates.longitude = coordinates[0]->AsNumber();
-						WeatherData.coordinates.latitude = coordinates[1]->AsNumber();
+						WeatherData.Coordinates.Longitude = coordinates[0]->AsNumber();
+						WeatherData.Coordinates.Latitude = coordinates[1]->AsNumber();
 						//Add the data recieved into the object and load the object into an array for use later.
-						weather.Add(WeatherData);
+						Weather.Add(WeatherData);
 					}
 				}
 			}
@@ -70,13 +83,12 @@ void AWeatherQuery::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 //Process the request in order to get the data
 void AWeatherQuery::ProcessWebRequest()
 {
-	weather.Empty();
+	Weather.Empty();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AWeatherQuery::OnResponseRecieved);
 	Request->SetURL(webLink);
 	Request->SetVerb("Get");
 	Request->ProcessRequest();
-	bDataUpdate = true;
 }
 
 void AWeatherQuery::SendCityQuery(float X, float Y)
@@ -94,11 +106,11 @@ void AWeatherQuery::SendCityQuery(float X, float Y)
 	Request->SetURL(Query);
 	Request->SetVerb("GET");
 	Request->ProcessRequest();
+	CityName = "";
 }
 
 void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
-	cityName = "";
 	// Check if the query was successful
 	TSharedPtr<FJsonObject> ResponseObj;
 	const auto ResponseBody = Response->GetContentAsString();
@@ -110,7 +122,7 @@ void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpRespo
 		auto address = ResponseObj->GetObjectField("address");
 		if (address->GetStringField("City").Len() > 0)
 		{
-			cityName = address->GetStringField("City") + ", " + address->GetStringField("RegionAbbr");	
+			CityName = address->GetStringField("City") + ", " + address->GetStringField("RegionAbbr");	
 		}
 	}
 }

@@ -22,7 +22,7 @@ Query Weather Data from the Weather Stations feature layer provided in order to 
 1. Create a new C++ class and make a http request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
 2. Create a new Blueprint Actor class
    - Create the event to place the data returned from the Weather Query.
-   - Create a function to spawn the actor according to the data received  in the query.
+   - Create a function to spawn the weather actor according to the data received in the query.
    - Attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to the weather actor blueprint class.
    - Add aditional functionality to spawn/show different **Niagra Particle Effects** based on the current weather data returned from the **Weather Query**.
 3. Create a widget for the viewport so users can select a city from the list fed from the feature service.
@@ -31,7 +31,7 @@ Note: You can use `UE_LOG` to print log messages in the **Output Log** window an
 
 ## About the data
 
-Data for Current Weather in the United States [Feature Layer](https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0//query?where=COUNTRY+LIKE+%27%25United+States+of+America%27+AND+WEATHER+NOT+IN(%27No+significant+weather+present+at+this+time.%27%2C+%27Automated+observation+with+no+human+augmentation%3B+there+may+or+may+not+be+significant+weather+present+at+this+time.%27)&outFields=*&f=pgeojson) hosted by Esri.
+Data for Current Weather in the United States is fetched from a[Feature Layer](https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0//query?where=COUNTRY+LIKE+%27%25United+States+of+America%27+AND+WEATHER+NOT+IN(%27No+significant+weather+present+at+this+time.%27%2C+%27Automated+observation+with+no+human+augmentation%3B+there+may+or+may+not+be+significant+weather+present+at+this+time.%27)&outFields=*&f=pgeojson) hosted by Esri.
 Elevation data is loaded from the [Terrain 3D elevation layer](https://www.arcgis.com/home/item.html?id=7029fb60158543ad845c7e1527af11e4) hosted by Esri.
 
 ## Tags

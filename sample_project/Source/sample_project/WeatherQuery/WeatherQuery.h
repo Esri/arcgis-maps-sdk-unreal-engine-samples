@@ -1,4 +1,17 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/* Copyright 2024 Esri
+*
+ * Licensed under the Apache License Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #pragma once
 
@@ -15,9 +28,9 @@ struct SAMPLE_PROJECT_API FCoordinates
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float longitude;
+	float Longitude;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float latitude;
+	float Latitude;
 };
 
 USTRUCT(BlueprintType)
@@ -26,19 +39,17 @@ struct SAMPLE_PROJECT_API FWeatherData
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FCoordinates coordinates;
+	FCoordinates Coordinates;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString country;
+	FString Country;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString cityName;
+	FString SkyCondition;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString skyCondition;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString stationName;
+	FString StationName;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	float tempurature;
+	float Tempurature;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString weather;
+	FString Weather;
 };
 
 UCLASS()
@@ -55,12 +66,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SendCityQuery(float X, float Y);
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bDataUpdate;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	FString cityName;
+	FString CityName;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<FWeatherData> weather;
+	TArray<FWeatherData> Weather;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
