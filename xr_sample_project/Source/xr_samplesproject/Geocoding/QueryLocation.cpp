@@ -15,7 +15,6 @@
 
 #include "QueryLocation.h"
 
-#include "WidgetBlueprint.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -52,11 +51,8 @@ AQueryLocation::AQueryLocation()
 	}
 
 	// Add a text render component and set the properties
-	UWidgetBlueprintGeneratedClass* Widget = LoadObject<UWidgetBlueprintGeneratedClass>(nullptr, TEXT("WidgetBlueprint'/Game/Samples/VRSample/UserInterface/wbp_GeoCodingText.wbp_GeoCodingText_c'"));
 	TextComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("TextComponent"));
 	TextComponent->SetupAttachment(Root);
-	TextComponent->SetWidgetClass(Widget);
-	TextComponent->SetDrawSize(FVector2d(300.0f, 100.0f));
 	//TextComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
 
 	// Add an ArcGISLocation component
@@ -67,7 +63,9 @@ AQueryLocation::AQueryLocation()
 void AQueryLocation::BeginPlay()
 {
 	Super::BeginPlay();
-
+	TextComponent->SetWidgetClass(Widget);
+	TextComponent->SetDrawSize(FVector2d(300.0f, 100.0f));
+	
 	PawnActor = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	playerChar = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
