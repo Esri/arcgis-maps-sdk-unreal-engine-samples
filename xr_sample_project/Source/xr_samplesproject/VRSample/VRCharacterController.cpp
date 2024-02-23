@@ -29,10 +29,6 @@ AVRCharacterController::AVRCharacterController()
 	leftMotionController->SetTrackingSource(EControllerHand::Left);
 	leftHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Left Hand Mesh"));
 	leftHandMesh->SetupAttachment(leftMotionController);
-	leftHandMesh->RegisterComponent();
-	leftHandMesh->SetSkeletalMesh(handMesh);
-	leftHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	leftHandMesh->SetAnimClass(handAnimBP->GeneratedClass);
 	widgetLeft = CreateDefaultSubobject<UWidgetComponent>(TEXT("Left Helper"));
 	widgetLeft->SetupAttachment(leftHandMesh);
 	
@@ -41,10 +37,6 @@ AVRCharacterController::AVRCharacterController()
 	rightMotionController->SetTrackingSource(EControllerHand::Right);
 	rightHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Right Hand Mesh"));
 	rightHandMesh->SetupAttachment(rightMotionController);
-	rightHandMesh->RegisterComponent();
-	rightHandMesh->SetSkeletalMesh(handMesh);
-	rightHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	rightHandMesh->SetAnimClass(handAnimBP->GeneratedClass);
 	widgetRight = CreateDefaultSubobject<UWidgetComponent>(TEXT("Right Helper"));
 	widgetRight->SetupAttachment(rightHandMesh);
 
@@ -307,16 +299,20 @@ void AVRCharacterController::UpdateRoomScaleMovement()
 void AVRCharacterController::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	leftHandMesh->SetSkeletalMesh(handMesh);
+	leftHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	leftAnimInstanceBase = leftHandMesh->GetAnimInstance();
+	leftAnimInstance = Cast<UVRHandAnimInstance>(leftAnimInstanceBase);
+	rightHandMesh->SetSkeletalMesh(handMesh);
+	rightHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	rightAnimInstanceBase = rightHandMesh->GetAnimInstance();
+	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
+	
 	GEngine->XRSystem->SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
 	InitializeCapsuleHeight();
 	GeoCoder = Cast<AGeocoder>(UGameplayStatics::GetActorOfClass(GetWorld(), AGeocoder::StaticClass()));
-	
-	leftAnimInstanceBase = leftHandMesh->GetAnimInstance();
-	leftAnimInstance = Cast<UVRHandAnimInstance>(leftAnimInstanceBase);
-	rightAnimInstanceBase = rightHandMesh->GetAnimInstance();
-	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
 	vrWidget->SetHiddenInGame(false);
 	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
@@ -329,8 +325,6 @@ void AVRCharacterController::BeginPlay()
 		}
 	}
 
-	auto DeviceType = GEngine->XRSystem->GetHMDDevice()->GetHMDName().ToString();
-	UE_LOG(LogTemp, Warning, TEXT("Device Type: %s"), *DeviceType);
 	FTimerHandle UpdateHeight;
 	GetWorldTimerManager().SetTimer(UpdateHeight, this, &AVRCharacterController::SetCapsuleHeight, 0.35f, true);
 	FTimerHandle UpdateCapsuleLocation;

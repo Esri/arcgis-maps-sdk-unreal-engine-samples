@@ -9,7 +9,7 @@ public class xr_samplesproject : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Json" , "HTTP",
-			"EnhancedInput", "ArcGISMapsSDK", "ArcGISSamples", "UMG", "HeadMountedDisplay", "UMGEditor"});
+			"EnhancedInput", "ArcGISMapsSDK", "ArcGISSamples", "UMG", "HeadMountedDisplay"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 

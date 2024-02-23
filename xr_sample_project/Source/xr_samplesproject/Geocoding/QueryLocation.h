@@ -18,13 +18,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/TextRenderComponent.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "Blueprint/WidgetBlueprintGeneratedClass.h"
 #include "Components/WidgetComponent.h"
-#include "WidgetBlueprint.h"
 #include "QueryLocation.generated.h"
 
 UCLASS()
@@ -69,4 +68,7 @@ private:
 	UStaticMesh* PinMesh;
 	UStaticMesh* PointMesh;
 	UMaterial* PointMaterial;
+
+	UWidgetBlueprintGeneratedClass* Widget = LoadObject<UWidgetBlueprintGeneratedClass>(nullptr, TEXT("WidgetBlueprint'/Game/Samples/VRSample/UserInterface/wbp_GeoCodingText.wbp_GeoCodingText_c'"));
+
 };
