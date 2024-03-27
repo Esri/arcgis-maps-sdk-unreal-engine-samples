@@ -145,7 +145,4 @@ void AWeatherQuery::BeginPlay()
 			PlayerController->SetShowMouseCursor(true);
 		}
 	}
-	
-	FTimerHandle timerHandle;
-	GetWorldTimerManager().SetTimer(timerHandle, this, &AWeatherQuery::ProcessWebRequest, 60.0f, true);
 }

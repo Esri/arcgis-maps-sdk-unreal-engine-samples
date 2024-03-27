@@ -67,8 +67,8 @@ void ARouteManager::Tick(float DeltaTime)
 
 	// If new routing information has been received, visualize the route
 	if (bShouldUpdateBreadcrums) {
-		float TraceLength = 10000000.;
-		float HeightOffset = 200.;
+		auto TraceLength = 10000000.0f;
+		float HeightOffset = 200.0f;
 		FHitResult TraceHit;
 		FVector3d WorldLocation;
 		bool bTraceSuccess = false;
@@ -143,7 +143,7 @@ void ARouteManager::SetupInput()
 void ARouteManager::AddStop()
 {
 	float DistanceAboveGround = 50000.0f;
-	float TraceLength = 10000000.f;
+	auto TraceLength = 10000000.0f;
 	FVector WorldLocation;
 	FVector WorldDirection;
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -254,7 +254,7 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 	if (FJsonSerializer::Deserialize(Reader, JsonObj) 
 		&& Response->GetResponseCode()>199 && Response->GetResponseCode() < 300) {
 	
-		float TraceLength = 100000.;
+		auto TraceLength = 100000.0f;
 		FHitResult TraceHit;
 		FVector3d WorldLocation;
 		ABreadcrumb* BC;
