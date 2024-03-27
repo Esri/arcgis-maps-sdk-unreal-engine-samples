@@ -67,7 +67,6 @@ void ARouteManager::Tick(float DeltaTime)
 
 	// If new routing information has been received, visualize the route
 	if (bShouldUpdateBreadcrums) {
-		auto TraceLength = 10000000.0f;
 		float HeightOffset = 200.0f;
 		FHitResult TraceHit;
 		FVector3d WorldLocation;
@@ -82,9 +81,9 @@ void ARouteManager::Tick(float DeltaTime)
 
 			// Do a line trace to determine the height of breadcrumbs
 			WorldLocation = FVector3d(
-				BC->GetActorLocation().X, BC->GetActorLocation().Y, TraceLength / 2.f);
+				BC->GetActorLocation().X, BC->GetActorLocation().Y, traceLength / 2.f);
 			bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
-				WorldLocation + TraceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
+				WorldLocation + traceLength * FVector3d::DownVector, ECC_Visibility, FCollisionQueryParams());
 			WorldLocation.Z = bTraceSuccess ? TraceHit.ImpactPoint.Z + HeightOffset : 0.;
 
 			BC->SetActorLocation(WorldLocation);
@@ -143,7 +142,6 @@ void ARouteManager::SetupInput()
 void ARouteManager::AddStop()
 {
 	float DistanceAboveGround = 50000.0f;
-	auto TraceLength = 10000000.0f;
 	FVector WorldLocation;
 	FVector WorldDirection;
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -151,7 +149,7 @@ void ARouteManager::AddStop()
 
 	FHitResult TraceHit;
 	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation, 
-		WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams());
+		WorldLocation + traceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams());
 	if (!bIsRouting && bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass())
 	{
 		if (TraceHit.bBlockingHit)
@@ -253,8 +251,7 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 	// Process the response if the query was successful
 	if (FJsonSerializer::Deserialize(Reader, JsonObj) 
 		&& Response->GetResponseCode()>199 && Response->GetResponseCode() < 300) {
-	
-		auto TraceLength = 100000.0f;
+		
 		FHitResult TraceHit;
 		FVector3d WorldLocation;
 		ABreadcrumb* BC;

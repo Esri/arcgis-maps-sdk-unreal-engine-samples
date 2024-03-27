@@ -57,6 +57,7 @@ private:
 	void SetupInput();
 	void AddStop();
 
+	float traceLength = 10000000.0f;
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UUserWidget* UIWidget;
 	UArcGISMapComponent* MapComponent;
