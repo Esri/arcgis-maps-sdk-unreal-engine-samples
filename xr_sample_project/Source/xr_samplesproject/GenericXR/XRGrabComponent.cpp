@@ -18,17 +18,31 @@ void UXRGrabComponent::BeginPlay()
 	Super::BeginPlay();
 
 	SetShouldSimulateOnDrop();
-	Cast<UPrimitiveComponent>(GetAttachParent())->SetCollisionProfileName(TEXT("PhysicsActor"), true);
+	if (UPrimitiveComponent* primitive = Cast<UPrimitiveComponent>(GetAttachParent()))
+	{
+		primitive->SetCollisionProfileName(TEXT("PhysicsActor"), true);
+	}
 }
 
 EControllerHand UXRGrabComponent::GetHeldByHand()
 {
-	return	MotionControllerRef->GetTrackingSource();
+	if (MotionControllerRef->MotionSource == TEXT("LeftGrip"))
+	{
+		return	EControllerHand::Left;
+	}
+	else
+	{
+		return	EControllerHand::Right;
+	}
 }
 
 void UXRGrabComponent::SetPrimitiveCompPhysics(bool bSimulate)
 {
-	Cast<UPrimitiveComponent>(GetAttachParent())->SetSimulatePhysics(bSimulate);
+	if (UPrimitiveComponent* primitive = Cast<UPrimitiveComponent>(GetAttachParent()))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Set Primitive"));	
+		primitive->SetSimulatePhysics(bSimulate);
+	}
 }
 
 void UXRGrabComponent::SetShouldSimulateOnDrop()
@@ -48,12 +62,18 @@ bool UXRGrabComponent::TryGrab(UMotionControllerComponent* MotionController)
 		break;
 	case Free:
 		SetPrimitiveCompPhysics(false);
-		MotionController->AttachToComponent(GetAttachParent(), FAttachmentTransformRules(EAttachmentRule::KeepWorld, false));
-		bIsHeld = true;
-		break;
+		if (GetAttachParent()->AttachToComponent(MotionController, FAttachmentTransformRules(EAttachmentRule::KeepWorld, true)))
+		{
+			bIsHeld = true;
+			break;			
+		}
+		else
+		{
+			break;
+		}
 	case Snap:
 		SetPrimitiveCompPhysics(false);
-		MotionController->AttachToComponent(GetAttachParent(), FAttachmentTransformRules(EAttachmentRule::KeepWorld, false));
+		GetAttachParent()->AttachToComponent(MotionController, FAttachmentTransformRules(EAttachmentRule::KeepWorld, true));
 		bIsHeld = true;
 		GetAttachParent()->SetRelativeRotation(GetRelativeRotation().GetInverse());
 		GetAttachParent()->SetWorldLocation(MotionController->GetComponentLocation() + location);
@@ -90,7 +110,7 @@ bool UXRGrabComponent::TryRelease()
 		}
 		else
 		{
-			GetAttachParent()->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, false));
+			GetAttachParent()->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
 			bIsHeld = false;
 		}
 		
@@ -104,7 +124,7 @@ bool UXRGrabComponent::TryRelease()
 		}
 		else
 		{
-			GetAttachParent()->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, false));
+			GetAttachParent()->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
 			bIsHeld = false;
 		}
 		

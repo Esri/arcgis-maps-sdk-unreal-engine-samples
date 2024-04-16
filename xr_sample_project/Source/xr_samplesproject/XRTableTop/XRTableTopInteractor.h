@@ -8,6 +8,7 @@
 #include "MotionControllerComponent.h"
 #include "Camera/CameraComponent.h"
 #include "HeadMountedDisplayTypes.h"
+#include "xr_samplesproject/GenericXR/XRGrabComponent.h"
 #include "XRTableTopInteractor.generated.h"
 
 class UXRTabletopComponent;
@@ -33,6 +34,11 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+	UXRGrabComponent* GetGrabComponentNearMotionController(UMotionControllerComponent* MotionController);
+	void OnGrabLeft();
+	void OnGrabRight();
+	void OnReleaseLeft();
+	void OnReleaseRight();
 	void SetTabletopComponent();
 	void UpdatePointDrag();
 	void ZoomMap(const FInputActionValue& value);
@@ -41,13 +47,22 @@ private:
 	FVector3d DragStartEnginePos{FVector3d::ZeroVector};
 	FTransform DragStartWorldTransform{FTransform::Identity};
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UInputMappingContext* inputContext = LoadObject<UInputMappingContext>(nullptr, TEXT("InputMappingContext'/Game/Samples/XRTableTop/Input/IAC_XRTableTop.IAC_XRTableTop'"));
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UInputAction* gripLeft = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Grip_Left.IA_Grip_Left'"));
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UInputAction* gripRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Grip_Right.IA_Grip_Right'"));
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UInputAction* panLeft = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Pan_Left.IA_Pan_Left'"));
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UInputAction* panRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Pan_Right.IA_Pan_Right'"));
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UInputAction* zoom = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Zoom.IA_Zoom'"));
 
+	UXRGrabComponent* heldComponentLeft = nullptr;
+	UXRGrabComponent* heldComponentRight = nullptr;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UXRTabletopComponent* TabletopComponent{nullptr};
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
@@ -55,9 +70,13 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UCameraComponent* vrCamera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
-	UMotionControllerComponent* leftMotionController;
+	UMotionControllerComponent* leftMotionControllerAim;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
-	UMotionControllerComponent* rightMotionController;
+	UMotionControllerComponent* rightMotionControllerAim;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UMotionControllerComponent* leftMotionControllerGrip;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UMotionControllerComponent* rightMotionControllerGrip;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	USceneComponent* vrOrigin;
 };

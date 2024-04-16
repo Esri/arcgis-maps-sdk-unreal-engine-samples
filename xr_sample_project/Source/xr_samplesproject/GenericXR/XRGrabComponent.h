@@ -39,9 +39,12 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnReleased OnReleased;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bIsHeld;
-	bool bSimulateOnDrop;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bIsStationary = false;
+	bool bSimulateOnDrop;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TEnumAsByte<EGrabbleType> GrabType;
 	UMotionControllerComponent* MotionControllerRef;
 	UXRGrabComponent* PrimaryGrabComponent;
@@ -52,10 +55,4 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-		
 };
