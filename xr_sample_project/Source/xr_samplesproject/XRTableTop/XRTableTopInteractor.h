@@ -11,6 +11,7 @@
 #include "xr_samplesproject/GenericXR/XRGrabComponent.h"
 #include "XRTableTopInteractor.generated.h"
 
+class UXRDistanceGrabComponent;
 class UXRTabletopComponent;
 
 UCLASS()
@@ -37,6 +38,8 @@ private:
 	UXRGrabComponent* GetGrabComponentNearMotionController(UMotionControllerComponent* MotionController);
 	void OnGrabLeft();
 	void OnGrabRight();
+	void OnTriggerLeft();
+	void OnTriggerRight();
 	void OnReleaseLeft();
 	void OnReleaseRight();
 	void SetTabletopComponent();
@@ -62,7 +65,11 @@ private:
 
 	UXRGrabComponent* heldComponentLeft = nullptr;
 	UXRGrabComponent* heldComponentRight = nullptr;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UXRDistanceGrabComponent* distanceGrabLeft;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UXRDistanceGrabComponent* distanceGrabRight;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UXRTabletopComponent* TabletopComponent{nullptr};
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))

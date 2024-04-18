@@ -7,6 +7,7 @@
 #include "IXRTrackingSystem.h"
 #include "XRTabletopComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "xr_samplesproject/GenericXR/XRDistanceGrabComponent.h"
 #include "xr_samplesproject/GenericXR/XRGrabComponent.h"
 
 // Sets default values
@@ -23,11 +24,16 @@ AXRTableTopInteractor::AXRTableTopInteractor()
 	leftMotionControllerAim->SetupAttachment(vrOrigin);
 	leftMotionControllerAim->SetTrackingSource(EControllerHand::Left);
 	leftMotionControllerAim->MotionSource = TEXT("LeftAim");
+	distanceGrabLeft = CreateDefaultSubobject<UXRDistanceGrabComponent>(TEXT("DistanceGrabLeft"));
+	distanceGrabLeft->SetupAttachment(leftMotionControllerAim);
 
 	rightMotionControllerAim = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionControllerAim"));
 	rightMotionControllerAim->SetupAttachment(vrOrigin);
 	rightMotionControllerAim->SetTrackingSource(EControllerHand::Right);
 	rightMotionControllerAim->MotionSource = TEXT("RightAim");
+	distanceGrabRight = CreateDefaultSubobject<UXRDistanceGrabComponent>(TEXT("DistanceGrabRight"));
+	distanceGrabRight->SetupAttachment(rightMotionControllerAim);
+	
 
 	leftMotionControllerGrip = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionControllerGrip"));
 	leftMotionControllerGrip->SetupAttachment(vrOrigin);
@@ -66,6 +72,7 @@ void AXRTableTopInteractor::Tick(float DeltaTime)
 	if(bIsDragging)
 	{
 		UpdatePointDrag();
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Panning"));
 	}
 }
 
@@ -80,18 +87,15 @@ void AXRTableTopInteractor::SetTabletopComponent()
 
 void AXRTableTopInteractor::StartPanning()
 {
-	auto location = leftMotionControllerAim->GetRelativeLocation();
-	auto direction = leftMotionControllerAim->GetForwardVector();
+	auto location = rightMotionControllerAim->GetComponentLocation();
+	auto direction = rightMotionControllerAim->GetForwardVector();
 	auto hitLocation = FVector3d::ZeroVector;
-
-	if(TabletopComponent->Raycast(location, direction, hitLocation))
-	{
-		bIsDragging = true;
-		auto mapTranslation = FTransform(TabletopComponent->GetMapComponentLocation());
-		auto toWorldTransform = TabletopComponent->GetFromEngineTransform();
-		FTransform::Multiply(&DragStartWorldTransform, &mapTranslation, &toWorldTransform);
-		DragStartEnginePos = hitLocation;	
-	}
+	TabletopComponent->Raycast(location, direction, hitLocation);
+	bIsDragging = true;
+	auto mapTranslation = FTransform(TabletopComponent->GetMapComponentLocation());
+	auto toWorldTransform = TabletopComponent->GetFromEngineTransform();
+	FTransform::Multiply(&DragStartWorldTransform, &mapTranslation, &toWorldTransform);
+	DragStartEnginePos = hitLocation;
 }
 
 void AXRTableTopInteractor::StopPanning()
@@ -101,7 +105,8 @@ void AXRTableTopInteractor::StopPanning()
 
 void AXRTableTopInteractor::UpdatePointDrag()
 {
-	FVector3d engineLocation, engineDirection;
+	FVector3d engineLocation = rightMotionControllerAim->GetComponentLocation();
+	FVector engineDirection = rightMotionControllerAim->GetForwardVector();
 	auto hitLocation = DragStartEnginePos;
 
 	if (TabletopComponent)
@@ -125,10 +130,10 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	{
 		EnhancedInputComponent->BindAction(zoom, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::ZoomMap);
 		
-		/*EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnGrabLeft);
-		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnGrabRight);
+		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnTriggerLeft);
+		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnTriggerRight);
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseLeft);
-		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseRight);*/
+		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseRight);
 		
 		EnhancedInputComponent->BindAction(gripLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnGrabLeft);
 		EnhancedInputComponent->BindAction(gripRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnGrabRight);
@@ -149,26 +154,22 @@ UXRGrabComponent* AXRTableTopInteractor::GetGrabComponentNearMotionController(UM
 	auto localGripPosition = MotionController->GetComponentLocation();
 	auto bHasHit = UKismetSystemLibrary::SphereTraceSingleForObjects(GetWorld(),
 		localGripPosition, localGripPosition, 6.0f, ObjectTypesArray,
-		false, ignoredActors, EDrawDebugTrace::Persistent, outHit, true);
+		false, ignoredActors, EDrawDebugTrace::None, outHit, true);
 	
 	if (bHasHit)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("has hit"));	
 		auto grabComponents = outHit.GetActor()->K2_GetComponentsByClass(UXRGrabComponent::StaticClass());
 
 		if (grabComponents.Max() > 0)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("greater than 0"));	
 			for (auto Component : grabComponents)
 			{
 				auto grabComponent = Cast<UXRGrabComponent>(Component);
 				if (grabComponent)
 				{
-					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Cast Success"));	
 					auto gripPosition= grabComponent->GetComponentLocation() - localGripPosition;
 					if (FMath::Square(gripPosition.Length()) <= localNearestComponentDistance)
 					{
-						GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Set Grab"));	
 						localNearestComponentDistance = FMath::Square(gripPosition.Length());
 						localNearestGrabComponent = grabComponent;
 					}
@@ -182,45 +183,92 @@ UXRGrabComponent* AXRTableTopInteractor::GetGrabComponentNearMotionController(UM
 
 void AXRTableTopInteractor::OnGrabLeft()
 {
+	if (UXRGrabComponent* grabComponent = distanceGrabLeft->Grab(leftMotionControllerGrip))
+	{
+		heldComponentLeft = grabComponent;
+	}
+
 	if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(leftMotionControllerGrip))
 	{
-		if(!grabComponent->bIsStationary)
+		heldComponentLeft = grabComponent;
+		distanceGrabRight->bIsDetecting = false;
+		
+		if (heldComponentLeft == heldComponentRight)
 		{
-			if (grabComponent->TryGrab(leftMotionControllerGrip))
-			{
-				heldComponentLeft = grabComponent;
-
-				if (heldComponentLeft == heldComponentRight)
-				{
-					heldComponentRight = nullptr;
-				}
-			}	
+			heldComponentRight = nullptr;
 		}
 	}
 }
 
 void AXRTableTopInteractor::OnGrabRight()
 {
+	if (UXRGrabComponent* grabComponent = distanceGrabRight->Grab(rightMotionControllerGrip))
+	{
+		heldComponentRight = grabComponent;
+	}
+
 	if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(rightMotionControllerGrip))
 	{
-		if(!grabComponent->bIsStationary)
+		if (grabComponent->TryGrab(rightMotionControllerGrip))
 		{
-			if (grabComponent->TryGrab(rightMotionControllerGrip))
+			heldComponentRight = grabComponent;
+			distanceGrabRight->bIsDetecting = false;
+			
+			if (heldComponentRight == heldComponentLeft)
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, TEXT("Grabbed"));
-				heldComponentRight = grabComponent;
+				heldComponentLeft = nullptr;
+			}
+		}	
+	}
+}
 
-				if (heldComponentRight == heldComponentLeft)
-				{
-					heldComponentLeft = nullptr;
-				}
-			}	
-		}
+void AXRTableTopInteractor::OnTriggerLeft()
+{
+	if (UXRGrabComponent* grabComponent = distanceGrabLeft->Grab(leftMotionControllerGrip))
+	{
+		heldComponentLeft = grabComponent;
+	}
+
+	if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(leftMotionControllerGrip))
+	{
+		if (grabComponent->TryGrab(leftMotionControllerGrip))
+		{
+			heldComponentLeft = grabComponent;
+			distanceGrabRight->bIsDetecting = false;
+			
+			if (heldComponentLeft == heldComponentRight)
+			{
+				heldComponentRight = nullptr;
+			}
+		}	
+	}
+}
+
+void AXRTableTopInteractor::OnTriggerRight()
+{
+	if (UXRGrabComponent* grabComponent = distanceGrabRight->Grab(rightMotionControllerGrip))
+	{
+		heldComponentRight = grabComponent;
+	}
+
+	if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(rightMotionControllerGrip))
+	{
+		if (grabComponent->TryGrab(rightMotionControllerGrip))
+		{
+			heldComponentRight = grabComponent;
+			distanceGrabRight->bIsDetecting = false;
+			
+			if (heldComponentRight == heldComponentLeft)
+			{
+				heldComponentLeft = nullptr;
+			}
+		}	
 	}
 }
 
 void AXRTableTopInteractor::OnReleaseLeft()
 {
+	distanceGrabRight->bIsDetecting = true;
 	if (heldComponentLeft)
 	{
 		if (heldComponentLeft->TryRelease())
@@ -232,11 +280,11 @@ void AXRTableTopInteractor::OnReleaseLeft()
 
 void AXRTableTopInteractor::OnReleaseRight()
 {
+	distanceGrabRight->bIsDetecting = true;
 	if (heldComponentRight)
 	{
 		if (heldComponentRight->TryRelease())
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Cyan, TEXT("Released"));
 			heldComponentRight = nullptr;
 		}
 	}

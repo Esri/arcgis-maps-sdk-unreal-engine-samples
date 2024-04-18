@@ -25,7 +25,6 @@ class XR_SAMPLESPROJECT_API UXRGrabComponent : public USceneComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UXRGrabComponent();
 
 	EControllerHand GetHeldByHand();
@@ -41,8 +40,6 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bIsHeld;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bIsStationary = false;
 	bool bSimulateOnDrop;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TEnumAsByte<EGrabbleType> GrabType;
@@ -53,6 +50,5 @@ public:
 	
 	
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
 };
