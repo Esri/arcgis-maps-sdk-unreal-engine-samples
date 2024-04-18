@@ -43,6 +43,7 @@ public:
 	bool bSimulateOnDrop;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TEnumAsByte<EGrabbleType> GrabType;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UMotionControllerComponent* MotionControllerRef;
 	UXRGrabComponent* PrimaryGrabComponent;
 	FRotator PrimaryGrabRelativeRotation;

@@ -11,6 +11,8 @@
 #include "xr_samplesproject/GenericXR/XRGrabComponent.h"
 #include "XRTableTopInteractor.generated.h"
 
+class UWidgetInteractionComponent;
+class UVRHandAnimInstance;
 class UXRDistanceGrabComponent;
 class UXRTabletopComponent;
 
@@ -70,6 +72,23 @@ private:
 	UXRDistanceGrabComponent* distanceGrabLeft;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UXRDistanceGrabComponent* distanceGrabRight;
+
+	USkeletalMesh* handMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("SkeletalMesh'/Game/Samples/VRSample/Hands/Meshes/SKM_MannyXR_left.SKM_MannyXR_left'"));
+
+	UVRHandAnimInstance* leftAnimInstance;
+	UAnimInstance* leftAnimInstanceBase;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	USkeletalMeshComponent* leftHandMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UWidgetInteractionComponent* leftInteraction;
+	
+	UVRHandAnimInstance* rightAnimInstance;
+	UAnimInstance* rightAnimInstanceBase;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	USkeletalMeshComponent* rightHandMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UWidgetInteractionComponent* rightInteraction;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UXRTabletopComponent* TabletopComponent{nullptr};
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))

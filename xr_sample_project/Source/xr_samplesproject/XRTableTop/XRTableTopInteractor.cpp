@@ -6,9 +6,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "IXRTrackingSystem.h"
 #include "XRTabletopComponent.h"
+#include "Components/WidgetInteractionComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "xr_samplesproject/GenericXR/XRDistanceGrabComponent.h"
 #include "xr_samplesproject/GenericXR/XRGrabComponent.h"
+#include "xr_samplesproject/VRSample/VRHandAnimInstance.h"
 
 // Sets default values
 AXRTableTopInteractor::AXRTableTopInteractor()
@@ -24,17 +26,24 @@ AXRTableTopInteractor::AXRTableTopInteractor()
 	leftMotionControllerAim->SetupAttachment(vrOrigin);
 	leftMotionControllerAim->SetTrackingSource(EControllerHand::Left);
 	leftMotionControllerAim->MotionSource = TEXT("LeftAim");
+	leftHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Left Hand Mesh"));
+	leftHandMesh->SetupAttachment(leftMotionControllerAim);
 	distanceGrabLeft = CreateDefaultSubobject<UXRDistanceGrabComponent>(TEXT("DistanceGrabLeft"));
 	distanceGrabLeft->SetupAttachment(leftMotionControllerAim);
+	leftInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Left Interactor"));
+	leftInteraction->SetupAttachment(leftMotionControllerAim);
 
 	rightMotionControllerAim = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionControllerAim"));
 	rightMotionControllerAim->SetupAttachment(vrOrigin);
 	rightMotionControllerAim->SetTrackingSource(EControllerHand::Right);
 	rightMotionControllerAim->MotionSource = TEXT("RightAim");
+	rightHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Right Hand Mesh"));
+	rightHandMesh->SetupAttachment(rightMotionControllerAim);
 	distanceGrabRight = CreateDefaultSubobject<UXRDistanceGrabComponent>(TEXT("DistanceGrabRight"));
 	distanceGrabRight->SetupAttachment(rightMotionControllerAim);
+	rightInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Right Interactor"));
+	rightInteraction->SetupAttachment(rightMotionControllerAim);
 	
-
 	leftMotionControllerGrip = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionControllerGrip"));
 	leftMotionControllerGrip->SetupAttachment(vrOrigin);
 	leftMotionControllerGrip->SetTrackingSource(EControllerHand::Left);
@@ -51,8 +60,16 @@ void AXRTableTopInteractor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	leftHandMesh->SetSkeletalMesh(handMesh);
+	leftHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	leftAnimInstanceBase = leftHandMesh->GetAnimInstance();
+	leftAnimInstance = Cast<UVRHandAnimInstance>(leftAnimInstanceBase);
+	rightHandMesh->SetSkeletalMesh(handMesh);
+	rightHandMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	rightAnimInstanceBase = rightHandMesh->GetAnimInstance();
+	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
+	
 	SetTabletopComponent();
-
 	GEngine->XRSystem->SetTrackingOrigin(trackingOrigin);
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
@@ -72,7 +89,6 @@ void AXRTableTopInteractor::Tick(float DeltaTime)
 	if(bIsDragging)
 	{
 		UpdatePointDrag();
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Panning"));
 	}
 }
 
