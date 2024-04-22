@@ -101,10 +101,11 @@ void AXRTableTopInteractor::SetTabletopComponent()
 	}
 }
 
-void AXRTableTopInteractor::StartPanning()
+void AXRTableTopInteractor::StartPanning(UMotionControllerComponent* MotionController)
 {
-	auto location = rightMotionControllerAim->GetComponentLocation();
-	auto direction = rightMotionControllerAim->GetForwardVector();
+	currentPanningController = MotionController;
+	auto location = MotionController->GetComponentLocation();
+	auto direction = MotionController->GetForwardVector();
 	auto hitLocation = FVector3d::ZeroVector;
 	TabletopComponent->Raycast(location, direction, hitLocation);
 	bIsDragging = true;
@@ -121,8 +122,8 @@ void AXRTableTopInteractor::StopPanning()
 
 void AXRTableTopInteractor::UpdatePointDrag()
 {
-	FVector3d engineLocation = rightMotionControllerAim->GetComponentLocation();
-	FVector engineDirection = rightMotionControllerAim->GetForwardVector();
+	FVector3d engineLocation = currentPanningController->GetComponentLocation();
+	FVector engineDirection = currentPanningController->GetForwardVector();
 	auto hitLocation = DragStartEnginePos;
 
 	if (TabletopComponent)
@@ -289,6 +290,7 @@ void AXRTableTopInteractor::OnReleaseLeft()
 	{
 		if (heldComponentLeft->TryRelease())
 		{
+			distanceGrabLeft->bIsDistanceGrab = false;
 			heldComponentLeft = nullptr;
 		}
 	}
@@ -301,6 +303,7 @@ void AXRTableTopInteractor::OnReleaseRight()
 	{
 		if (heldComponentRight->TryRelease())
 		{
+			distanceGrabRight->bIsDistanceGrab = false;
 			heldComponentRight = nullptr;
 		}
 	}

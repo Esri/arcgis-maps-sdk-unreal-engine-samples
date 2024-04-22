@@ -25,7 +25,7 @@ public:
 	AXRTableTopInteractor();
 
 	UFUNCTION(BlueprintCallable)
-	void StartPanning();
+	void StartPanning(UMotionControllerComponent* MotionController);
 	UFUNCTION(BlueprintCallable)
 	void StopPanning();
 	
@@ -68,6 +68,8 @@ private:
 	UXRGrabComponent* heldComponentLeft = nullptr;
 	UXRGrabComponent* heldComponentRight = nullptr;
 
+	UMotionControllerComponent* currentPanningController;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UXRDistanceGrabComponent* distanceGrabLeft;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))

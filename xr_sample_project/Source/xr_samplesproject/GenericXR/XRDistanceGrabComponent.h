@@ -25,6 +25,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bIsDetecting = true;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	bool bIsDistanceGrab;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	bool bIsValidGrabbable;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FVector impactPoint;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<AActor*> IgnoreActors;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UXRGrabComponent* TargetedGrabComponent;

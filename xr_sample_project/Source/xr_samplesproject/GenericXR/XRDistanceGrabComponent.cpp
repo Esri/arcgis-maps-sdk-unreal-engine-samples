@@ -29,6 +29,7 @@ void UXRDistanceGrabComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 		
 		if(UKismetSystemLibrary::SphereTraceSingleForObjects(GetWorld(),GetComponentLocation(), GetComponentLocation() + forwardDirection, 50.0f, ObjectTypesArray,false, IgnoreActors, EDrawDebugTrace::None, outHit, true))
 		{
+			impactPoint = outHit.ImpactPoint;
 			if (outHit.bBlockingHit)
 			{
 				IgnoreActors.Add(outHit.GetActor());
@@ -36,6 +37,7 @@ void UXRDistanceGrabComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 				if (UXRGrabComponent* grabbable = Cast<UXRGrabComponent>(grabComponent))
 				{
+					bIsValidGrabbable = true;
 					if (FVector::Distance(grabbable->GetComponentLocation(), GetComponentLocation()) >= 50.0f)
 					{
 						if (!TargetedGrabComponent)
@@ -56,6 +58,10 @@ void UXRDistanceGrabComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 				}
 			}
 		}
+		else
+		{
+			bIsValidGrabbable = false;	
+		}
 	}
 }
 
@@ -65,7 +71,8 @@ UXRGrabComponent* UXRDistanceGrabComponent::Grab(UMotionControllerComponent* Mot
 	{
 		auto grabComp = TargetedGrabComponent;
 		bIsDetecting = false;
-
+		bIsDistanceGrab = true;
+		
 		switch (grabComp->GrabType)
 		{
 			case None:
