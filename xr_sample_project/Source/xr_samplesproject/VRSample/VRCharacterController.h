@@ -50,6 +50,7 @@ public:
 	int UpSpeed = 100000;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables")
 	AGeocoder* GeoCoder;
+	TEnumAsByte<EHMDTrackingOrigin::Type> TrackingOrigin;
 
 protected:
 	virtual void BeginPlay() override;

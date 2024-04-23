@@ -309,7 +309,7 @@ void AVRCharacterController::BeginPlay()
 	rightAnimInstanceBase = rightHandMesh->GetAnimInstance();
 	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
 	
-	GEngine->XRSystem->SetTrackingOrigin(EHMDTrackingOrigin::Floor);
+	GEngine->XRSystem->SetTrackingOrigin(TrackingOrigin);
 	GetCharacterMovement()->SetMovementMode(MOVE_Flying, 0);
 	InitializeCapsuleHeight();
 	GeoCoder = Cast<AGeocoder>(UGameplayStatics::GetActorOfClass(GetWorld(), AGeocoder::StaticClass()));
