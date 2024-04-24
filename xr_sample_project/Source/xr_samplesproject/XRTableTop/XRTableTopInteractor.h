@@ -25,14 +25,14 @@ public:
 	AXRTableTopInteractor();
 
 	UFUNCTION(BlueprintCallable)
-	void StartPanning(UMotionControllerComponent* MotionController);
+	void StartPanning();
 	UFUNCTION(BlueprintCallable)
 	void StopPanning();
 	
 protected:
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -44,13 +44,27 @@ private:
 	void OnTriggerRight();
 	void OnReleaseLeft();
 	void OnReleaseRight();
+	void SetLeftGripAxis(const FInputActionValue& value);
+	void SetLeftTriggerAxis(const FInputActionValue& value);
+	void SetRightGripAxis(const FInputActionValue& value);
+	void SetRightTriggerAxis(const FInputActionValue& value);
+	void ResetLeftGripAxis();
+	void ResetLeftTriggerAxis();
+	void ResetRightGripAxis();
+	void ResetRightTriggerAxis();
+	void SimulateClickLeft();
+	void SimulateClickRight();
+	void ResetClickLeft();
+	void ResetClickRight();
 	void SetTabletopComponent();
 	void UpdatePointDrag();
 	void ZoomMap(const FInputActionValue& value);
 	
 	bool bIsDragging;
+	bool bUseRightHand;
 	FVector3d DragStartEnginePos{FVector3d::ZeroVector};
 	FTransform DragStartWorldTransform{FTransform::Identity};
+	FHitResult panningHit;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UInputMappingContext* inputContext = LoadObject<UInputMappingContext>(nullptr, TEXT("InputMappingContext'/Game/Samples/XRTableTop/Input/IAC_XRTableTop.IAC_XRTableTop'"));
@@ -64,10 +78,18 @@ private:
 	UInputAction* panRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Pan_Right.IA_Pan_Right'"));
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UInputAction* zoom = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Zoom.IA_Zoom'"));
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UInputAction* grip_L = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_LeftGrip.IA_LeftGrip'"));
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UInputAction* grip_R = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_RightGrip.IA_RightGrip'"));
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UInputAction* trigger_L = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_LeftTrigger.IA_LeftTrigger'"));
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UInputAction* trigger_R = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_RightTrigger.IA_RightTrigger'"));
+	
 	UXRGrabComponent* heldComponentLeft = nullptr;
 	UXRGrabComponent* heldComponentRight = nullptr;
-
+	
 	UMotionControllerComponent* currentPanningController;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
