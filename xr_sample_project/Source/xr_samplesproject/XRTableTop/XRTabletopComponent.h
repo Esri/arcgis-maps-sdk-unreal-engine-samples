@@ -56,6 +56,7 @@ public:
 
 	FTransform GetFromEngineTransform();
 
+	UFUNCTION(BlueprintCallable)
 	void ZoomMap(float ZoomValue);
 
 	void MoveExtentCenter(FVector3d WorldPos);

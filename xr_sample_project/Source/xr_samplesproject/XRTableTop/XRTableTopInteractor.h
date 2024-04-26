@@ -63,6 +63,10 @@ private:
 	void ZoomMap(const FInputActionValue& value);
 	
 	bool bIsDragging;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta=(AllowPrivateAccess))
+	bool bIsOverUILeft;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta=(AllowPrivateAccess))
+	bool bIsOverUIRight;
 	bool bUseRightHand;
 	FVector3d DragStartEnginePos{FVector3d::ZeroVector};
 	FTransform DragStartWorldTransform{FTransform::Identity};

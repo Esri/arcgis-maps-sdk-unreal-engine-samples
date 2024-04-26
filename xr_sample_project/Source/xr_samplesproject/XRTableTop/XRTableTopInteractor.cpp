@@ -90,6 +90,8 @@ void AXRTableTopInteractor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	currentPanningController = bUseRightHand ? rightMotionControllerAim : leftMotionControllerAim;
+	bIsOverUILeft = leftInteraction->IsOverInteractableWidget();
+	bIsOverUIRight = rightInteraction->IsOverInteractableWidget();
 	
 	if(bIsDragging)
 	{
@@ -174,9 +176,11 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetRightTriggerAxis);
 
 		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::SimulateClickLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::SimulateClickLeft);
 		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::ResetClickLeft);
 		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetClickLeft);
 		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::SimulateClickRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::SimulateClickRight);
 		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::ResetClickRight);
 		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetClickRight);
 
