@@ -10,6 +10,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "xr_samplesproject/GenericXR/XRDistanceGrabComponent.h"
 #include "xr_samplesproject/GenericXR/XRGrabComponent.h"
+#include "xr_samplesproject/Geocoding/Geocoder.h"
 #include "xr_samplesproject/VRSample/VRHandAnimInstance.h"
 
 // Sets default values
@@ -71,12 +72,14 @@ void AXRTableTopInteractor::BeginPlay()
 	
 	SetTabletopComponent();
 	GEngine->XRSystem->SetTrackingOrigin(trackingOrigin);
+	geoCoder = Cast<AGeocoder>(UGameplayStatics::GetActorOfClass(GetWorld(), AGeocoder::StaticClass()));
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
 			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(inputContext, 0);
+			Subsystem->AddMappingContext(menuMappingContext, 0);
 		}
 	}
 }
@@ -169,6 +172,14 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(grip_R, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetRightGripAxis);
 		EnhancedInputComponent->BindAction(trigger_L, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetLeftTriggerAxis);
 		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetRightTriggerAxis);
+
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::SimulateClickLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::ResetClickLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetClickLeft);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::SimulateClickRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::ResetClickRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetClickRight);
+
 	}
 }
 
@@ -208,6 +219,14 @@ UXRGrabComponent* AXRTableTopInteractor::GetGrabComponentNearMotionController(UM
 	}
 
 	return localNearestGrabComponent;
+}
+
+void AXRTableTopInteractor::Geocode()
+{
+	if(geoCoder != nullptr)
+	{
+		geoCoder->SelectLocation(rightInteraction->GetComponentLocation(), rightInteraction->GetForwardVector());	
+	}
 }
 
 void AXRTableTopInteractor::OnGrabLeft()
@@ -259,6 +278,7 @@ void AXRTableTopInteractor::OnGrabRight()
 void AXRTableTopInteractor::OnTriggerLeft()
 {
 	bUseRightHand = false;
+
 	if (UXRGrabComponent* grabComponent = distanceGrabLeft->Grab(leftMotionControllerGrip))
 	{
 		heldComponentLeft = grabComponent;
@@ -282,6 +302,7 @@ void AXRTableTopInteractor::OnTriggerLeft()
 void AXRTableTopInteractor::OnTriggerRight()
 {
 	bUseRightHand = true;
+
 	if (UXRGrabComponent* grabComponent = distanceGrabRight->Grab(rightMotionControllerGrip))
 	{
 		heldComponentRight = grabComponent;
@@ -394,7 +415,10 @@ void AXRTableTopInteractor::ResetRightTriggerAxis()
 
 void AXRTableTopInteractor::SimulateClickLeft()
 {
-	leftInteraction->PressPointerKey(EKeys::LeftMouseButton);
+	if (leftInteraction->IsOverInteractableWidget())
+	{
+		leftInteraction->PressPointerKey(EKeys::LeftMouseButton);	
+	}
 }
 
 void AXRTableTopInteractor::SimulateClickRight()
@@ -403,13 +427,6 @@ void AXRTableTopInteractor::SimulateClickRight()
 	{
 		rightInteraction->PressPointerKey(EKeys::LeftMouseButton);	
 	}
-	/*else
-	{
-		if(GeoCoder != nullptr)
-		{
-			GeoCoder->SelectLocation(rightInteraction->GetComponentLocation(), rightInteraction->GetForwardVector());	
-		}
-	}*/
 }
 
 void AXRTableTopInteractor::ResetClickLeft()
