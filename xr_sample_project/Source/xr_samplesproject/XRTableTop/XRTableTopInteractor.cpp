@@ -93,6 +93,11 @@ void AXRTableTopInteractor::Tick(float DeltaTime)
 	bIsOverUILeft = leftInteraction->IsOverInteractableWidget();
 	bIsOverUIRight = rightInteraction->IsOverInteractableWidget();
 	
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypesArray;
+	ObjectTypesArray.Add(UEngineTypes::ConvertToObjectType(ECC_PhysicsBody));
+	IgnoreActors.Empty();
+	UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), currentPanningController->GetComponentLocation(), currentPanningController->GetComponentLocation() + currentPanningController->GetForwardVector(), ObjectTypesArray,false, IgnoreActors, EDrawDebugTrace::None, panningHit, true);
+	
 	if(bIsDragging)
 	{
 		UpdatePointDrag();
@@ -111,7 +116,7 @@ void AXRTableTopInteractor::SetTabletopComponent()
 void AXRTableTopInteractor::StartPanning()
 {	
 	auto hitLocation = FVector3d::ZeroVector;
-	TabletopComponent->Raycast(currentPanningController->GetComponentLocation(), currentPanningController->GetForwardVector(), hitLocation);
+	TabletopComponent->Raycast(panningHit.TraceStart, panningHit.TraceEnd - panningHit.TraceStart, hitLocation);
 	bIsDragging = true;
 	auto mapTranslation = FTransform(TabletopComponent->GetMapComponentLocation());
 	auto toWorldTransform = TabletopComponent->GetFromEngineTransform();
@@ -130,7 +135,7 @@ void AXRTableTopInteractor::UpdatePointDrag()
 
 	if (TabletopComponent)
 	{
-		TabletopComponent->Raycast(currentPanningController->GetComponentLocation(), currentPanningController->GetForwardVector(), hitLocation);
+		TabletopComponent->Raycast(panningHit.TraceStart, panningHit.TraceEnd - panningHit.TraceStart, hitLocation);
 		auto dragDeltaEngine = DragStartEnginePos - hitLocation;
 		auto dragDeltaWorld = DragStartWorldTransform.TransformPosition(dragDeltaEngine);
 
@@ -153,12 +158,6 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnTriggerRight);
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseLeft);
 		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseRight);
-		
-		EnhancedInputComponent->BindAction(gripLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnGrabLeft);
-		EnhancedInputComponent->BindAction(gripRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnGrabRight);
-		EnhancedInputComponent->BindAction(gripLeft, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseLeft);
-		EnhancedInputComponent->BindAction(gripRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseRight);
-
 		//Update Hand Animations
 		EnhancedInputComponent->BindAction(grip_L, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::SetLeftGripAxis);
 		EnhancedInputComponent->BindAction(grip_R, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::SetRightGripAxis);
@@ -175,15 +174,14 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(trigger_L, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetLeftTriggerAxis);
 		EnhancedInputComponent->BindAction(trigger_R, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetRightTriggerAxis);
 
-		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::SimulateClickLeft);
-		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::SimulateClickLeft);
-		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::ResetClickLeft);
-		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetClickLeft);
-		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::SimulateClickRight);
-		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::SimulateClickRight);
-		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::ResetClickRight);
-		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::ResetClickRight);
-
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnTriggerLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnTriggerLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::OnReleaseLeft);
+		EnhancedInputComponent->BindAction(clickLeft, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseLeft);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnTriggerRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnTriggerRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::OnReleaseRight);
+		EnhancedInputComponent->BindAction(clickRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseRight);
 	}
 }
 
@@ -223,14 +221,6 @@ UXRGrabComponent* AXRTableTopInteractor::GetGrabComponentNearMotionController(UM
 	}
 
 	return localNearestGrabComponent;
-}
-
-void AXRTableTopInteractor::Geocode()
-{
-	if(geoCoder != nullptr)
-	{
-		geoCoder->SelectLocation(rightInteraction->GetComponentLocation(), rightInteraction->GetForwardVector());	
-	}
 }
 
 void AXRTableTopInteractor::OnGrabLeft()
@@ -283,22 +273,29 @@ void AXRTableTopInteractor::OnTriggerLeft()
 {
 	bUseRightHand = false;
 
-	if (UXRGrabComponent* grabComponent = distanceGrabLeft->Grab(leftMotionControllerGrip))
+	if (leftInteraction->IsOverInteractableWidget())
 	{
-		heldComponentLeft = grabComponent;
+		leftInteraction->PressPointerKey(EKeys::LeftMouseButton);	
 	}
-
-	if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(leftMotionControllerGrip))
+	else
 	{
-		if (grabComponent->TryGrab(leftMotionControllerGrip))
+		if (UXRGrabComponent* grabComponent = distanceGrabLeft->Grab(leftMotionControllerGrip))
 		{
 			heldComponentLeft = grabComponent;
-			distanceGrabLeft->bIsDetecting = false;
-			
-			if (heldComponentLeft == heldComponentRight)
+		}
+
+		if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(leftMotionControllerGrip))
+		{
+			if (grabComponent->TryGrab(leftMotionControllerGrip))
 			{
-				heldComponentRight = nullptr;
-			}
+				heldComponentLeft = grabComponent;
+				distanceGrabLeft->bIsDetecting = false;
+			
+				if (heldComponentLeft == heldComponentRight)
+				{
+					heldComponentRight = nullptr;
+				}
+			}	
 		}	
 	}
 }
@@ -307,28 +304,36 @@ void AXRTableTopInteractor::OnTriggerRight()
 {
 	bUseRightHand = true;
 
-	if (UXRGrabComponent* grabComponent = distanceGrabRight->Grab(rightMotionControllerGrip))
+	if(rightInteraction->IsOverInteractableWidget())
 	{
-		heldComponentRight = grabComponent;
+		rightInteraction->PressPointerKey(EKeys::LeftMouseButton);	
 	}
-
-	if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(rightMotionControllerGrip))
+	else
 	{
-		if (grabComponent->TryGrab(rightMotionControllerGrip))
+		if (UXRGrabComponent* grabComponent = distanceGrabRight->Grab(rightMotionControllerGrip))
 		{
 			heldComponentRight = grabComponent;
-			distanceGrabRight->bIsDetecting = false;
-			
-			if (heldComponentRight == heldComponentLeft)
+		}
+
+		if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(rightMotionControllerGrip))
+		{
+			if (grabComponent->TryGrab(rightMotionControllerGrip))
 			{
-				heldComponentLeft = nullptr;
-			}
+				heldComponentRight = grabComponent;
+				distanceGrabRight->bIsDetecting = false;
+			
+				if (heldComponentRight == heldComponentLeft)
+				{
+					heldComponentLeft = nullptr;
+				}
+			}	
 		}	
 	}
 }
 
 void AXRTableTopInteractor::OnReleaseLeft()
 {
+	leftInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
 	distanceGrabLeft->bIsDetecting = true;
 	if (heldComponentLeft)
 	{
@@ -342,6 +347,7 @@ void AXRTableTopInteractor::OnReleaseLeft()
 
 void AXRTableTopInteractor::OnReleaseRight()
 {
+	rightInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
 	distanceGrabRight->bIsDetecting = true;
 	if (heldComponentRight)
 	{

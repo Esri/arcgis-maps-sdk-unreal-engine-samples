@@ -25,21 +25,25 @@ class XR_SAMPLESPROJECT_API AXRTableTopInteractor : public APawn
 public:
 	AXRTableTopInteractor();
 
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	UFUNCTION(BlueprintCallable)
 	void StartPanning();
 	UFUNCTION(BlueprintCallable)
 	void StopPanning();
+	virtual void Tick(float DeltaTime) override;
+
+	FHitResult panningHit;
+	FVector endPoint;
+	TArray<AActor*> IgnoreActors;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UXRTabletopComponent* TabletopComponent{nullptr};
 	
 protected:
 	virtual void BeginPlay() override;
 
-public:
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 private:
 	UXRGrabComponent* GetGrabComponentNearMotionController(UMotionControllerComponent* MotionController);
-	void Geocode();
 	void OnGrabLeft();
 	void OnGrabRight();
 	void OnTriggerLeft();
@@ -70,7 +74,6 @@ private:
 	bool bUseRightHand;
 	FVector3d DragStartEnginePos{FVector3d::ZeroVector};
 	FTransform DragStartWorldTransform{FTransform::Identity};
-	FHitResult panningHit;
 
 	UInputAction* clickLeft = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Menu_Cursor_Left.IA_Menu_Cursor_Left'"));
 	UInputAction* clickRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Menu_Cursor_Right.IA_Menu_Cursor_Right'"));
@@ -115,8 +118,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	UWidgetInteractionComponent* rightInteraction;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
-	UXRTabletopComponent* TabletopComponent{nullptr};
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	TEnumAsByte<EHMDTrackingOrigin::Type> trackingOrigin;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
