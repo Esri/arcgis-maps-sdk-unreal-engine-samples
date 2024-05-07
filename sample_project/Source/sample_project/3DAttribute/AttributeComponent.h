@@ -5,8 +5,6 @@
 //
 #pragma once
 
-#include <functional>
-
 #include "Components/ActorComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -63,5 +61,5 @@ private:
 	void Setup3DAttributesFloatAndIntegerType(UArcGIS3DObjectSceneLayer* Layer);
 	void Setup3DAttributesOtherType(UArcGIS3DObjectSceneLayer* Layer);
 	int32 IsBuildingOfInterest(const FAnsiStringView& buildingName);
-	void ForEachString(const Esri::GameEngine::Attributes::ArcGISAttribute& attribute, std::function<void(const FAnsiStringView&, int32)> predicate);
+	void ForEachString(const Esri::GameEngine::Attributes::ArcGISAttribute& attribute, TFunction<void(const FAnsiStringView&, int32)> predicate);
 };
