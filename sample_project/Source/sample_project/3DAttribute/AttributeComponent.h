@@ -5,11 +5,12 @@
 //
 #pragma once
 
+#include <functional>
+
 #include "Components/ActorComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-#include "ArcGISMapsSDK/Private/ArcGISMapsSDKPrivatePCH.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGIS3DObjectSceneLayer.h"
 
 #include "AttributeComponent.generated.h"
