@@ -124,8 +124,6 @@ private:
 	UMotionControllerComponent* rightMotionControllerInteractor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* springArmComponent;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
-	TEnumAsByte<EHMDTrackingOrigin::Type> TrackingOrigin;
 	UInputAction* trigger_L = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_LeftTrigger.IA_LeftTrigger'"));
 	UInputAction* trigger_R = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_RightTrigger.IA_RightTrigger'"));
 	UInputAction* turn = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/VRSample/Input/IA_Turn.IA_Turn'"));
