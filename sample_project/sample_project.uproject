@@ -17,6 +17,10 @@
 		{
 			"Name": "EnhancedInput",
 			"Enabled": true
+		},
+		{
+			"Name": "ArcGISMapsSDK",
+			"Enabled": true
 		}
 	]
 }
