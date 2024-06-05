@@ -1,8 +1,8 @@
 # Explore with a third-person character made entirely with blueprints
 
 Allows users to explore a city/map from the perspective of a third-person character.
-This sample is a blueprint implementation of the original Third Person Character Controller sample
-This blueprint version replicates the functionality of the original sample, demonstrating the use of the blueprint system with ArcGIS Maps SDK for Unreal Engine
+This sample is a blueprint implementation of the original Third Person Character Controller sample.
+This blueprint version replicates the functionality of the original sample, demonstrating the use of the blueprint system with ArcGIS Maps SDK for Unreal Engine.
 
 ## How to use the sample
 
