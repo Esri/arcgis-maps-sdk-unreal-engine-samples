@@ -13,11 +13,10 @@ This blueprint version replicates the functionality of the original sample, demo
 
 Note: The terrain needs to be loaded before the Third Person Character falls on the ground. Adjust the `Z` Location value of the **ThirdPersonCharacterBluePrintVersion** in order to gain more time for the terrain to be loaded if it's necessary.
 
-
 ## How it works
 
 1. Set up **ArcGIS Map** for the exploration area.
-2. Create a Third Person Character with its control and attach the [**ArcGIS Camera Component**](https://developers.arcgis.com/unreal-engine/maps/camera/#arcgis-camera-component) to the Character Mesh. 
+2. Create a Third Person Character with its control and attach the [**ArcGIS Camera Component**](https://developers.arcgis.com/unreal-engine/maps/camera/#arcgis-camera-component) to the Character Mesh.
 3. Add the Third Person Character to the level.
    - Mesh colliders need to be enabled in the **ArcGIS Map Component**.
    - If you want to place the character in a specific location, attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to specify it.
