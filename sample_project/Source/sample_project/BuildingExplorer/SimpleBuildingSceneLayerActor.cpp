@@ -15,7 +15,6 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Actor.h"
-#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ASimpleBuildingSceneLayerActor::ASimpleBuildingSceneLayerActor()
