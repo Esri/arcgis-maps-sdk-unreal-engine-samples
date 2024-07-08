@@ -110,13 +110,11 @@ void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool b
 		const auto& firstLayers = BuildingSceneLayer->GetSublayers();
 		for (const auto& firstSubLayer : firstLayers)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Processing Sublayer: %s"), *firstSubLayer.GetName());
 			if (firstSubLayer.GetName() == TEXT("Full Model"))
 			{
 				const auto& secondLayers = firstSubLayer.GetSublayers();
 				for (const auto& secondSubLayer : secondLayers)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Processing SecondSublayer: %s"), *secondSubLayer.GetName());
 					if (secondSubLayer.GetName() == option)
 					{
 						SetSublayerVisibility(secondSubLayer, bVisible);
@@ -125,7 +123,6 @@ void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool b
 					const auto& thirdLayers = secondSubLayer.GetSublayers();
 					for (const auto& thirdSubLayer : thirdLayers)
 					{
-						UE_LOG(LogTemp, Warning, TEXT("Processing Sublayer: %s"), *thirdSubLayer.GetName());
 						if (thirdSubLayer.GetName() == option)
 						{
 							SetSublayerVisibility(thirdSubLayer, bVisible);
