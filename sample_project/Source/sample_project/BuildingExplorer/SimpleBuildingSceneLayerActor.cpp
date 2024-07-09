@@ -1,6 +1,20 @@
-// /* Copyright 2023 Esri* * Licensed under the Apache License Version 2.0 (the "License"); * you may not use this file except in compliance with the License. * You may obtain a copy of the License at * *     http://www.apache.org/licenses/LICENSE-2.0 * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS, * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. * See the License for the specific language governing permissions and * limitations under the License. */
+/* Copyright 2023 Esri
+ *
+ * Licensed under the Apache License Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include "SimpleBuildingSceneLayerActor.h"
+#include <Kismet/GameplayStatics.h>
 #include "ArcGISMapsSDK/API/GameEngine/Layers/ArcGISBuildingSceneLayer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/Base/ArcGISLayer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/BuildingScene/ArcGISBuildingAttributeFilter.h"
@@ -27,12 +41,15 @@ ASimpleBuildingSceneLayerActor::ASimpleBuildingSceneLayerActor()
 void ASimpleBuildingSceneLayerActor::BeginPlay()
 {
 	InitializeBuildingSceneLayer();
+	APlayerController* const PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	PlayerController->SetInputMode(FInputModeGameAndUI());
+	PlayerController->SetShowMouseCursor(true);
 	Super::BeginPlay();
 }
 
 void ASimpleBuildingSceneLayerActor::InitializeBuildingSceneLayer()
 {
-	//Find the Map Actor in the scene
+	// Find the Map Actor in the scene
 	for (TActorIterator<AArcGISMapActor> ActorItr(GetWorld()); ActorItr; ++ActorItr)
 	{
 		AArcGISMapActor* ArcGISMapActor = *ActorItr;
@@ -86,24 +103,66 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 		}
 	}
 }
-
-void ASimpleBuildingSceneLayerActor::ApplyWhereClause(FString level)
+// Creating where clauses to filter desired levels/construction phases
+void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phase)
 {
 	Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter> Filters =
 		BuildingSceneLayer->GetBuildingAttributeFilters();
-	for (const auto& filter : Filters)
+	FString buildingLevels = "('";
+	FString constructionPhases = "('";
+
+	for (int32 i = 0; i <= level; ++i)
+	{
+		FString levelNum = FString::FromInt(i);
+		buildingLevels += levelNum;
+		if (i != level)
+		{
+			buildingLevels += "', '";
+		}
+		else
+		{
+			buildingLevels += "')";
+		}
+	}
+	for (int32 i = 1; i <= phase; ++i)
+	{
+		FString phaseNum = FString::FromInt(i);
+		constructionPhases += phaseNum;
+		if (i != phase)
+		{
+			constructionPhases += "', '";
+		}
+		else
+		{
+			constructionPhases += "')";
+		}
+	}
+
+	// Create the where clauses
+	FString buildingLevelClause = FString::Printf(TEXT("BldgLevel in %s"), *buildingLevels);
+	FString constructionPhaseClause = FString::Printf(TEXT("CreatedPhase in %s"), *constructionPhases);
+
+	// Combine the where clauses
+	FString WhereClause = FString::Printf(TEXT("%s and %s"), *buildingLevelClause, *constructionPhaseClause);
+
+	Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter* levelFilter;
+	for (auto filter : Filters)
 	{
 		FString Name = filter.GetName();
-		if (Name == level)
+		if (Name == "Filter")
 		{
+			levelFilter = &filter;
+			auto solidDefinition = filter.GetSolidFilterDefinition();
+			solidDefinition.SetWhereClause(WhereClause);
 			BuildingSceneLayer->SetActiveBuildingAttributeFilter(filter);
 		}
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Where clause : %s"), *WhereClause)
 }
 
 void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool bVisible)
 {
-	// Barebones functionality - We will put them into a map for faster lookup later
+	// Search for given discipline/category
 	if (BuildingSceneLayer)
 	{
 		const auto& firstLayers = BuildingSceneLayer->GetSublayers();
@@ -137,7 +196,6 @@ void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool b
 void ASimpleBuildingSceneLayerActor::SetSublayerVisibility(const Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingSceneSublayer& Sublayer,
 														   bool bVisible)
 {
-	// Use const_cast to remove const qualifier if necessary
 	const_cast<Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingSceneSublayer&>(Sublayer).SetIsVisible(bVisible);
 }
 
