@@ -69,6 +69,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	UPROPERTY(BlueprintReadWrite, Category = "BuildingSceneLayer")
+	TArray<FDiscipline> DisciplineCategoryData;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -76,14 +78,10 @@ public:
 	void AddDisciplineCategoryData();
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
-	void PopulateSublayerMaps(FString option, bool bVisible);
-
-	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
 	void GenerateWhereClause(int32 level, int32 phase);
 
-	UPROPERTY(BlueprintReadWrite, Category = "BuildingSceneLayer")
-
-	TArray<FDiscipline> DisciplineCategoryData;
+	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
+	void PopulateSublayerMaps(FString option, bool bVisible);
 
 private:
 	UPROPERTY()

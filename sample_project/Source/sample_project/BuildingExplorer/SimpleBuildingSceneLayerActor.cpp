@@ -79,22 +79,22 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 	DisciplineCategoryData.Empty();
 	if (BuildingSceneLayer)
 	{
-		const auto& firstLayers = BuildingSceneLayer->GetSublayers();
+		const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
 		FString Tect = BuildingSceneLayer->GetName();
-		for (const auto& firstSubLayer : firstLayers)
+		for (const auto& FirstSubLayer : FirstLayers)
 		{
-			if (firstSubLayer.GetName() == TEXT("Full Model"))
+			if (FirstSubLayer.GetName() == TEXT("Full Model"))
 			{
-				const auto& secondLayers = firstSubLayer.GetSublayers();
-				for (const auto& secondSubLayer : secondLayers)
+				const auto& SecondLayers = FirstSubLayer.GetSublayers();
+				for (const auto& SecondSubLayer : SecondLayers)
 				{
 					FDiscipline NewDiscipline;
-					NewDiscipline.Name = secondSubLayer.GetName();
-					const auto& thirdLayers = secondSubLayer.GetSublayers();
-					for (const auto& thirdSubLayer : thirdLayers)
+					NewDiscipline.Name = SecondSubLayer.GetName();
+					const auto& ThirdLayers = SecondSubLayer.GetSublayers();
+					for (const auto& ThirdSubLayer : ThirdLayers)
 					{
 						FCategory SubCategory;
-						SubCategory.Name = thirdSubLayer.GetName();
+						SubCategory.Name = ThirdSubLayer.GetName();
 						NewDiscipline.Categories.Add(SubCategory);
 					}
 					DisciplineCategoryData.Add(NewDiscipline);
@@ -108,56 +108,55 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 {
 	Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter> Filters =
 		BuildingSceneLayer->GetBuildingAttributeFilters();
-	FString buildingLevels = "('";
-	FString constructionPhases = "('";
+	FString BuildingLevels = TEXT("('");
+	FString ConstructionPhases = TEXT("('");
 
 	for (int32 i = 0; i <= level; ++i)
 	{
-		FString levelNum = FString::FromInt(i);
-		buildingLevels += levelNum;
+		FString LevelNum = FString::FromInt(i);
+		BuildingLevels += LevelNum;
 		if (i != level)
 		{
-			buildingLevels += "', '";
+			BuildingLevels += TEXT("', '");
 		}
 		else
 		{
-			buildingLevels += "')";
+			BuildingLevels += TEXT("')");
 		}
 	}
 	for (int32 i = 1; i <= phase; ++i)
 	{
-		FString phaseNum = FString::FromInt(i);
-		constructionPhases += phaseNum;
+		FString PhaseNum = FString::FromInt(i);
+		ConstructionPhases += PhaseNum;
 		if (i != phase)
 		{
-			constructionPhases += "', '";
+			ConstructionPhases += TEXT("', '");
 		}
 		else
 		{
-			constructionPhases += "')";
+			ConstructionPhases += TEXT("')");
 		}
 	}
 
 	// Create the where clauses
-	FString buildingLevelClause = FString::Printf(TEXT("BldgLevel in %s"), *buildingLevels);
-	FString constructionPhaseClause = FString::Printf(TEXT("CreatedPhase in %s"), *constructionPhases);
+	FString BuildingLevelClause = FString::Printf(TEXT("BldgLevel in %s"), *BuildingLevels);
+	FString ConstructionPhaseClause = FString::Printf(TEXT("CreatedPhase in %s"), *ConstructionPhases);
 
 	// Combine the where clauses
-	FString WhereClause = FString::Printf(TEXT("%s and %s"), *buildingLevelClause, *constructionPhaseClause);
+	FString WhereClause = FString::Printf(TEXT("%s and %s"), *BuildingLevelClause, *ConstructionPhaseClause);
 
-	Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter* levelFilter;
-	for (auto filter : Filters)
+	Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter* LevelFilter;
+	for (auto Filter : Filters)
 	{
-		FString Name = filter.GetName();
-		if (Name == "Filter")
+		FString Name = Filter.GetName();
+		if (Name == TEXT("Filter"))
 		{
-			levelFilter = &filter;
-			auto solidDefinition = filter.GetSolidFilterDefinition();
+			LevelFilter = &Filter;
+			auto solidDefinition = Filter.GetSolidFilterDefinition();
 			solidDefinition.SetWhereClause(WhereClause);
-			BuildingSceneLayer->SetActiveBuildingAttributeFilter(filter);
+			BuildingSceneLayer->SetActiveBuildingAttributeFilter(Filter);
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Where clause : %s"), *WhereClause)
 }
 
 void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool bVisible)
@@ -165,25 +164,25 @@ void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool b
 	// Search for given discipline/category
 	if (BuildingSceneLayer)
 	{
-		const auto& firstLayers = BuildingSceneLayer->GetSublayers();
-		for (const auto& firstSubLayer : firstLayers)
+		const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
+		for (const auto& FirstSubLayer : FirstLayers)
 		{
-			if (firstSubLayer.GetName() == TEXT("Full Model"))
+			if (FirstSubLayer.GetName() == TEXT("Full Model"))
 			{
-				const auto& secondLayers = firstSubLayer.GetSublayers();
-				for (const auto& secondSubLayer : secondLayers)
+				const auto& SecondLayers = FirstSubLayer.GetSublayers();
+				for (const auto& SecondSubLayer : SecondLayers)
 				{
-					if (secondSubLayer.GetName() == option)
+					if (SecondSubLayer.GetName() == option)
 					{
-						SetSublayerVisibility(secondSubLayer, bVisible);
+						SetSublayerVisibility(SecondSubLayer, bVisible);
 						break;
 					}
-					const auto& thirdLayers = secondSubLayer.GetSublayers();
-					for (const auto& thirdSubLayer : thirdLayers)
+					const auto& ThirdLayers = SecondSubLayer.GetSublayers();
+					for (const auto& ThirdSubLayer : ThirdLayers)
 					{
-						if (thirdSubLayer.GetName() == option)
+						if (ThirdSubLayer.GetName() == option)
 						{
-							SetSublayerVisibility(thirdSubLayer, bVisible);
+							SetSublayerVisibility(ThirdSubLayer, bVisible);
 							break;
 						}
 					}
