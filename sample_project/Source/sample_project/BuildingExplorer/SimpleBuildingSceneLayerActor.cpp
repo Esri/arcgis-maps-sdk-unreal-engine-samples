@@ -99,7 +99,16 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 			}
 		}
 	}
-	SortData();
+	DisciplineCategoryData.Sort([](const FDiscipline& A, const FDiscipline& B) {
+		return A.Name.Compare(B.Name, ESearchCase::IgnoreCase) < 0;
+	});
+
+	for (FDiscipline& Discipline : DisciplineCategoryData)
+	{
+		Discipline.Categories.Sort([](const FCategory& A, const FCategory& B) {
+			return A.Name.Compare(B.Name, ESearchCase::IgnoreCase) < 0;
+		});
+	}
 }
 // Creating where clauses to filter desired levels/construction phases
 void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phase, bool bClearLevel)
@@ -199,19 +208,6 @@ void ASimpleBuildingSceneLayerActor::SetSublayerVisibility(const Esri::GameEngin
 	const_cast<Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingSceneSublayer&>(Sublayer).SetIsVisible(bVisible);
 }
 
-void ASimpleBuildingSceneLayerActor::SortData()
-{
-	DisciplineCategoryData.Sort([](const FDiscipline& A, const FDiscipline& B) {
-		return A.Name.Compare(B.Name, ESearchCase::IgnoreCase) < 0;
-	});
-
-	for (FDiscipline& Discipline : DisciplineCategoryData)
-	{
-		Discipline.Categories.Sort([](const FCategory& A, const FCategory& B) {
-			return A.Name.Compare(B.Name, ESearchCase::IgnoreCase) < 0;
-		});
-	}
-}
 // Called every frame
 void ASimpleBuildingSceneLayerActor::Tick(float DeltaTime)
 {

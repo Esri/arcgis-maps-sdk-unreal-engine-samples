@@ -93,5 +93,4 @@ private:
 	Esri::GameEngine::Layers::ArcGISBuildingSceneLayer* BuildingSceneLayer;
 
 	void SetSublayerVisibility(const Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingSceneSublayer& Sublayer, bool bVisible);
-	void SortData();
 };
