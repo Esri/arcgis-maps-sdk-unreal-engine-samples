@@ -78,7 +78,10 @@ public:
 	void AddDisciplineCategoryData();
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
-	void GenerateWhereClause(int32 level, int32 phase);
+	void GenerateWhereClause(int32 level, int32 phase, bool bClearLevel);
+
+	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
+	void InitializeBuildingSceneLayer();
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
 	void PopulateSublayerMaps(FString option, bool bVisible);
@@ -89,6 +92,6 @@ private:
 
 	Esri::GameEngine::Layers::ArcGISBuildingSceneLayer* BuildingSceneLayer;
 
-	void InitializeBuildingSceneLayer();
 	void SetSublayerVisibility(const Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingSceneSublayer& Sublayer, bool bVisible);
+	void SortData();
 };

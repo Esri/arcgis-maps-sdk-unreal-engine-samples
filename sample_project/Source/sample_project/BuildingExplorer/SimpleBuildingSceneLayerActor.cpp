@@ -40,7 +40,6 @@ ASimpleBuildingSceneLayerActor::ASimpleBuildingSceneLayerActor()
 // Called when the game starts or when spawned
 void ASimpleBuildingSceneLayerActor::BeginPlay()
 {
-	InitializeBuildingSceneLayer();
 	APlayerController* const PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	PlayerController->SetInputMode(FInputModeGameAndUI());
 	PlayerController->SetShowMouseCursor(true);
@@ -62,7 +61,6 @@ void ASimpleBuildingSceneLayerActor::InitializeBuildingSceneLayer()
 
 				for (const auto& Layer : AllLayers)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("No Layers?"))
 					if (Layer.Name == TEXT("Building E"))
 					{
 						BuildingSceneLayer = static_cast<Esri::GameEngine::Layers::ArcGISBuildingSceneLayer*>(Layer.APIObject->APIObject.Get());
@@ -80,7 +78,6 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 	if (BuildingSceneLayer)
 	{
 		const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
-		FString Tect = BuildingSceneLayer->GetName();
 		for (const auto& FirstSubLayer : FirstLayers)
 		{
 			if (FirstSubLayer.GetName() == TEXT("Full Model"))
@@ -102,9 +99,10 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 			}
 		}
 	}
+	SortData();
 }
 // Creating where clauses to filter desired levels/construction phases
-void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phase)
+void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phase, bool bClearLevel)
 {
 	Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter> Filters =
 		BuildingSceneLayer->GetBuildingAttributeFilters();
@@ -141,9 +139,12 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 	// Create the where clauses
 	FString BuildingLevelClause = FString::Printf(TEXT("BldgLevel in %s"), *BuildingLevels);
 	FString ConstructionPhaseClause = FString::Printf(TEXT("CreatedPhase in %s"), *ConstructionPhases);
+	FString WhereClause = *ConstructionPhaseClause;
 
-	// Combine the where clauses
-	FString WhereClause = FString::Printf(TEXT("%s and %s"), *BuildingLevelClause, *ConstructionPhaseClause);
+	if (!bClearLevel)
+	{
+		WhereClause = FString::Printf(TEXT("%s and %s"), *BuildingLevelClause, *ConstructionPhaseClause);
+	}
 
 	Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter* LevelFilter;
 	for (auto Filter : Filters)
@@ -198,6 +199,19 @@ void ASimpleBuildingSceneLayerActor::SetSublayerVisibility(const Esri::GameEngin
 	const_cast<Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingSceneSublayer&>(Sublayer).SetIsVisible(bVisible);
 }
 
+void ASimpleBuildingSceneLayerActor::SortData()
+{
+	DisciplineCategoryData.Sort([](const FDiscipline& A, const FDiscipline& B) {
+		return A.Name.Compare(B.Name, ESearchCase::IgnoreCase) < 0;
+	});
+
+	for (FDiscipline& Discipline : DisciplineCategoryData)
+	{
+		Discipline.Categories.Sort([](const FCategory& A, const FCategory& B) {
+			return A.Name.Compare(B.Name, ESearchCase::IgnoreCase) < 0;
+		});
+	}
+}
 // Called every frame
 void ASimpleBuildingSceneLayerActor::Tick(float DeltaTime)
 {
