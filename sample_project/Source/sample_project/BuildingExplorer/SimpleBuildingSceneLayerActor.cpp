@@ -61,7 +61,7 @@ void ASimpleBuildingSceneLayerActor::InitializeBuildingSceneLayer()
 
 				for (const auto& Layer : AllLayers)
 				{
-					if (Layer.Name == TEXT("Building E"))
+					if (Layer.Type == 7)
 					{
 						BuildingSceneLayer = static_cast<Esri::GameEngine::Layers::ArcGISBuildingSceneLayer*>(Layer.APIObject->APIObject.Get());
 					}
