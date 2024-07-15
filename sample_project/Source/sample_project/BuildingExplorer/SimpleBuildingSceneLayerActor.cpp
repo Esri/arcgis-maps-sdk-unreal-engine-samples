@@ -99,10 +99,20 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 			}
 		}
 	}
-	DisciplineCategoryData.Sort([](const FDiscipline& A, const FDiscipline& B) {
-		return A.Name.Compare(B.Name, ESearchCase::IgnoreCase) < 0;
+
+	// Define the order
+	TMap<FString, int32> DisciplineOrder;
+	DisciplineOrder.Add(TEXT("Architectural"), 0);
+	DisciplineOrder.Add(TEXT("Structural"), 1);
+	DisciplineOrder.Add(TEXT("Electrical"), 2);
+
+	DisciplineCategoryData.Sort([&DisciplineOrder](const FDiscipline& A, const FDiscipline& B) {
+		int32 OrderA = DisciplineOrder.Contains(A.Name) ? DisciplineOrder[A.Name] : MAX_int32;
+		int32 OrderB = DisciplineOrder.Contains(B.Name) ? DisciplineOrder[B.Name] : MAX_int32;
+		return OrderA < OrderB;
 	});
 
+	// Sort categories within each discipline alphabetically
 	for (FDiscipline& Discipline : DisciplineCategoryData)
 	{
 		Discipline.Categories.Sort([](const FCategory& A, const FCategory& B) {
