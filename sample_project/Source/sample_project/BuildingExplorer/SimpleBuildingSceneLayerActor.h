@@ -63,14 +63,6 @@ class SAMPLE_PROJECT_API ASimpleBuildingSceneLayerActor : public AActor
 public:
 	// Sets default values for this actor's properties
 	ASimpleBuildingSceneLayerActor();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:
-	UPROPERTY(BlueprintReadWrite, Category = "BuildingSceneLayer")
-	TArray<FDiscipline> DisciplineCategoryData;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -85,6 +77,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
 	void PopulateSublayerMaps(FString option, bool bVisible);
+
+	UPROPERTY(BlueprintReadWrite, Category = "BuildingSceneLayer")
+	TArray<FDiscipline> DisciplineCategoryData;
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
 private:
 	UPROPERTY()
