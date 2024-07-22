@@ -55,6 +55,24 @@ struct FDiscipline
 	TArray<FCategory> Categories;
 };
 
+USTRUCT(BlueprintType)
+struct FBuildingStatistics
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 BldgLevelMin;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 BldgLevelMax;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 CreatedPhaseMin;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 CreatedPhaseMax;
+};
+
 UCLASS()
 class SAMPLE_PROJECT_API ASimpleBuildingSceneLayerActor : public AActor
 {
@@ -77,6 +95,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
 	void PopulateSublayerMaps(FString option, bool bVisible);
+
+	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
+	bool LoadStatus();
+
+	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
+	FBuildingStatistics GetStatistics();
 
 	UPROPERTY(BlueprintReadWrite, Category = "BuildingSceneLayer")
 	TArray<FDiscipline> DisciplineCategoryData;

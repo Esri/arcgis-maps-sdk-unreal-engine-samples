@@ -15,16 +15,23 @@
 
 #include "SimpleBuildingSceneLayerActor.h"
 #include <Kismet/GameplayStatics.h>
+#include "ArcGISMapsSDK/API/GameEngine/ArcGISLoadStatus.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/ArcGISBuildingSceneLayer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/Base/ArcGISLayer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/BuildingScene/ArcGISBuildingAttributeFilter.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/BuildingScene/ArcGISBuildingSceneLayerActiveBuildingAttributeFilterChangedEvent.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/BuildingScene/ArcGISBuildingSceneLayerAttributeStatistics.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/BuildingScene/ArcGISBuildingSceneSublayer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/BuildingScene/ArcGISBuildingSceneSublayerDiscipline.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/BuildingScene/ArcGISSolidBuildingFilterDefinition.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISCollection.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISDictionary.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISFuture.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISImmutableCollection.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGISBuildingSceneLayer.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
+#include "ArcGISMapsSDK/CAPI/GameEngine/Attributes/GEBuildingSceneLayerAttributeStatistics.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -70,6 +77,32 @@ void ASimpleBuildingSceneLayerActor::InitializeBuildingSceneLayer()
 			}
 		}
 	}
+}
+bool ASimpleBuildingSceneLayerActor::LoadStatus()
+{
+	if (BuildingSceneLayer == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BuildingSceneLayer is nullptr"));
+		return false;
+	}
+
+	bool bIsLoaded = false;
+
+	// Set up the done loading callback
+	BuildingSceneLayer->SetDoneLoading([&bIsLoaded](Esri::Unreal::ArcGISException& loadError) {
+		if (loadError)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Error loading layer: %s"), *loadError.GetMessage());
+			bIsLoaded = false;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("Layer loaded successfully"));
+			bIsLoaded = true;
+		}
+	});
+
+	return bIsLoaded;
 }
 
 void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
@@ -141,7 +174,7 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 			BuildingLevels += TEXT("')");
 		}
 	}
-	for (int32 i = 1; i <= phase; ++i)
+	for (int32 i = 0; i <= phase; ++i)
 	{
 		FString PhaseNum = FString::FromInt(i);
 		ConstructionPhases += PhaseNum;
@@ -164,6 +197,7 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 	{
 		WhereClause = FString::Printf(TEXT("%s and %s"), *BuildingLevelClause, *ConstructionPhaseClause);
 	}
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *WhereClause)
 
 	Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter* LevelFilter;
 	for (auto Filter : Filters)
@@ -210,6 +244,67 @@ void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool b
 			}
 		}
 	}
+}
+
+FBuildingStatistics ASimpleBuildingSceneLayerActor::GetStatistics()
+{
+	FBuildingStatistics buildingStatistics;
+	buildingStatistics.BldgLevelMin = INT32_MAX;
+	buildingStatistics.BldgLevelMax = INT32_MIN;
+	buildingStatistics.CreatedPhaseMin = INT32_MAX;
+	buildingStatistics.CreatedPhaseMax = INT32_MIN;
+
+	if (BuildingSceneLayer)
+	{
+		// Fetch statistics asynchronously
+		auto data = BuildingSceneLayer->FetchStatisticsAsync();
+		data.Wait();
+		auto statistics = data.Get();
+
+		// Process BldgLevel statistics
+		auto bldgLevelValue = statistics.At(TEXT("BldgLevel"));
+		TArray<FString> bldgLevelMostFrequentValues;
+		auto bldgLevelMostFrequentValuesCollection = bldgLevelValue.GetMostFrequentValues();
+		TArray<int32> bldgLevelValues;
+
+		for (int32 j = 0; j < bldgLevelMostFrequentValuesCollection.GetSize(); j++)
+		{
+			FString valueStr = bldgLevelMostFrequentValuesCollection.At(j);
+			int32 valueInt = FCString::Atoi(*valueStr);
+			bldgLevelValues.Add(valueInt);
+			UE_LOG(LogTemp, Warning, TEXT("BldgLevel: %d"), valueInt);
+		}
+
+		// Determine highest and lowest values for BldgLevel
+		if (bldgLevelValues.Num() > 0)
+		{
+			buildingStatistics.BldgLevelMin = FMath::Min(bldgLevelValues);
+			buildingStatistics.BldgLevelMax = FMath::Max(bldgLevelValues);
+		}
+
+		// Process CreatedPhase statistics
+		auto createdPhaseValue = statistics.At(TEXT("CreatedPhase"));
+		TArray<FString> createdPhaseMostFrequentValues;
+		auto createdPhaseMostFrequentValuesCollection = createdPhaseValue.GetMostFrequentValues();
+		TArray<int32> createdPhaseValues;
+
+		for (int32 j = 0; j < createdPhaseMostFrequentValuesCollection.GetSize(); j++)
+		{
+			FString valueStr = createdPhaseMostFrequentValuesCollection.At(j);
+			int32 valueInt = FCString::Atoi(*valueStr);
+			createdPhaseValues.Add(valueInt);
+			UE_LOG(LogTemp, Warning, TEXT("CreatedPhase: %d"), valueInt);
+		}
+
+		// Determine highest and lowest values for CreatedPhase
+		if (createdPhaseValues.Num() > 0)
+		{
+			buildingStatistics.CreatedPhaseMin = FMath::Min(createdPhaseValues);
+			buildingStatistics.CreatedPhaseMax = FMath::Max(createdPhaseValues);
+		}
+	}
+
+	return buildingStatistics;
 }
 
 void ASimpleBuildingSceneLayerActor::SetSublayerVisibility(const Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingSceneSublayer& Sublayer,
