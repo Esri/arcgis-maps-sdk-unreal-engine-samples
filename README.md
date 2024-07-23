@@ -23,7 +23,7 @@ This repository is composed of two separate Unity projects. If you would like to
 
 ## Features in Sample Project
 
-* [Building Explorer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/BuildingExplorer) - Explore a building scene layer by toggling the visibility of different attributes.
+* [Building Filter](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/BuildingFilter) - Explore a building scene layer by toggling the visibility of different attributes.
 * [Feature Layer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/FeatureLayer) - Query objects from a feature layer and show them on the map in Unreal Engine.
 * [Geocoding](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Geocoding) - Search for an address or click on the surface to get the address of that location.
 * [HitTest](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/HitTest) - Visualize individual Buildings ID's from a 3D Object Scene Layer.
