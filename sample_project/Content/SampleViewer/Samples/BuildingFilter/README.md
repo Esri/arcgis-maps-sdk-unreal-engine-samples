@@ -1,18 +1,18 @@
-# Building Explorer
+# Building Filter
 
 Allows users to toggle the visibility of different levels, construction phases, disciplines, and categories within a building scene layer. This sample demonstrates how to explore building scene layers and filter based on various criteria.
 
-![image](https://github.com/user-attachments/assets/8d978cf4-1a7a-4cc8-bfc1-410f34e9585a)
+![image](https://github.com/user-attachments/assets/f2fa6633-8227-4d89-8745-38111461662d)
 
 ## How to use the sample (SampleViewer)
 1. The SampleViewer scene should open by default. If it is not open, click the **SampleViewer** scene to open it.
 2. Click play.
 3. Using the UI, enter an APIKey in the input field to the top left.
-4. Open the **Samples** drop-down and click **Building Explorer** to open the level.
+4. Open the **Samples** drop-down and click **Building Filter** to open the level.
 5. Use the UI to toggle visibility of different levels, construction phases, disciplines, and categories.
 
-## How to use the sample (BuildingExplorer Scene)
-1. Open the **BuildingExplorer** Level.
+## How to use the sample (BuildingFilter Scene)
+1. Open the **BuildingFilter** Level.
 2. Click on the **ArcGISMapActor** in the outliner and set your API key in the **Details** panel.
 3. Click play.
 4. Use the UI to toggle visibility of different levels, construction phases, disciplines, and categories.
