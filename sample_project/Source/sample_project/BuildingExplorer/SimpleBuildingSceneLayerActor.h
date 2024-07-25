@@ -14,6 +14,7 @@
  */
 #pragma once
 
+#include "ArcGISMapsSDK/API/Unreal/ArcGISCollection.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "SimpleBuildingSceneLayerActor.generated.h"
@@ -28,6 +29,7 @@ namespace Layers
 class ArcGISBuildingSceneLayer;
 namespace BuildingScene
 {
+class ArcGISBuildingAttributeFilter;
 class ArcGISBuildingSceneSublayer;
 } // namespace BuildingScene
 } // namespace Layers
@@ -94,10 +96,16 @@ public:
 	void InitializeBuildingSceneLayer();
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
+	UArcGISBuildingSceneLayer* NewBuildingSceneLayer(FString source, FString APIKey);
+
+	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
 	void PopulateSublayerMaps(FString option, bool bVisible);
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
-	bool LoadStatus();
+	FString LoadStatus();
+
+	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
+	void ConfigureNewBSL(UArcGISBuildingSceneLayer* newLayer);
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
 	FBuildingStatistics GetStatistics();
@@ -114,6 +122,8 @@ private:
 	TWeakObjectPtr<UArcGISMapComponent> ArcGISMapComponent;
 
 	Esri::GameEngine::Layers::ArcGISBuildingSceneLayer* BuildingSceneLayer;
+
+	Esri::GameEngine::Layers::ArcGISBuildingSceneLayer* LastActiveBSL;
 
 	void SetSublayerVisibility(const Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingSceneSublayer& Sublayer, bool bVisible);
 };

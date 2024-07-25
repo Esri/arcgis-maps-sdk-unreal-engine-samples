@@ -78,31 +78,54 @@ void ASimpleBuildingSceneLayerActor::InitializeBuildingSceneLayer()
 		}
 	}
 }
-bool ASimpleBuildingSceneLayerActor::LoadStatus()
+
+UArcGISBuildingSceneLayer* ASimpleBuildingSceneLayerActor::NewBuildingSceneLayer(FString source, FString APIKey)
+{
+	auto newLayer = UArcGISBuildingSceneLayer::CreateArcGISBuildingSceneLayerWithProperties(source, TEXT("NewBSL"), 1, true, APIKey);
+
+	if (ArcGISMapComponent != nullptr)
+	{
+		auto NewLayers = ArcGISMapComponent->GetMap()->GetLayers();
+		NewLayers->Add(newLayer);
+	}
+	return newLayer;
+}
+
+void ASimpleBuildingSceneLayerActor::ConfigureNewBSL(UArcGISBuildingSceneLayer* newLayer)
+{
+	// Cast the layer to ArcGISBuildingSceneLayer
+	LastActiveBSL = BuildingSceneLayer;
+	BuildingSceneLayer = static_cast<Esri::GameEngine::Layers::ArcGISBuildingSceneLayer*>(newLayer->APIObject.Get());
+	if (!BuildingSceneLayer)
+	{
+		// Handle the error: the cast failed
+		return;
+	}
+}
+
+FString ASimpleBuildingSceneLayerActor::LoadStatus()
 {
 	if (BuildingSceneLayer == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("BuildingSceneLayer is nullptr"));
-		return false;
+		return TEXT("Failed");
 	}
-
-	bool bIsLoaded = false;
-
+	FString LoadStatus = TEXT("Loading");
 	// Set up the done loading callback
-	BuildingSceneLayer->SetDoneLoading([&bIsLoaded](Esri::Unreal::ArcGISException& loadError) {
+	BuildingSceneLayer->SetDoneLoading([&LoadStatus](Esri::Unreal::ArcGISException& loadError) {
 		if (loadError)
 		{
-			UE_LOG(LogTemp, Error, TEXT("Error loading layer: %s"), *loadError.GetMessage());
-			bIsLoaded = false;
+			LoadStatus = TEXT("Failed");
 		}
 		else
 		{
-			UE_LOG(LogTemp, Log, TEXT("Layer loaded successfully"));
-			bIsLoaded = true;
+			LoadStatus = TEXT("Loaded");
 		}
 	});
-
-	return bIsLoaded;
+	if (LoadStatus == TEXT("Failed"))
+	{
+		BuildingSceneLayer = LastActiveBSL;
+	}
+	return LoadStatus;
 }
 
 void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
@@ -197,7 +220,6 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 	{
 		WhereClause = FString::Printf(TEXT("%s and %s"), *BuildingLevelClause, *ConstructionPhaseClause);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *WhereClause)
 
 	Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter* LevelFilter;
 	for (auto Filter : Filters)
@@ -272,7 +294,6 @@ FBuildingStatistics ASimpleBuildingSceneLayerActor::GetStatistics()
 			FString valueStr = bldgLevelMostFrequentValuesCollection.At(j);
 			int32 valueInt = FCString::Atoi(*valueStr);
 			bldgLevelValues.Add(valueInt);
-			UE_LOG(LogTemp, Warning, TEXT("BldgLevel: %d"), valueInt);
 		}
 
 		// Determine highest and lowest values for BldgLevel
@@ -293,7 +314,6 @@ FBuildingStatistics ASimpleBuildingSceneLayerActor::GetStatistics()
 			FString valueStr = createdPhaseMostFrequentValuesCollection.At(j);
 			int32 valueInt = FCString::Atoi(*valueStr);
 			createdPhaseValues.Add(valueInt);
-			UE_LOG(LogTemp, Warning, TEXT("CreatedPhase: %d"), valueInt);
 		}
 
 		// Determine highest and lowest values for CreatedPhase
