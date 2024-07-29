@@ -12,10 +12,24 @@ Allows users to toggle the visibility of different levels, construction phases, 
 5. Use the UI to toggle visibility of different levels, construction phases, disciplines, and categories.
 
 ## How to use the sample (BuildingFilter Scene)
-1. Open the **BuildingFilter** Level.
-2. Click on the **ArcGISMapActor** in the outliner and set your API key in the **Details** panel.
-3. Click play.
-4. Use the UI to toggle visibility of different levels, construction phases, disciplines, and categories.
+1. **Open the BuildingFilter Level:**
+   - Navigate to the **BuildingFilter** level in your project and open it.
+2. **Set the API Key:**
+   - In the outliner, locate and select the **ArcGISMapActor**.
+   - In the **Details** panel, find the field for the API key and enter your API key.
+3. **Start the Simulation:**
+   - Click the play button to start the simulation.
+4. **Interact with the UI:**
+   - **Service URL:**
+     - There is a space in the UI where you can add a service URL for a building scene layer. Enter the URL to load a specific building scene layer. You can also use a local filepath for the URL.
+   - **Building Scene Levels:**
+     - Use the provided controls to adjust the building scene levels. This allows you to focus on specific levels of the building.
+   - **Construction Phases:**
+     - Use the slider to adjust the construction phases of the building scene layer. Slide it to view different stages of the construction process.
+   - **Disciplines and Categories:**
+     - The UI provides a list of disciplines and categories. You can:
+       - Set the visibility of specific disciplines or categories by toggling them on or off.
+       - Enable or disable all disciplines or categories at once using the provided options.
 
 ## How it works
 1. Create an ArcGISMap actor with a building scene layer.
