@@ -68,7 +68,7 @@ void ASimpleBuildingSceneLayerActor::InitializeBuildingSceneLayer()
 
 				for (const auto& Layer : AllLayers)
 				{
-					if (Layer.Type == 7)
+					if (Layer.Type == EArcGISLayerType::ArcGISBuildingSceneLayer)
 					{
 						BuildingSceneLayer = static_cast<Esri::GameEngine::Layers::ArcGISBuildingSceneLayer*>(Layer.APIObject->APIObject.Get());
 					}
@@ -109,50 +109,61 @@ FString ASimpleBuildingSceneLayerActor::LoadStatus()
 	{
 		return TEXT("Failed");
 	}
-	FString LoadStatus = TEXT("Loading");
-	// Set up the done loading callback
-	BuildingSceneLayer->SetDoneLoading([&LoadStatus](Esri::Unreal::ArcGISException& loadError) {
-		if (loadError)
-		{
-			LoadStatus = TEXT("Failed");
-		}
-		else
-		{
-			LoadStatus = TEXT("Loaded");
-		}
-	});
-	if (LoadStatus == TEXT("Failed"))
+
+	auto LoadStatus = BuildingSceneLayer->GetLoadStatus();
+
+	if (LoadStatus == Esri::GameEngine::ArcGISLoadStatus::Loaded)
+	{
+		return TEXT("Loaded");
+	}
+	else if (LoadStatus == Esri::GameEngine::ArcGISLoadStatus::Loading)
+	{
+		return TEXT("Loading");
+	}
+	else
 	{
 		BuildingSceneLayer = LastActiveBSL;
+		return TEXT("Failed");
 	}
-	return LoadStatus;
 }
 
 void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 {
 	DisciplineCategoryData.Empty();
-	if (BuildingSceneLayer)
+
+	if (!BuildingSceneLayer)
 	{
-		const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
-		for (const auto& FirstSubLayer : FirstLayers)
+		return;
+	}
+	const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
+
+	for (const auto& FirstSubLayer : FirstLayers)
+	{
+		if (FirstSubLayer.GetName() == TEXT("Full Model"))
 		{
-			if (FirstSubLayer.GetName() == TEXT("Full Model"))
+			SetSublayerVisibility(FirstSubLayer, true);
+			const auto& SecondLayers = FirstSubLayer.GetSublayers();
+
+			for (const auto& SecondSubLayer : SecondLayers)
 			{
-				const auto& SecondLayers = FirstSubLayer.GetSublayers();
-				for (const auto& SecondSubLayer : SecondLayers)
+				FDiscipline NewDiscipline;
+				NewDiscipline.Name = SecondSubLayer.GetName();
+				const auto& ThirdLayers = SecondSubLayer.GetSublayers();
+				SetSublayerVisibility(SecondSubLayer, true);
+
+				for (const auto& ThirdSubLayer : ThirdLayers)
 				{
-					FDiscipline NewDiscipline;
-					NewDiscipline.Name = SecondSubLayer.GetName();
-					const auto& ThirdLayers = SecondSubLayer.GetSublayers();
-					for (const auto& ThirdSubLayer : ThirdLayers)
-					{
-						FCategory SubCategory;
-						SubCategory.Name = ThirdSubLayer.GetName();
-						NewDiscipline.Categories.Add(SubCategory);
-					}
-					DisciplineCategoryData.Add(NewDiscipline);
+					FCategory SubCategory;
+					SubCategory.Name = ThirdSubLayer.GetName();
+					NewDiscipline.Categories.Add(SubCategory);
+					SetSublayerVisibility(ThirdSubLayer, true);
 				}
+				DisciplineCategoryData.Add(NewDiscipline);
 			}
+		}
+		if (FirstSubLayer.GetName() == TEXT("Overview"))
+		{
+			SetSublayerVisibility(FirstSubLayer, false);
 		}
 	}
 
@@ -160,8 +171,11 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 	TMap<FString, int32> DisciplineOrder;
 	DisciplineOrder.Add(TEXT("Architectural"), 0);
 	DisciplineOrder.Add(TEXT("Structural"), 1);
-	DisciplineOrder.Add(TEXT("Electrical"), 2);
+	DisciplineOrder.Add(TEXT("Mechanical"), 2);
+	DisciplineOrder.Add(TEXT("Electrical"), 3);
+	DisciplineOrder.Add(TEXT("Piping"), 4);
 
+	// Sort disciplines based on the defined order
 	DisciplineCategoryData.Sort([&DisciplineOrder](const FDiscipline& A, const FDiscipline& B) {
 		int32 OrderA = DisciplineOrder.Contains(A.Name) ? DisciplineOrder[A.Name] : MAX_int32;
 		int32 OrderB = DisciplineOrder.Contains(B.Name) ? DisciplineOrder[B.Name] : MAX_int32;
@@ -186,7 +200,7 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 
 	for (int32 i = 0; i <= level; ++i)
 	{
-		FString LevelNum = FString::FromInt(i);
+		auto LevelNum = FString::FromInt(i);
 		BuildingLevels += LevelNum;
 		if (i != level)
 		{
@@ -199,7 +213,7 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 	}
 	for (int32 i = 0; i <= phase; ++i)
 	{
-		FString PhaseNum = FString::FromInt(i);
+		auto PhaseNum = FString::FromInt(i);
 		ConstructionPhases += PhaseNum;
 		if (i != phase)
 		{
@@ -212,8 +226,8 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 	}
 
 	// Create the where clauses
-	FString BuildingLevelClause = FString::Printf(TEXT("BldgLevel in %s"), *BuildingLevels);
-	FString ConstructionPhaseClause = FString::Printf(TEXT("CreatedPhase in %s"), *ConstructionPhases);
+	auto BuildingLevelClause = FString::Printf(TEXT("BldgLevel in %s"), *BuildingLevels);
+	auto ConstructionPhaseClause = FString::Printf(TEXT("CreatedPhase in %s"), *ConstructionPhases);
 	FString WhereClause = *ConstructionPhaseClause;
 
 	if (!bClearLevel)
@@ -224,8 +238,7 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 	Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter* LevelFilter;
 	for (auto Filter : Filters)
 	{
-		FString Name = Filter.GetName();
-		if (Name == TEXT("Filter"))
+		if (Filter.GetName() == TEXT("Filter"))
 		{
 			LevelFilter = &Filter;
 			auto solidDefinition = Filter.GetSolidFilterDefinition();
@@ -238,29 +251,30 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool bVisible)
 {
 	// Search for given discipline/category
-	if (BuildingSceneLayer)
+	if (!BuildingSceneLayer)
 	{
-		const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
-		for (const auto& FirstSubLayer : FirstLayers)
+		return;
+	}
+	const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
+	for (const auto& FirstSubLayer : FirstLayers)
+	{
+		if (FirstSubLayer.GetName() == TEXT("Full Model"))
 		{
-			if (FirstSubLayer.GetName() == TEXT("Full Model"))
+			const auto& SecondLayers = FirstSubLayer.GetSublayers();
+			for (const auto& SecondSubLayer : SecondLayers)
 			{
-				const auto& SecondLayers = FirstSubLayer.GetSublayers();
-				for (const auto& SecondSubLayer : SecondLayers)
+				if (SecondSubLayer.GetName() == option)
 				{
-					if (SecondSubLayer.GetName() == option)
+					SetSublayerVisibility(SecondSubLayer, bVisible);
+					break;
+				}
+				const auto& ThirdLayers = SecondSubLayer.GetSublayers();
+				for (const auto& ThirdSubLayer : ThirdLayers)
+				{
+					if (ThirdSubLayer.GetName() == option)
 					{
-						SetSublayerVisibility(SecondSubLayer, bVisible);
+						SetSublayerVisibility(ThirdSubLayer, bVisible);
 						break;
-					}
-					const auto& ThirdLayers = SecondSubLayer.GetSublayers();
-					for (const auto& ThirdSubLayer : ThirdLayers)
-					{
-						if (ThirdSubLayer.GetName() == option)
-						{
-							SetSublayerVisibility(ThirdSubLayer, bVisible);
-							break;
-						}
 					}
 				}
 			}
