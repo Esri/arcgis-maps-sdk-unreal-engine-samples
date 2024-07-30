@@ -1,4 +1,4 @@
-/* Copyright 2023 Esri
+/* Copyright 2024 Esri
  *
  * Licensed under the Apache License Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,8 +135,8 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 	{
 		return;
 	}
-	const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
 
+	const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
 	for (const auto& FirstSubLayer : FirstLayers)
 	{
 		if (FirstSubLayer.GetName() == TEXT("Full Model"))
@@ -161,7 +161,7 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 				DisciplineCategoryData.Add(NewDiscipline);
 			}
 		}
-		if (FirstSubLayer.GetName() == TEXT("Overview"))
+		else if (FirstSubLayer.GetName() == TEXT("Overview"))
 		{
 			SetSublayerVisibility(FirstSubLayer, false);
 		}
@@ -250,32 +250,35 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 
 void ASimpleBuildingSceneLayerActor::PopulateSublayerMaps(FString option, bool bVisible)
 {
-	// Search for given discipline/category
 	if (!BuildingSceneLayer)
 	{
 		return;
 	}
+
 	const auto& FirstLayers = BuildingSceneLayer->GetSublayers();
 	for (const auto& FirstSubLayer : FirstLayers)
 	{
-		if (FirstSubLayer.GetName() == TEXT("Full Model"))
+		if (FirstSubLayer.GetName() != TEXT("Full Model"))
 		{
-			const auto& SecondLayers = FirstSubLayer.GetSublayers();
-			for (const auto& SecondSubLayer : SecondLayers)
+			continue;
+		}
+
+		const auto& SecondLayers = FirstSubLayer.GetSublayers();
+		for (const auto& SecondSubLayer : SecondLayers)
+		{
+			if (SecondSubLayer.GetName() == option)
 			{
-				if (SecondSubLayer.GetName() == option)
+				SetSublayerVisibility(SecondSubLayer, bVisible);
+				return;
+			}
+
+			const auto& ThirdLayers = SecondSubLayer.GetSublayers();
+			for (const auto& ThirdSubLayer : ThirdLayers)
+			{
+				if (ThirdSubLayer.GetName() == option)
 				{
-					SetSublayerVisibility(SecondSubLayer, bVisible);
-					break;
-				}
-				const auto& ThirdLayers = SecondSubLayer.GetSublayers();
-				for (const auto& ThirdSubLayer : ThirdLayers)
-				{
-					if (ThirdSubLayer.GetName() == option)
-					{
-						SetSublayerVisibility(ThirdSubLayer, bVisible);
-						break;
-					}
+					SetSublayerVisibility(ThirdSubLayer, bVisible);
+					return;
 				}
 			}
 		}
@@ -305,8 +308,8 @@ FBuildingStatistics ASimpleBuildingSceneLayerActor::GetStatistics()
 
 		for (int32 j = 0; j < bldgLevelMostFrequentValuesCollection.GetSize(); j++)
 		{
-			FString valueStr = bldgLevelMostFrequentValuesCollection.At(j);
-			int32 valueInt = FCString::Atoi(*valueStr);
+			auto valueStr = bldgLevelMostFrequentValuesCollection.At(j);
+			auto valueInt = FCString::Atoi(*valueStr);
 			bldgLevelValues.Add(valueInt);
 		}
 
@@ -325,8 +328,8 @@ FBuildingStatistics ASimpleBuildingSceneLayerActor::GetStatistics()
 
 		for (int32 j = 0; j < createdPhaseMostFrequentValuesCollection.GetSize(); j++)
 		{
-			FString valueStr = createdPhaseMostFrequentValuesCollection.At(j);
-			int32 valueInt = FCString::Atoi(*valueStr);
+			auto valueStr = createdPhaseMostFrequentValuesCollection.At(j);
+			auto valueInt = FCString::Atoi(*valueStr);
 			createdPhaseValues.Add(valueInt);
 		}
 
