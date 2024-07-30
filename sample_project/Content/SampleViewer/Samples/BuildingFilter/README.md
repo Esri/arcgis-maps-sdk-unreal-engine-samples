@@ -2,7 +2,7 @@
 
 Allows users to toggle the visibility of different levels, construction phases, disciplines, and categories within a building scene layer. This sample demonstrates how to explore building scene layers and filter based on various criteria.
 
-![image](https://github.com/user-attachments/assets/f2fa6633-8227-4d89-8745-38111461662d)
+![image](https://github.com/user-attachments/assets/f35d80c0-4d71-4af6-b462-44ef3a5d2d66)
 
 ## How to use the sample (SampleViewer)
 1. The SampleViewer scene should open by default. If it is not open, click the **SampleViewer** scene to open it.
