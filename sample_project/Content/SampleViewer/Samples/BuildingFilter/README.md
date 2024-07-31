@@ -37,7 +37,7 @@ Allows users to toggle the visibility of different levels, construction phases, 
 3. Create an actor with a C++ script to filter different criteria.
 4. The [`GetSubLayers`](https://developers.arcgis.com/unreal-engine/api-reference/gameengine/layers/buildingscene/arcgisbuildingscenesublayer/#sublayers) function is used to fetch a collection of the building scene layer's sublayers.
 5. The [`GetSolidFilterDefinition`](https://developers.arcgis.com/unreal-engine/api-reference/gameengine/layers/buildingscene/arcgisbuildingattributefilter/#solidfilterdefinition) function is used to get the filter definition of the default filter.
-6. The [`SetWhereClause`](https://developers.arcgis.com/unreal-engine/api-reference/gameengine/layers/buildingscene/arcgissolidbuildingfilterdefinition/#whereclause) function is used to set a dynmically created where clause based on filter criteria.
+6. The [`SetWhereClause`](https://developers.arcgis.com/unreal-engine/api-reference/gameengine/layers/buildingscene/arcgissolidbuildingfilterdefinition/#whereclause) function is used to set a dynamically created where clause based on filter criteria.
 7. The [`SetActiveBuildingAttributeFilter`](https://developers.arcgis.com/unreal-engine/api-reference/gameengine/layers/arcgisbuildingscenelayer/#activebuildingattributefilter) function is used to set the default filter with the new where clause to active.
 
 ## Tags
