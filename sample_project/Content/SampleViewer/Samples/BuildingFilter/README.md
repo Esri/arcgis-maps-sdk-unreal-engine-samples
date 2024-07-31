@@ -21,7 +21,7 @@ Allows users to toggle the visibility of different levels, construction phases, 
    - Click the play button to start the simulation.
 4. **Interact with the UI:**
    - **Service URL:**
-     - There is a space in the UI where you can add a service URL for a building scene layer. Enter the URL to load a specific building scene layer. You can also use a local filepath for the URL.
+     - There is a space in the UI where you can add a service URL for a building scene layer. Enter the URL to load a specific building scene layer. You can also use a local file path for the URL.
    - **Building Scene Levels:**
      - Use the provided controls to adjust the building scene levels. This allows you to focus on specific levels of the building.
    - **Construction Phases:**
