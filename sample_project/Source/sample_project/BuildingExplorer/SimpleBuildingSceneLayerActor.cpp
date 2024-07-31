@@ -191,26 +191,13 @@ void ASimpleBuildingSceneLayerActor::AddDisciplineCategoryData()
 	}
 }
 // Creating where clauses to filter desired levels/construction phases
-void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phase, bool bClearLevel)
+void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phase, bool bClearLevel, bool bNoLevel)
 {
 	Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter> Filters =
 		BuildingSceneLayer->GetBuildingAttributeFilters();
-	FString BuildingLevels = TEXT("('");
+	FString BuildingLevels = TEXT("('") + FString::FromInt(level) + TEXT("')");
 	FString ConstructionPhases = TEXT("('");
 
-	for (int32 i = 0; i <= level; ++i)
-	{
-		auto LevelNum = FString::FromInt(i);
-		BuildingLevels += LevelNum;
-		if (i != level)
-		{
-			BuildingLevels += TEXT("', '");
-		}
-		else
-		{
-			BuildingLevels += TEXT("')");
-		}
-	}
 	for (int32 i = 0; i <= phase; ++i)
 	{
 		auto PhaseNum = FString::FromInt(i);
@@ -233,6 +220,10 @@ void ASimpleBuildingSceneLayerActor::GenerateWhereClause(int32 level, int32 phas
 	if (!bClearLevel)
 	{
 		WhereClause = FString::Printf(TEXT("%s and %s"), *BuildingLevelClause, *ConstructionPhaseClause);
+	}
+	if (bNoLevel)
+	{
+		WhereClause = *ConstructionPhaseClause;
 	}
 
 	Esri::GameEngine::Layers::BuildingScene::ArcGISBuildingAttributeFilter* LevelFilter;

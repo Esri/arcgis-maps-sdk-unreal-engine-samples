@@ -90,7 +90,7 @@ public:
 	void AddDisciplineCategoryData();
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
-	void GenerateWhereClause(int32 level, int32 phase, bool bClearLevel);
+	void GenerateWhereClause(int32 level, int32 phase, bool bClearLevel, bool bNoLevel);
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingSceneLayer")
 	void InitializeBuildingSceneLayer();
