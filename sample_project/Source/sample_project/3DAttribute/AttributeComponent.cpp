@@ -142,7 +142,7 @@ void UAttributeComponent::Setup3DAttributesOtherType(UArcGIS3DObjectSceneLayer* 
 
 // ForEachString takes care of converting the attribute buffer into a readable string value
 void UAttributeComponent::ForEachString(const Esri::GameEngine::Attributes::ArcGISAttribute& attribute,
-												 std::function<void(const FAnsiStringView&, int32)> predicate)
+												 TFunction<void(const FAnsiStringView&, int32)> predicate)
 {
 	const auto buffer = attribute.GetData();
 	const auto metadata = reinterpret_cast<const int*>(buffer.GetData());
