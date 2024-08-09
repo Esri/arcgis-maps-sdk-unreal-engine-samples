@@ -1,4 +1,17 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/* Copyright 2024 Esri
+ *
+ * Licensed under the Apache License Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #pragma once
 
@@ -63,10 +76,9 @@ public:
 
 	bool Raycast(FVector InRayOrigin, FVector InRayDirection, OUT FVector& HitLocation);
 
-	UPROPERTY(EditAnywhere, Category = "ArcGISTabletop")
+	UPROPERTY(EditAnywhere, Category = "XRTabletop")
 	AActor* WrapperActor = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "ArcGISTabletop")
 	AXRTableTopInteractor* TabletopController = nullptr;
 
 protected:
@@ -89,16 +101,16 @@ private:
 
 	bool SetupReferences();
 
-	UPROPERTY(EditAnywhere, BlueprintGetter = GetExtentCenter, BlueprintSetter = SetExtentCenter, Category = "Tabletop|Extent")
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetExtentCenter, BlueprintSetter = SetExtentCenter, Category = "XRTabletop|Extent")
 	FGeoPosition CenterPosition;
 
-	UPROPERTY(EditAnywhere, BlueprintGetter = GetShape, BlueprintSetter = SetShape, Category = "Tabletop|Extent")
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetShape, BlueprintSetter = SetShape, Category = "XRTabletop|Extent")
 	EMapExtentShapes Shape = EMapExtentShapes::Circle;
 
-	UPROPERTY(EditAnywhere, BlueprintGetter = GetDimensions, BlueprintSetter = SetDimensions, Category = "Tabletop|Extent", meta = (UIMin = 0.0001))
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetDimensions, BlueprintSetter = SetDimensions, Category = "XRTabletop|Extent", meta = (UIMin = 0.0001))
 	FVector2D ExtentDimensions;
 
-	UPROPERTY(EditAnywhere, BlueprintGetter = GetElevationOffset, BlueprintSetter = SetElevationOffset, Category = "Tabletop")
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetElevationOffset, BlueprintSetter = SetElevationOffset, Category = "XRTabletop")
 	double ElevationOffset = 0;
 
 	UArcGISLocationComponent* ArcGISCameraLocation = nullptr;
@@ -108,6 +120,7 @@ private:
 	FDelegateHandle ExtentChangeHandle;
 
 	float ZoomFactor = 0.07;
+	const float ZoomFactor = 0.07;
 
 	bool bNeedsExtentChange = true;
 	bool bExtentChanged = false;
