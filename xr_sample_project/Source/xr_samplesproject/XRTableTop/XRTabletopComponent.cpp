@@ -190,7 +190,8 @@ void UXRTabletopComponent::PostUpdateTabletop(FVector3d InAreaMin, FVector3d InA
 void UXRTabletopComponent::UpdateOffset()
 {
 	auto newPosition = WrapperActor->GetActorLocation();
-	newPosition.Z = ElevationOffset * WrapperActor->GetActorScale3D().X;
+	newPosition.Z = ElevationOffset * WrapperActor->GetActorScale3D().Z;
+	UE_LOG(LogTemp, Error, TEXT("Actor scale %f - Actor Z %f  -  offset  %f"), WrapperActor->GetActorScale3D().X, newPosition.Z, ElevationOffset);
 
 	WrapperActor->SetActorLocation(newPosition);
 }

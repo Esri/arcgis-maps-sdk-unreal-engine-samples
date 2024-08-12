@@ -119,7 +119,6 @@ private:
 
 	FDelegateHandle ExtentChangeHandle;
 
-	float ZoomFactor = 0.07;
 	const float ZoomFactor = 0.07;
 
 	bool bNeedsExtentChange = true;

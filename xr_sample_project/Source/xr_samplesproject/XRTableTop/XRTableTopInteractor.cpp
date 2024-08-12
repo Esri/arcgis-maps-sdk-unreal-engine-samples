@@ -42,7 +42,7 @@ AXRTableTopInteractor::AXRTableTopInteractor()
 	leftMotionControllerAim->MotionSource = TEXT("LeftAim");
 	leftHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Left Hand Mesh"));
 	leftHandMesh->SetupAttachment(leftMotionControllerAim);
-	distanceGrabLeft = CreateDefaultSubobject<UXRDistanceGrabComponent>(TEXT("DistanceGrabLeft"));
+	distanceGrabLeft = CreateDefaultSubobject<UXRDistanceGrabber>(TEXT("DistanceGrabLeft"));
 	distanceGrabLeft->SetupAttachment(leftMotionControllerAim);
 	leftInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Left Interactor"));
 	leftInteraction->SetupAttachment(leftMotionControllerAim);
@@ -53,20 +53,11 @@ AXRTableTopInteractor::AXRTableTopInteractor()
 	rightMotionControllerAim->MotionSource = TEXT("RightAim");
 	rightHandMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Right Hand Mesh"));
 	rightHandMesh->SetupAttachment(rightMotionControllerAim);
-	distanceGrabRight = CreateDefaultSubobject<UXRDistanceGrabComponent>(TEXT("DistanceGrabRight"));
+	distanceGrabRight = CreateDefaultSubobject<UXRDistanceGrabber>(TEXT("DistanceGrabRight"));
 	distanceGrabRight->SetupAttachment(rightMotionControllerAim);
 	rightInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Right Interactor"));
 	rightInteraction->SetupAttachment(rightMotionControllerAim);
 	
-	leftMotionControllerGrip = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionControllerGrip"));
-	leftMotionControllerGrip->SetupAttachment(vrOrigin);
-	leftMotionControllerGrip->SetTrackingSource(EControllerHand::Left);
-	leftMotionControllerGrip->MotionSource = TEXT("LeftGrip");
-
-	rightMotionControllerGrip = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("RightMotionControllerGrip"));
-	rightMotionControllerGrip->SetupAttachment(vrOrigin);
-	rightMotionControllerGrip->SetTrackingSource(EControllerHand::Right);
-	rightMotionControllerGrip->MotionSource = TEXT("RightGrip");
 }
 
 // Called when the game starts or when spawned
@@ -188,7 +179,14 @@ void AXRTableTopInteractor::StopPanning()
 
 void AXRTableTopInteractor::ZoomMap(const FInputActionValue& value)
 {
-	TabletopComponent->ZoomMap(value.Get<float>());
+	ZoomLevel += value.Get<float>();
+
+	if (ZoomLevel < -4 || ZoomLevel > 4)
+	{
+		TabletopComponent->ZoomMap(ZoomLevel);
+		ZoomLevel = 0;
+	}
+
 }
 
 void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -197,16 +195,88 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	{
 		EnhancedInputComponent->BindAction(zoom, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::ZoomMap);
 		
-		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnTriggerLeft);
-		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnTriggerRight);
-		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Completed , this, &AXRTableTopInteractor::OnReleaseLeft);
-		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnReleaseRight);
-		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Canceled , this, &AXRTableTopInteractor::OnReleaseLeft);
-		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::OnReleaseRight);
+		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnPanLeft);
+		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnPanRight);
+		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Completed , this, &AXRTableTopInteractor::OnPanReleaseLeft);
+		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnPanReleaseRight);
+		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Canceled , this, &AXRTableTopInteractor::OnPanReleaseLeft);
+		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::OnPanReleaseRight);
+
+		EnhancedInputComponent->BindAction(grabLeft, ETriggerEvent::Started , this, &AXRTableTopInteractor::OnGrabLeft);
+		EnhancedInputComponent->BindAction(grabRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnGrabRight);
+		EnhancedInputComponent->BindAction(grabLeft, ETriggerEvent::Completed , this, &AXRTableTopInteractor::OnGrabReleaseLeft);
+		EnhancedInputComponent->BindAction(grabRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnGrabReleaseRight);
+		EnhancedInputComponent->BindAction(grabLeft, ETriggerEvent::Canceled , this, &AXRTableTopInteractor::OnGrabReleaseLeft);
+		EnhancedInputComponent->BindAction(grabRight, ETriggerEvent::Canceled, this, &AXRTableTopInteractor::OnGrabReleaseRight);
 	}
 }
 
+void AXRTableTopInteractor::OnGrabLeft()
+{
+	UE_LOG(LogTemp, Error, TEXT("Left Grab ------------"));
 
+	bUseRightHand = false;
+
+	distanceGrabLeft->TryGrab();
+
+	//if (UXRGrabComponent* grabComponent = distanceGrabLeft->Grab(leftMotionControllerGrip))
+	//{
+	//	heldComponentLeft = grabComponent;
+	//}
+
+	//if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(leftMotionControllerGrip))
+	//{
+	//	if (grabComponent->TryGrab(leftMotionControllerGrip))
+	//	{
+	//		heldComponentLeft = grabComponent;
+	//		distanceGrabLeft->bIsDetecting = false;
+	//		
+	//		if (heldComponentLeft == heldComponentRight)
+	//		{
+	//			heldComponentRight = nullptr;
+	//		}
+	//	}	
+	//}
+}
+
+void AXRTableTopInteractor::OnGrabRight()
+{
+	UE_LOG(LogTemp, Error, TEXT("Right Grab ------------"));
+
+	bUseRightHand = true;
+	
+	distanceGrabRight->TryGrab();
+	
+	//if (UXRGrabComponent* grabComponent = distanceGrabRight->Grab(rightMotionControllerGrip))
+	//{
+	//	heldComponentRight = grabComponent;
+	//}
+
+	//if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(rightMotionControllerGrip))
+	//{
+	//	if (grabComponent->TryGrab(rightMotionControllerGrip))
+	//	{
+	//		heldComponentRight = grabComponent;
+	//		distanceGrabRight->bIsDetecting = false;
+	//		
+	//		if (heldComponentRight == heldComponentLeft)
+	//		{
+	//			heldComponentLeft = nullptr;
+	//		}
+	//	}	
+	//}
+}
+
+void AXRTableTopInteractor::OnGrabReleaseLeft()
+{
+	distanceGrabLeft->TryRelease();
+}
+void AXRTableTopInteractor::OnGrabReleaseRight()
+{
+	distanceGrabRight->TryRelease();
+}
+
+void AXRTableTopInteractor::OnPanLeft()
 {
 
 	if (!bIsPanning) 
@@ -228,7 +298,8 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	}
 }
 
-void AXRTableTopInteractor::OnTriggerRight()
+
+void AXRTableTopInteractor::OnPanRight()
 {
 
 	if (!bIsPanning)
@@ -249,14 +320,14 @@ void AXRTableTopInteractor::OnTriggerRight()
 		{
 }
 
-void AXRTableTopInteractor::OnReleaseLeft()
+void AXRTableTopInteractor::OnPanReleaseLeft()
 {
 	StopPanning();
 
 	leftInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
 }
 
-void AXRTableTopInteractor::OnReleaseRight()
+void AXRTableTopInteractor::OnPanReleaseRight()
 {
 	StopPanning();
 
