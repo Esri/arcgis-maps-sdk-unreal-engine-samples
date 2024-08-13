@@ -208,8 +208,8 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnPanLeft);
 		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnPanRight);
-		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnMouseClickLeft);
-		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnMouseClickRight);
+		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnTriggerPressedLeft);
+		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnTriggerPressedRight);
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Completed , this, &AXRTableTopInteractor::OnPanReleaseLeft);
 		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnPanReleaseRight);
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Canceled , this, &AXRTableTopInteractor::OnPanReleaseLeft);
@@ -229,6 +229,8 @@ void AXRTableTopInteractor::OnGrabLeft()
 	bUseRightHand = false;
 
 	distanceGrabLeft->TryGrab();
+
+	SetGripAxisValue(1);
 }
 
 void AXRTableTopInteractor::OnGrabRight()
@@ -236,6 +238,8 @@ void AXRTableTopInteractor::OnGrabRight()
 	bUseRightHand = true;
 	
 	distanceGrabRight->TryGrab();
+
+	SetGripAxisValue(1);
 }
 
 void AXRTableTopInteractor::OnGrabReleaseLeft()
@@ -243,6 +247,8 @@ void AXRTableTopInteractor::OnGrabReleaseLeft()
 	distanceGrabLeft->TryRelease();
 
 	UpdateElevationOffsetFromLocation();
+
+	SetGripAxisValue(0);
 }
 
 void AXRTableTopInteractor::OnGrabReleaseRight()
@@ -250,6 +256,8 @@ void AXRTableTopInteractor::OnGrabReleaseRight()
 	distanceGrabRight->TryRelease();
 
 	UpdateElevationOffsetFromLocation();
+
+	SetGripAxisValue(0);
 }
 
 void AXRTableTopInteractor::HandleWidgetInteraction(bool ButtonPressed)
@@ -269,16 +277,20 @@ void AXRTableTopInteractor::HandleWidgetInteraction(bool ButtonPressed)
 	}
 }
 
-void AXRTableTopInteractor::OnMouseClickLeft()
+void AXRTableTopInteractor::OnTriggerPressedLeft()
 {
 	bUseRightHand = false;
 	HandleWidgetInteraction(true);
+
+	SetTriggerAxisValue(1);
 }
 
-void AXRTableTopInteractor::OnMouseClickRight()
+void AXRTableTopInteractor::OnTriggerPressedRight()
 {
 	bUseRightHand = true;
 	HandleWidgetInteraction(true);
+
+	SetTriggerAxisValue(1);
 }
 
 void AXRTableTopInteractor::OnPanLeft()
@@ -293,7 +305,6 @@ void AXRTableTopInteractor::OnPanLeft()
 		UpdatePanning();
 	}
 }
-
 
 void AXRTableTopInteractor::OnPanRight()
 {
@@ -315,6 +326,8 @@ void AXRTableTopInteractor::OnPanReleaseLeft()
 	StopPanning();
 
 	HandleWidgetInteraction(false);
+
+	SetTriggerAxisValue(0);
 }
 
 void AXRTableTopInteractor::OnPanReleaseRight()
@@ -324,68 +337,27 @@ void AXRTableTopInteractor::OnPanReleaseRight()
 	StopPanning();
 
 	HandleWidgetInteraction(false);
+
+	SetTriggerAxisValue(0);
 }
 
-void AXRTableTopInteractor::SetLeftGripAxis(const FInputActionValue& value)
+void AXRTableTopInteractor::SetGripAxisValue(const float& value)
 {
-	if (leftAnimInstance)
+	auto currentInstance = bUseRightHand ? rightAnimInstance : leftAnimInstance;
+
+	if (currentInstance)
 	{
-		leftAnimInstance->GripAxis = value.Get<float>();
+		currentInstance->GripAxis = value;
 	}
 }
 
-void AXRTableTopInteractor::SetRightGripAxis(const FInputActionValue& value)
+void AXRTableTopInteractor::SetTriggerAxisValue(const float& value)
 {
-	if (rightAnimInstance)
+	auto currentInstance = bUseRightHand ? rightAnimInstance : leftAnimInstance;
+
+	if (currentInstance)
 	{
-		rightAnimInstance->GripAxis = value.Get<float>();
+		currentInstance->TriggerAxis = value;
 	}
 }
 
-void AXRTableTopInteractor::SetLeftTriggerAxis(const FInputActionValue& value)
-{
-	if (leftAnimInstance)
-	{
-		leftAnimInstance->TriggerAxis = value.Get<float>();
-	}
-}
-
-void AXRTableTopInteractor::SetRightTriggerAxis(const FInputActionValue& value)
-{	
-	if (rightAnimInstance)
-	{
-		rightAnimInstance->TriggerAxis = value.Get<float>();
-	}
-}
-
-void AXRTableTopInteractor::ResetLeftGripAxis()
-{
-	if (leftAnimInstance)
-	{
-		leftAnimInstance->GripAxis = 0.0f;
-	}
-}
-
-void AXRTableTopInteractor::ResetRightGripAxis()
-{
-	if (rightAnimInstance)
-	{
-		rightAnimInstance->GripAxis = 0.0f;
-	}
-}
-
-void AXRTableTopInteractor::ResetLeftTriggerAxis()
-{
-	if (leftAnimInstance)
-	{
-		leftAnimInstance->TriggerAxis = 0.0f;
-	}
-}
-
-void AXRTableTopInteractor::ResetRightTriggerAxis()
-{
-	if (rightAnimInstance)
-	{
-		rightAnimInstance->TriggerAxis = 0.0f;
-	}
-}
