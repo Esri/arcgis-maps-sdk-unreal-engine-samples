@@ -129,9 +129,12 @@ void AXRTableTopInteractor::StartPanning()
 
 void AXRTableTopInteractor::StopPanning()
 {
+	bIsPanning = false;
 }
 
+void AXRTableTopInteractor::UpdatePanning()
 {
+	auto hitLocation = PanStartEnginePos;
 
 	if (TabletopComponent)
 	{
@@ -177,6 +180,14 @@ void AXRTableTopInteractor::StopPanning()
 	}
 }
 
+
+
+void AXRTableTopInteractor::UpdateElevationOffsetFromLocation() 
+{
+	auto wrapper = TabletopComponent->WrapperActor;
+	TabletopComponent->SetElevationOffset(wrapper->GetActorLocation().Z / wrapper->GetActorScale3D().Z);
+}
+
 void AXRTableTopInteractor::ZoomMap(const FInputActionValue& value)
 {
 	ZoomLevel += value.Get<float>();
@@ -197,6 +208,8 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnPanLeft);
 		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnPanRight);
+		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnMouseClickLeft);
+		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Started, this, &AXRTableTopInteractor::OnMouseClickRight);
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Completed , this, &AXRTableTopInteractor::OnPanReleaseLeft);
 		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Completed, this, &AXRTableTopInteractor::OnPanReleaseRight);
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Canceled , this, &AXRTableTopInteractor::OnPanReleaseLeft);
@@ -213,72 +226,63 @@ void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInp
 
 void AXRTableTopInteractor::OnGrabLeft()
 {
-	UE_LOG(LogTemp, Error, TEXT("Left Grab ------------"));
-
 	bUseRightHand = false;
 
 	distanceGrabLeft->TryGrab();
-
-	//if (UXRGrabComponent* grabComponent = distanceGrabLeft->Grab(leftMotionControllerGrip))
-	//{
-	//	heldComponentLeft = grabComponent;
-	//}
-
-	//if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(leftMotionControllerGrip))
-	//{
-	//	if (grabComponent->TryGrab(leftMotionControllerGrip))
-	//	{
-	//		heldComponentLeft = grabComponent;
-	//		distanceGrabLeft->bIsDetecting = false;
-	//		
-	//		if (heldComponentLeft == heldComponentRight)
-	//		{
-	//			heldComponentRight = nullptr;
-	//		}
-	//	}	
-	//}
 }
 
 void AXRTableTopInteractor::OnGrabRight()
 {
-	UE_LOG(LogTemp, Error, TEXT("Right Grab ------------"));
-
 	bUseRightHand = true;
 	
 	distanceGrabRight->TryGrab();
-	
-	//if (UXRGrabComponent* grabComponent = distanceGrabRight->Grab(rightMotionControllerGrip))
-	//{
-	//	heldComponentRight = grabComponent;
-	//}
-
-	//if (UXRGrabComponent* grabComponent = GetGrabComponentNearMotionController(rightMotionControllerGrip))
-	//{
-	//	if (grabComponent->TryGrab(rightMotionControllerGrip))
-	//	{
-	//		heldComponentRight = grabComponent;
-	//		distanceGrabRight->bIsDetecting = false;
-	//		
-	//		if (heldComponentRight == heldComponentLeft)
-	//		{
-	//			heldComponentLeft = nullptr;
-	//		}
-	//	}	
-	//}
 }
 
 void AXRTableTopInteractor::OnGrabReleaseLeft()
 {
 	distanceGrabLeft->TryRelease();
+
+	UpdateElevationOffsetFromLocation();
 }
+
 void AXRTableTopInteractor::OnGrabReleaseRight()
 {
 	distanceGrabRight->TryRelease();
+
+	UpdateElevationOffsetFromLocation();
+}
+
+void AXRTableTopInteractor::HandleWidgetInteraction(bool ButtonPressed)
+{
+	auto currentInteraction = bUseRightHand ? rightInteraction : leftInteraction;
+
+	if (ButtonPressed) 
+	{
+		if (currentInteraction->IsOverInteractableWidget())
+		{
+			currentInteraction->PressPointerKey(EKeys::LeftMouseButton);
+		}
+	}
+	else
+	{
+		currentInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
+	}
+}
+
+void AXRTableTopInteractor::OnMouseClickLeft()
+{
+	bUseRightHand = false;
+	HandleWidgetInteraction(true);
+}
+
+void AXRTableTopInteractor::OnMouseClickRight()
+{
+	bUseRightHand = true;
+	HandleWidgetInteraction(true);
 }
 
 void AXRTableTopInteractor::OnPanLeft()
 {
-
 	if (!bIsPanning) 
 	{
 		bUseRightHand = false;
@@ -288,20 +292,11 @@ void AXRTableTopInteractor::OnPanLeft()
 	{
 		UpdatePanning();
 	}
-
-	if (leftInteraction->IsOverInteractableWidget())
-	{
-		leftInteraction->PressPointerKey(EKeys::LeftMouseButton);	
-	}
-	else
-	{
-	}
 }
 
 
 void AXRTableTopInteractor::OnPanRight()
 {
-
 	if (!bIsPanning)
 	{
 		bUseRightHand = true;
@@ -311,27 +306,24 @@ void AXRTableTopInteractor::OnPanRight()
 	{
 		UpdatePanning();
 	}
-
-		if (rightInteraction->IsOverInteractableWidget())
-		{
-			rightInteraction->PressPointerKey(EKeys::LeftMouseButton);
-		}
-		else
-		{
 }
 
 void AXRTableTopInteractor::OnPanReleaseLeft()
 {
+	bUseRightHand = false;
+	
 	StopPanning();
 
-	leftInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
+	HandleWidgetInteraction(false);
 }
 
 void AXRTableTopInteractor::OnPanReleaseRight()
 {
+	bUseRightHand = true;
+
 	StopPanning();
 
-	rightInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
+	HandleWidgetInteraction(false);
 }
 
 void AXRTableTopInteractor::SetLeftGripAxis(const FInputActionValue& value)

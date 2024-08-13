@@ -70,6 +70,9 @@ private:
 	void OnGrabRight();
 	void OnGrabReleaseLeft();
 	void OnGrabReleaseRight();
+	void HandleWidgetInteraction(bool ButtonPressed);
+	void OnMouseClickLeft();
+	void OnMouseClickRight();
 	void OnPanLeft();
 	void OnPanRight();
 	void OnPanReleaseLeft();
