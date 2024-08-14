@@ -96,7 +96,6 @@ void UXRTabletopComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	PreUpdateTabletop();
 }
 
 void UXRTabletopComponent::PreUpdateTabletop()
@@ -149,8 +148,8 @@ void UXRTabletopComponent::PreUpdateTabletop()
 			bNeedsExtentChange = false;
 		}
 
-		ArcGISCameraLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-			CenterPosition.X, CenterPosition.Y, radiusDistance - ElevationOffset, CenterPosition.GetSpatialReference()));
+		auto newHeight = 70. / ArcGISCameraLocation->GetOwner()->GetActorScale3D().Z;
+		ArcGISCameraLocation->GetOwner()->SetActorRelativeLocation(FVector3d(0, 0, newHeight));
 	}
 
 	if (bNeedsOffsetChange)
@@ -185,6 +184,8 @@ void UXRTabletopComponent::PostUpdateTabletop(FVector3d InAreaMin, FVector3d InA
 	UpdateOffset();
 
 	bExtentChanged = true;
+
+	PreUpdateTabletop();
 }
 
 void UXRTabletopComponent::UpdateOffset()
@@ -205,6 +206,8 @@ void UXRTabletopComponent::MoveExtentCenter(FVector3d WorldPos)
 
 	CenterPosition = FGeoPosition(MapComponent->GetView()->WorldToGeographic(WorldPos));
 	bNeedsExtentChange = true;
+
+	PreUpdateTabletop();
 }
 
 void UXRTabletopComponent::ZoomMap(float ZoomValue)
@@ -221,6 +224,8 @@ void UXRTabletopComponent::ZoomMap(float ZoomValue)
 	}
 
 	bNeedsExtentChange = true;
+
+	PreUpdateTabletop();
 }
 
 bool UXRTabletopComponent::Raycast(FVector InRayOrigin, FVector InRayDirection, OUT FVector& HitLocation)
@@ -380,6 +385,7 @@ bool UXRTabletopComponent::SetupReferences()
 			UE_LOG(LogTemp, Warning, TEXT("Tabletop component requires the ArcGISMapActor to be parent to an ArcGISCamera."));
 		}
 	}
+
 	if (!WrapperActor)
 	{
 		WrapperActor = GetOwner();

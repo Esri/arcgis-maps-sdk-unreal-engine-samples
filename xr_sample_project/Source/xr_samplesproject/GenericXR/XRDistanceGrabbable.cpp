@@ -76,7 +76,7 @@ bool UXRDistanceGrabbable::OnGrabbed_Implementation(UXRDistanceGrabber* Grabber,
 	bIsGrabbed = true;
 	CurrentGrabber = Grabber;
 	GrabOffset = GetOwner()->GetActorLocation() - Hit.ImpactPoint;
-	GrabDistance = FVector3d::Dist(Grabber->GetComponentLocation(), GrabOffset);
+	GrabDistance = FVector3d::Dist(Grabber->GetComponentLocation(), Hit.ImpactPoint);
 	return true;
 }
 

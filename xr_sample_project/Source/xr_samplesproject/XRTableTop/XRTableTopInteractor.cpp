@@ -193,6 +193,9 @@ void AXRTableTopInteractor::ZoomMap(const FInputActionValue& value)
 	{
 		TabletopComponent->ZoomMap(ZoomLevel);
 		ZoomLevel = 0;
+
+		UpdateElevationOffsetFromLocation();
+
 	}
 
 }
