@@ -23,7 +23,6 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "xr_samplesproject/GenericXR/XRDistanceGrabComponent.h"
 #include "xr_samplesproject/GenericXR/XRGrabComponent.h"
-#include "xr_samplesproject/Geocoding/Geocoder.h"
 #include "xr_samplesproject/VRSample/VRHandAnimInstance.h"
 
 // Sets default values
@@ -76,7 +75,6 @@ void AXRTableTopInteractor::BeginPlay()
 	
 	SetTabletopComponent();
 	GEngine->XRSystem->SetTrackingOrigin(trackingOrigin);
-	geoCoder = Cast<AGeocoder>(UGameplayStatics::GetActorOfClass(GetWorld(), AGeocoder::StaticClass()));
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
@@ -93,7 +91,6 @@ void AXRTableTopInteractor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	
-	if(bIsDragging)
 }
 
 void AXRTableTopInteractor::SetTabletopComponent()
