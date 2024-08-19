@@ -16,29 +16,11 @@
 #include "XRDistanceGrabbable.h"
 #include "XRDistanceGrabber.h"
 
-
-// Sets default values for this component's properties
 UXRDistanceGrabbable::UXRDistanceGrabbable()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
 
-
-// Called when the game starts
-void UXRDistanceGrabbable::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// ...
-	
-}
-
-
-// Called every frame
 void UXRDistanceGrabbable::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -46,32 +28,22 @@ void UXRDistanceGrabbable::TickComponent(float DeltaTime, ELevelTick TickType, F
 	if (bIsGrabbed)
 	{
 		auto newLocation = CurrentGrabber->GetComponentLocation() + CurrentGrabber->GetForwardVector() * GrabDistance + GrabOffset;
-		//auto newRotation= UKismetMathLibrary::FindLookAtRotation(CurrentGrabber->GetOwner()->GetActorLocation(), newLocation);
 		
 		auto playerLookDirection = newLocation - CurrentGrabber->GetOwner()->GetActorLocation();
 		playerLookDirection.Z = 0;
 
 		auto newRotation = FRotationMatrix::MakeFromX(playerLookDirection).Rotator();
-		//GetOwner()->SetActorLocation(newLocation);
 
 		GetOwner()->SetActorLocationAndRotation(newLocation, newRotation);
 	}
 }
 
-void UXRDistanceGrabbable::OnTargetted_Implementation(UXRDistanceGrabber* Grabber)
-{
-	UE_LOG(LogTemp, Warning, TEXT("+++++++++++++++++++ c++ impl grab"));
-}
-
 bool UXRDistanceGrabbable::OnGrabbed_Implementation(UXRDistanceGrabber* Grabber, const FHitResult& Hit)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("+++++++++++++++++++ c++ impl target"));
-
 	if (bIsGrabbed) 
 	{
 		return false;
 	}
-	//UE_LOG(LogTemp, Error, TEXT("location %s"), *Hit.ImpactPoint.ToString());
 
 	bIsGrabbed = true;
 	CurrentGrabber = Grabber;
@@ -83,8 +55,9 @@ bool UXRDistanceGrabbable::OnGrabbed_Implementation(UXRDistanceGrabber* Grabber,
 void UXRDistanceGrabbable::OnGrabReleased_Implementation()
 {
 	bIsGrabbed = false;
-	//CurrentGrabber = nullptr;
-	//GrabDistance = 0;
-	//GrabOffset = FVector3d();
 }
 
+void UXRDistanceGrabbable::AddGrabDistance(float Offset)
+{
+	GrabDistance += Offset;
+}

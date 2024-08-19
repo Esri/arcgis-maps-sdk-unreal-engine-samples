@@ -13,26 +13,16 @@
  * limitations under the License.
  */
 
-
 #include "XRTableTopInteractor.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "IXRTrackingSystem.h"
 #include "XRTabletopComponent.h"
-#include "Components/WidgetInteractionComponent.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "xr_samplesproject/GenericXR/XRDistanceGrabComponent.h"
-#include "xr_samplesproject/GenericXR/XRGrabComponent.h"
-#include "xr_samplesproject/VRSample/VRHandAnimInstance.h"
 
-// Sets default values
 AXRTableTopInteractor::AXRTableTopInteractor()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	vrOrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
+
+	auto vrOrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
 	vrOrigin->SetupAttachment(RootComponent);
-	vrCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("VRCamera"));
+	auto vrCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("VRCamera"));
 	vrCamera->SetupAttachment(vrOrigin);
 
 	leftMotionControllerAim = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("LeftMotionControllerAim"));
@@ -56,10 +46,8 @@ AXRTableTopInteractor::AXRTableTopInteractor()
 	distanceGrabRight->SetupAttachment(rightMotionControllerAim);
 	rightInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("Right Interactor"));
 	rightInteraction->SetupAttachment(rightMotionControllerAim);
-	
 }
 
-// Called when the game starts or when spawned
 void AXRTableTopInteractor::BeginPlay()
 {
 	Super::BeginPlay();
@@ -74,7 +62,9 @@ void AXRTableTopInteractor::BeginPlay()
 	rightAnimInstance = Cast<UVRHandAnimInstance>(rightAnimInstanceBase);
 	
 	SetTabletopComponent();
-	GEngine->XRSystem->SetTrackingOrigin(trackingOrigin);
+	
+	GEngine->XRSystem->SetTrackingOrigin(TrackingOrigin);
+
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
@@ -85,16 +75,9 @@ void AXRTableTopInteractor::BeginPlay()
 	}
 }
 
-// Called every frame
-void AXRTableTopInteractor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	
-}
-
 void AXRTableTopInteractor::SetTabletopComponent()
 {
+	// Find the tabletop component attached to the map actor
 	auto mapComponent = UArcGISMapComponent::GetMapComponent(this);
 	if (mapComponent)
 	{
@@ -106,15 +89,14 @@ void AXRTableTopInteractor::StartPanning()
 {	
 	auto hitLocation = FVector3d::ZeroVector;
 
-	currentPanningController = bUseRightHand ? rightMotionControllerAim : leftMotionControllerAim;
+	CurrentPanningController = bUseRightHand ? rightMotionControllerAim : leftMotionControllerAim;
 
-	auto hitIsInExtent = TabletopComponent->Raycast(currentPanningController->GetComponentLocation(),
-		currentPanningController->GetForwardVector(), hitLocation);
+	auto hitIsInExtent = TabletopComponent->Raycast(CurrentPanningController->GetComponentLocation(),
+		CurrentPanningController->GetForwardVector(), hitLocation);
 
+	// Start panning if controller is pointing to a location withing the extent
 	if (hitIsInExtent)
 	{
-
-
 		bIsPanning = true;
 		auto mapTranslation = FTransform(TabletopComponent->GetMapComponentLocation());
 		auto toWorldTransform = TabletopComponent->GetFromEngineTransform();
@@ -135,76 +117,50 @@ void AXRTableTopInteractor::UpdatePanning()
 
 	if (TabletopComponent)
 	{
-		//currentPanningController = bUseRightHand ? rightMotionControllerAim : leftMotionControllerAim;
-
-		//auto start = currentPanningController->GetComponentLocation();
-		//auto end = currentPanningController->GetComponentLocation() + 10000. * currentPanningController->GetForwardVector();
-		auto inExtent = TabletopComponent->Raycast(
-			currentPanningController->GetComponentLocation(), 
-			currentPanningController->GetForwardVector(), hitLocation);
-
-		//auto inExtent = TabletopComponent->Raycast(panningHit.TraceStart, panningHit.TraceEnd - panningHit.TraceStart, hitLocation);
-
-		//if (!inExtent) {
-		//	return;
-		//}
-
+		TabletopComponent->Raycast(CurrentPanningController->GetComponentLocation(), 
+			CurrentPanningController->GetForwardVector(), hitLocation);
 
 		auto panDeltaEngine = PanStartEnginePos - hitLocation;
+		
+		// Limit panning amount per frame
 		if (FVector3d::Dist(hitLocation, PanLastEnginePos) > MaxEnginePanDistancePerTick) {
 			panDeltaEngine *= (panDeltaEngine.Length() + MaxEnginePanDistancePerTick) / panDeltaEngine.Length();
-			//UE_LOG(LogTemp, Warning, TEXT("%f"), (hitLocation-PanLastEnginePos).Length());
 		}
 		PanLastEnginePos = hitLocation;
 
 		auto panDeltaWorld = PanStartWorldTransform.TransformPosition(panDeltaEngine);
-		//auto panDeltaWorld = PanStartWorldTransform.TransformPosition(hitLocation);
-
-		//DrawDebugLine(GetWorld(), PanStartEnginePos, hitLocation, FColor::Black, false, -1.f, 0, 3);
-		DrawDebugSphere(GetWorld(), PanStartEnginePos, 10, 5, FColor::Blue);
-		DrawDebugSphere(GetWorld(), hitLocation, 10, 5, FColor::Red);
-
-		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, inExtent? FColor::Green : FColor::Red, hitLocation.ToString());
-
-
-		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, inExtent? FColor::Green : FColor::Red, hitLocation.ToString());
-		//auto temp = PanStartWorldTransform.TransformPosition(PanStartEnginePos);
-		//UE_LOG(LogTemp, Warning, TEXT("%f:   %s"), (temp-panDeltaWorld).Length(), *(temp-panDeltaWorld).ToString());
-	
 		TabletopComponent->MoveExtentCenter(panDeltaWorld);
-
-		//bIsPanning = false;
 	}
 }
 
-
-
-void AXRTableTopInteractor::UpdateElevationOffsetFromLocation() 
+void AXRTableTopInteractor::OnThumbstickTilted(const FInputActionValue& value)
 {
-	auto wrapper = TabletopComponent->WrapperActor;
-	TabletopComponent->SetElevationOffset(wrapper->GetActorLocation().Z / wrapper->GetActorScale3D().Z);
-}
-
-void AXRTableTopInteractor::ZoomMap(const FInputActionValue& value)
-{
-	ZoomLevel += value.Get<float>();
-
-	if (ZoomLevel < -4 || ZoomLevel > 4)
+	if (bIsPanning)
 	{
-		TabletopComponent->ZoomMap(ZoomLevel);
-		ZoomLevel = 0;
-
-		UpdateElevationOffsetFromLocation();
-
+		return;
 	}
 
+	if (GrabbedComponent) // If grabbing the table, move is closer or farther
+	{
+		GrabbedComponent->AddGrabDistance(value.Get<float>()*4);
+	}
+	else // Zoom the map in discrete steps
+	{
+		ZoomLevel += value.Get<float>();
+
+		if (FMath::Abs(ZoomLevel) > MinZoomStep)
+		{
+			TabletopComponent->ZoomMap(ZoomLevel);
+			ZoomLevel = 0;
+		}
+	}
 }
 
 void AXRTableTopInteractor::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(zoom, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::ZoomMap);
+		EnhancedInputComponent->BindAction(zoom, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnThumbstickTilted);
 		
 		EnhancedInputComponent->BindAction(panLeft, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnPanLeft);
 		EnhancedInputComponent->BindAction(panRight, ETriggerEvent::Triggered, this, &AXRTableTopInteractor::OnPanRight);
@@ -228,7 +184,7 @@ void AXRTableTopInteractor::OnGrabLeft()
 {
 	bUseRightHand = false;
 
-	distanceGrabLeft->TryGrab();
+	GrabbedComponent = distanceGrabLeft->TryGrab();
 
 	SetGripAxisValue(1);
 }
@@ -237,7 +193,7 @@ void AXRTableTopInteractor::OnGrabRight()
 {
 	bUseRightHand = true;
 	
-	distanceGrabRight->TryGrab();
+	GrabbedComponent = distanceGrabRight->TryGrab();
 
 	SetGripAxisValue(1);
 }
@@ -246,7 +202,7 @@ void AXRTableTopInteractor::OnGrabReleaseLeft()
 {
 	distanceGrabLeft->TryRelease();
 
-	UpdateElevationOffsetFromLocation();
+	GrabbedComponent = nullptr;
 
 	SetGripAxisValue(0);
 }
@@ -255,7 +211,7 @@ void AXRTableTopInteractor::OnGrabReleaseRight()
 {
 	distanceGrabRight->TryRelease();
 
-	UpdateElevationOffsetFromLocation();
+	GrabbedComponent = nullptr;
 
 	SetGripAxisValue(0);
 }
@@ -280,6 +236,7 @@ void AXRTableTopInteractor::HandleWidgetInteraction(bool ButtonPressed)
 void AXRTableTopInteractor::OnTriggerPressedLeft()
 {
 	bUseRightHand = false;
+	
 	HandleWidgetInteraction(true);
 
 	SetTriggerAxisValue(1);
@@ -288,6 +245,7 @@ void AXRTableTopInteractor::OnTriggerPressedLeft()
 void AXRTableTopInteractor::OnTriggerPressedRight()
 {
 	bUseRightHand = true;
+
 	HandleWidgetInteraction(true);
 
 	SetTriggerAxisValue(1);
@@ -360,4 +318,3 @@ void AXRTableTopInteractor::SetTriggerAxisValue(const float& value)
 		currentInstance->TriggerAxis = value;
 	}
 }
-

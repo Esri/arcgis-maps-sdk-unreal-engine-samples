@@ -16,14 +16,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
-#include "InputMappingContext.h"
-#include "MotionControllerComponent.h"
 #include "Camera/CameraComponent.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "GameFramework/Pawn.h"
 #include "HeadMountedDisplayTypes.h"
+#include "InputMappingContext.h"
+#include "IXRTrackingSystem.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "MotionControllerComponent.h"
+#include "Components/WidgetInteractionComponent.h"
+#include "xr_samplesproject/VRSample/VRHandAnimInstance.h"
 #include "xr_samplesproject/GenericXR/XRDistanceGrabbable.h"
 #include "xr_samplesproject/GenericXR/XRDistanceGrabber.h"
 #include "XRTableTopInteractor.generated.h"
+
+
 
 class AGeocoder;
 class UWidgetInteractionComponent;
@@ -44,21 +52,11 @@ public:
 	void StartPanning();
 	UFUNCTION(BlueprintCallable)
 	void StopPanning();
-	virtual void Tick(float DeltaTime) override;
-
-	FHitResult panningHit;
-	FVector endPoint;
-	TArray<AActor*> IgnoreActors;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
-	UXRTabletopComponent* TabletopComponent{nullptr};
-
-
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
-	AActor* TestActor;
-
+	UXRTabletopComponent* TabletopComponent;
+	
 	UXRDistanceGrabber* distanceGrabLeft;
-
 	UXRDistanceGrabber* distanceGrabRight;
 
 	
@@ -66,36 +64,23 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	void OnGrabLeft();
-	void OnGrabRight();
-	void OnGrabReleaseLeft();
-	void OnGrabReleaseRight();
 	void HandleWidgetInteraction(bool ButtonPressed);
+	void OnGrabLeft();
+	void OnGrabReleaseLeft();
+	void OnGrabRight();
+	void OnGrabReleaseRight();
+	void OnPanLeft();
+	void OnPanReleaseLeft();
+	void OnPanRight();
+	void OnPanReleaseRight();
 	void OnTriggerPressedLeft();
 	void OnTriggerPressedRight();
-	void OnPanLeft();
-	void OnPanRight();
-	void OnPanReleaseLeft();
-	void OnPanReleaseRight();
 	void SetGripAxisValue(const float& value);
 	void SetTriggerAxisValue(const float& value);
 	void SetTabletopComponent();
 	void UpdatePanning();
-	void UpdateElevationOffsetFromLocation();
-	void ZoomMap(const FInputActionValue& value);
-	
-	bool bIsPanning;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta=(AllowPrivateAccess))
-	bool bIsOverUILeft;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta=(AllowPrivateAccess))
-	bool bIsOverUIRight;
-	bool bUseRightHand;
+	void OnThumbstickTilted(const FInputActionValue& value);
 
-	const double MaxEnginePanDistancePerTick = 5.;
-
-	FVector3d PanStartEnginePos{FVector3d::ZeroVector};
-	FVector3d PanLastEnginePos{FVector3d::ZeroVector};
-	FTransform PanStartWorldTransform{FTransform::Identity};
 	UInputMappingContext* inputContext = LoadObject<UInputMappingContext>(nullptr, TEXT("InputMappingContext'/Game/Samples/XRTableTop/Input/IAC_XRTableTop.IAC_XRTableTop'"));
 	UInputAction* grabLeft = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Grip_Left.IA_Grip_Left'"));
 	UInputAction* grabRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Grip_Right.IA_Grip_Right'"));
@@ -103,36 +88,41 @@ private:
 	UInputAction* panRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Pan_Right.IA_Pan_Right'"));
 	UInputAction* zoom = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Zoom.IA_Zoom'"));
 	
+	UMotionControllerComponent* CurrentPanningController;
 	
-	UMotionControllerComponent* currentPanningController;
-	
+	UXRDistanceGrabbable* GrabbedComponent;
 
 	USkeletalMesh* handMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("SkeletalMesh'/Game/Samples/VRSample/Hands/Meshes/SKM_MannyXR_left.SKM_MannyXR_left'"));
 
-		
 	UVRHandAnimInstance* leftAnimInstance;
 	UAnimInstance* leftAnimInstanceBase;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* leftHandMesh;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	UWidgetInteractionComponent* leftInteraction;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
+	UMotionControllerComponent* leftMotionControllerAim;
 	
 	UVRHandAnimInstance* rightAnimInstance;
 	UAnimInstance* rightAnimInstanceBase;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* rightHandMesh;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	UWidgetInteractionComponent* rightInteraction;
-	
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
-	TEnumAsByte<EHMDTrackingOrigin::Type> trackingOrigin;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
-	UCameraComponent* vrCamera;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
-	UMotionControllerComponent* leftMotionControllerAim;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
 	UMotionControllerComponent* rightMotionControllerAim;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess))
-	USceneComponent* vrOrigin;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	TEnumAsByte<EHMDTrackingOrigin::Type> TrackingOrigin;
+
+	bool bUseRightHand;
+	
+	bool bIsPanning;
+	const double MaxEnginePanDistancePerTick = 5.;
+	FVector3d PanStartEnginePos{FVector3d::ZeroVector};
+	FVector3d PanLastEnginePos{FVector3d::ZeroVector};
+	FTransform PanStartWorldTransform{FTransform::Identity};
+
 	float ZoomLevel;
+	const float MinZoomStep{4.};
 };

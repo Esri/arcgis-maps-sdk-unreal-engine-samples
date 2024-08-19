@@ -16,18 +16,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ArcGISTabletopPlayerController.h"
-#include "ArcGISMapsSDK/API/GameEngine/Extent/ArcGISExtentType.h"
-#include "ArcGISMapsSDK/Utils/ArcGISMapExtentShapes.h"
 #include "Components/ActorComponent.h"
-
+#include "ArcGISTabletopPlayerController.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "ArcGISMapsSDK/Components/ArcGISCameraComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "ArcGISMapsSDK/API/GameEngine/Extent/ArcGISExtentType.h"
+#include "ArcGISMapsSDK/Utils/ArcGISMapExtentShapes.h"
 #include "XRTableTopInteractor.h"
-
+#include "ArcGISMapsSDK/Utils/ArcGISExtentInstanceData.h"
+#include "Kismet/GameplayStatics.h"
 #include "XRTabletopComponent.generated.h"
 
 
@@ -37,11 +37,8 @@ class XR_SAMPLESPROJECT_API UXRTabletopComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UXRTabletopComponent();
 
-// UActorComponent
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void OnRegister() override;
 	virtual void OnUnregister() override;
 
@@ -83,23 +80,19 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
 private:
-	void GetTabletopController();
-
-	void PostUpdateTabletop(FVector3d InAreaMin, FVector3d InAreaMax, Esri::GameEngine::Extent::ArcGISExtentType InType);
-
-	void PreUpdateTabletop();
-
-	void UpdateOffset();
-
 	bool FindArcGISCameraLocationInHierarchy();
-
 	bool SetupReferences();
+	void GetTabletopController();
+	void PostUpdateTabletop(FVector3d InAreaMin, FVector3d InAreaMax, Esri::GameEngine::Extent::ArcGISExtentType InType);
+	void PreUpdateTabletop();
+	void UpdateOffset();
 
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetExtentCenter, BlueprintSetter = SetExtentCenter, Category = "XRTabletop|Extent")
 	FGeoPosition CenterPosition;
@@ -111,17 +104,24 @@ private:
 	FVector2D ExtentDimensions;
 
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetElevationOffset, BlueprintSetter = SetElevationOffset, Category = "XRTabletop")
-	double ElevationOffset = 0;
-
-	UArcGISLocationComponent* ArcGISCameraLocation = nullptr;
+	double ElevationOffset{ 0 };
+	
+	UArcGISLocationComponent* ArcGISCameraLocation;
 
 	TWeakObjectPtr<UArcGISMapComponent> MapComponent;
 
 	FDelegateHandle ExtentChangeHandle;
 
-	const float ZoomFactor = 0.07;
+	double LocalZOffset{ 0 };
+	const float MinExtentDimension{ 250. };
+	const float MaxExtentDimension{ 7500000. };
+	const float WrapperScaleFactor{ 0.8 };
+	const float ZoomFactor{ 0.07 };
+	const float CameraHeightFactor{ 500. };
 
-	bool bNeedsExtentChange = true;
 	bool bExtentChanged = false;
+	bool bNeedsExtentChange = true;
 	bool bNeedsOffsetChange = true;
+
+
 };

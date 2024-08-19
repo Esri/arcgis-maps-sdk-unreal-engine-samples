@@ -27,15 +27,9 @@ class XR_SAMPLESPROJECT_API UXRDistanceGrabbable : public USceneComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UXRDistanceGrabbable();
 
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void OnTargetted(UXRDistanceGrabber* Grabber);
-	virtual void OnTargetted_Implementation(UXRDistanceGrabber* Grabber);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool OnGrabbed(UXRDistanceGrabber* Grabber, const FHitResult& Hit);
@@ -44,11 +38,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnGrabReleased();
 	virtual void OnGrabReleased_Implementation();
+		
+	void AddGrabDistance(float Offset);
 
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
+private:
 	bool bIsGrabbed{ false };
 	UXRDistanceGrabber* CurrentGrabber;
 	float GrabDistance;

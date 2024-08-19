@@ -15,19 +15,11 @@
 
 #include "XRTabletopComponent.h"
 
-#include "ArcGISMapsSDK/Utils/ArcGISExtentInstanceData.h"
-#include "Kismet/GameplayStatics.h"
 
-// Sets default values for this component's properties
 UXRTabletopComponent::UXRTabletopComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
-
 
 void UXRTabletopComponent::OnRegister()
 {
@@ -90,12 +82,17 @@ void UXRTabletopComponent::BeginPlay()
 
 	SetupReferences();
 	GetTabletopController();
+
+	LocalZOffset = WrapperActor->GetRootComponent()->GetRelativeLocation().Z - ElevationOffset * WrapperActor->GetActorScale3D().Z;
 }
 
-void UXRTabletopComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UXRTabletopComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	auto relativeLocation = WrapperActor->GetRootComponent()->GetRelativeLocation();
+	relativeLocation.Z = LocalZOffset;
+	WrapperActor->SetActorRelativeLocation(relativeLocation);
 
+	Super::EndPlay(EndPlayReason);
 }
 
 void UXRTabletopComponent::PreUpdateTabletop()
@@ -132,7 +129,7 @@ void UXRTabletopComponent::PreUpdateTabletop()
 		{
 			MapComponent->SetOriginPosition(newExtent.ExtentCenter);
 
-			WrapperActor->SetActorRelativeScale3D(FVector3d(0.5 / radiusDistance));
+			WrapperActor->SetActorRelativeScale3D(FVector3d(WrapperScaleFactor / radiusDistance));
 
 			bExtentChanged = false;
 		}
@@ -148,7 +145,7 @@ void UXRTabletopComponent::PreUpdateTabletop()
 			bNeedsExtentChange = false;
 		}
 
-		auto newHeight = 70. / ArcGISCameraLocation->GetOwner()->GetActorScale3D().Z;
+		auto newHeight = CameraHeightFactor / ArcGISCameraLocation->GetOwner()->GetActorScale3D().Z;
 		ArcGISCameraLocation->GetOwner()->SetActorRelativeLocation(FVector3d(0, 0, newHeight));
 	}
 
@@ -190,11 +187,13 @@ void UXRTabletopComponent::PostUpdateTabletop(FVector3d InAreaMin, FVector3d InA
 
 void UXRTabletopComponent::UpdateOffset()
 {
-	auto newPosition = WrapperActor->GetActorLocation();
-	newPosition.Z = ElevationOffset * WrapperActor->GetActorScale3D().Z;
-	UE_LOG(LogTemp, Error, TEXT("Actor scale %f - Actor Z %f  -  offset  %f"), WrapperActor->GetActorScale3D().X, newPosition.Z, ElevationOffset);
 
-	WrapperActor->SetActorLocation(newPosition);
+	auto newPosition = WrapperActor->GetActorLocation();
+	newPosition.Z += ElevationOffset * WrapperActor->GetActorScale3D().Z;
+
+	auto relativeLocation = WrapperActor->GetRootComponent()->GetRelativeLocation();
+	relativeLocation.Z = ElevationOffset * WrapperActor->GetActorScale3D().Z + LocalZOffset;
+	WrapperActor->SetActorRelativeLocation(relativeLocation);
 }
 
 void UXRTabletopComponent::MoveExtentCenter(FVector3d WorldPos)
@@ -217,10 +216,11 @@ void UXRTabletopComponent::ZoomMap(float ZoomValue)
 		return;
 	}
 
-	ExtentDimensions.X *= 1 - ZoomValue * ZoomFactor;
+	ExtentDimensions.X = FMath::Clamp(ExtentDimensions.X * (1. - ZoomValue * ZoomFactor), MinExtentDimension, MaxExtentDimension);
+
 	if (Shape == EMapExtentShapes::Rectangle)
 	{
-		ExtentDimensions.Y *= 1 - ZoomValue * ZoomFactor;
+		ExtentDimensions.Y = FMath::Clamp(ExtentDimensions.Y * (1. - ZoomValue * ZoomFactor), MinExtentDimension, MaxExtentDimension);
 	}
 
 	bNeedsExtentChange = true;
