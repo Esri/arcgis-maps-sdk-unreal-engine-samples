@@ -2,7 +2,7 @@
 
 ![image](arcgis-maps-sdk-unreal-engine-samples.png)
 
-Here is an Unreal Engine 5 project containing a set of samples showing you how to accomplish various things using the combined features of Unreal Engine 5 and the ArcGIS Maps SDK for Unreal Engine. The `main` branch is configured to work with our most recent release (1.4.0). If you want to use the sample repo with an older release, check out the corresponding tag of the sample repo, `git checkout 1.0.0` for the sample repo that worked with our 1.0.0 release.
+Here is an Unreal Engine 5 project containing a set of samples showing you how to accomplish various things using the combined features of Unreal Engine 5 and the ArcGIS Maps SDK for Unreal Engine. The `main` branch is configured to work with our most recent release (1.6.0). If you want to use the sample repo with an older release, check out the corresponding tag of the sample repo, `git checkout 1.0.0` for the sample repo that worked with our 1.0.0 release.
 
 ### Note
 
@@ -11,18 +11,19 @@ This repository is composed of two separate Unity projects. If you would like to
 ### Requirements for Sample Project
 
 * Computer running Windows or macOS
-* The minimum version of Unreal Engine supported for the project is 5.0 but works with 5.1, 5.2, and 5.3
+* The minimum version of Unreal Engine supported for the project is 5.2
 * ArcGISMaps SDK for Unreal Engine
 
 ### Requirements for XR Sample Project
 
 * Computer running Windows (OpenXR is not supported on macOS)
-* The minimum version of Unreal Engine supported for the project is 5.3 but will support new versions as they come out
+* The minimum version of Unreal Engine supported for the project is 5.4
 * ArcGISMaps SDK for Unreal Engine
 * A VR Headset and the necessary software to run through Desktop Mode
 
 ## Features in Sample Project
 
+* [Building Filter](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/BuildingFilter) - Explore a building scene layer by toggling the visibility of different attributes.
 * [Feature Layer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/FeatureLayer) - Query objects from a feature layer and show them on the map in Unreal Engine.
 * [Geocoding](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Geocoding) - Search for an address or click on the surface to get the address of that location.
 * [HitTest](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/HitTest) - Visualize individual Buildings ID's from a 3D Object Scene Layer.
@@ -32,7 +33,7 @@ This repository is composed of two separate Unity projects. If you would like to
 * [Routing](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Routing) - Show a route between two points on a map using Esri's routing service REST API.
 * [Stream Layer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/StreamLayer) - See how to use web sockets to connect to an Esri real time service to update game objects locations in real time.
 * [Third Person Character Controller](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/ThirdPersonCharacter) - See how to run around a virtual city in Unreal Engine.
-* [Real Time Weather Query](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/RealTime_Weather) - Querry the current weather in a city using the feature layer query work flow.
+* [Real Time Weather Query](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/RealTime_Weather) - Query the current weather in a city using the feature layer query work flow.
 
 ## Features in XR Sample Project
 

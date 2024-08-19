@@ -1,4 +1,4 @@
-# Query Current Weather Conditions Across the U.S.A
+# Query current weather conditions across the U.S.A
 
 Query Weather Data from the Weather Stations feature layer provided in order to display weather conditions on the map.
 
@@ -19,12 +19,12 @@ Query Weather Data from the Weather Stations feature layer provided in order to 
 
 ## How it works
 
-1. Create a new C++ class and make a http request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
+1. Create a new C++ class and make an HTTP request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
 2. Create a new Blueprint Actor class
    - Create the event to place the data returned from the Weather Query.
    - Create a function to spawn the weather actor according to the data received in the query.
    - Attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to the weather actor blueprint class.
-   - Add aditional functionality to spawn/show different **Niagra Particle Effects** based on the current weather data returned from the **Weather Query**.
+   - Add additional functionality to spawn/show different **Niagra Particle Effects** based on the current weather data returned from the **Weather Query**.
 3. Create a widget for the viewport so users can select a city from the list fed from the feature service.
 
 Note: You can use `UE_LOG` to print log messages in the **Output Log** window and see if you are gathering the data properly from the feature service.

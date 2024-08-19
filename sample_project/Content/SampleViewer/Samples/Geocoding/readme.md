@@ -6,7 +6,7 @@ Find the location for an address or find the address of a selected location usin
 
 ## How to use the sample
 
-This sample demonstrates the capability of the [Geocoding service](https://developers.arcgis.com/documentation/mapping-apis-and-services/search/geocoding/) inside Unreal Engine. You can make two kinds of operations with this sample, find a place and find an address. 
+This sample demonstrates the capability of the [Geocoding service](https://developers.arcgis.com/rest/geocode/api-reference/overview-world-geocoding-service.htm) inside Unreal Engine. You can make two kinds of operations with this sample, find a place and find an address. 
 
 1. Open the **Geocoding** level.
 2. Click on the **ArcGISMap Actor** in the **Outliner**.

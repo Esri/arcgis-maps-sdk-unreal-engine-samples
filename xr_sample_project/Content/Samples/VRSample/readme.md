@@ -1,6 +1,6 @@
-# Explore with Virtual Reality
+# Explore the world in virtual reality
 
-Allows users to explore a city/map from the first person perspective using Virtual Reality.
+Allows users to explore a city/map from the first-person perspective using Virtual Reality.
 
 ![Image of Virtual Reality Sample](VRSample.png)
 
@@ -9,7 +9,7 @@ Allows users to explore a city/map from the first person perspective using Virtu
 1. Prior to opening the project, ensure your VR headset is connected and any required software is running (SteamVR, Oculus, Vive Streaming Hub).
 2. Open the **VRSample_lvl** level.
 3. Click on the **ArcGISMapActor** in the Outliner panel.
-4. Set your API key under th **Authentication** section in the Details panel.
+4. Set your API key under the **Authentication** section in the Details panel.
 5. If the play mode is not set to **VR Preview**, click on the 3 dots and select **VR Preview**, otherwise just hit play.
 
 
@@ -22,7 +22,7 @@ Allows users to explore a city/map from the first person perspective using Virtu
 5. Using the blueprints Tick Function, create a function that allows the **Follow Camera Blueprint** to follow the Virtual Reality Character. This is used for rendering the **ArcGISMap Component** and any layers you may have added.  
 3. Add the Virtual Reality Character to the level.
    - Mesh colliders need to be enabled in the **ArcGIS Map Component**.
-   - If you want to place the character on a specific location, use the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to specify its location.
+   - If you want to place the character in a specific location, use the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to specify its location.
    - Adjust the `Z` Location value of the character to be above the location you would like it at.
 
 ## About the data
