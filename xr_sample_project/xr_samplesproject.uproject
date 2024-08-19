@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.4",
+	"EngineAssociation": "5.3",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -29,6 +29,11 @@
 				"Linux",
 				"Android"
 			]
+		},
+		{
+			"Name": "ArcGISMapsSDK",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/87e590379c974958bc96bb127c9dc001"
 		}
 	]
 }
