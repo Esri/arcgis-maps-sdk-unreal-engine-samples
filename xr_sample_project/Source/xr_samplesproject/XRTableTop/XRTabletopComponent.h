@@ -113,7 +113,7 @@ private:
 	FDelegateHandle ExtentChangeHandle;
 
 	double LocalZOffset{ 0 };
-	const float MinExtentDimension{ 250. };
+	const float MinExtentDimension{ 150. };
 	const float MaxExtentDimension{ 7500000. };
 	const float WrapperScaleFactor{ 0.8 };
 	const float ZoomFactor{ 0.07 };

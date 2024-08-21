@@ -83,7 +83,7 @@ void UXRTabletopComponent::BeginPlay()
 	SetupReferences();
 	GetTabletopController();
 
-	LocalZOffset = WrapperActor->GetRootComponent()->GetRelativeLocation().Z - ElevationOffset * WrapperActor->GetActorScale3D().Z;
+	LocalZOffset = WrapperActor->GetRootComponent()->GetRelativeLocation().Z;
 }
 
 void UXRTabletopComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -187,10 +187,6 @@ void UXRTabletopComponent::PostUpdateTabletop(FVector3d InAreaMin, FVector3d InA
 
 void UXRTabletopComponent::UpdateOffset()
 {
-
-	auto newPosition = WrapperActor->GetActorLocation();
-	newPosition.Z += ElevationOffset * WrapperActor->GetActorScale3D().Z;
-
 	auto relativeLocation = WrapperActor->GetRootComponent()->GetRelativeLocation();
 	relativeLocation.Z = ElevationOffset * WrapperActor->GetActorScale3D().Z + LocalZOffset;
 	WrapperActor->SetActorRelativeLocation(relativeLocation);
