@@ -178,17 +178,17 @@ void UXRTabletopComponent::PostUpdateTabletop(FVector3d InAreaMin, FVector3d InA
 
 	ExtentDimensions = FVector2D(width, height) / (Shape == EMapExtentShapes::Circle ? 2 : 1);
 
-	UpdateOffset();
-
 	bExtentChanged = true;
 
 	PreUpdateTabletop();
+
+	UpdateOffset();
 }
 
 void UXRTabletopComponent::UpdateOffset()
 {
 	auto relativeLocation = WrapperActor->GetRootComponent()->GetRelativeLocation();
-	relativeLocation.Z = ElevationOffset * WrapperActor->GetActorScale3D().Z + LocalZOffset;
+	relativeLocation.Z = ElevationOffset * WrapperActor->GetActorRelativeScale3D().Z + LocalZOffset;
 	WrapperActor->SetActorRelativeLocation(relativeLocation);
 }
 
