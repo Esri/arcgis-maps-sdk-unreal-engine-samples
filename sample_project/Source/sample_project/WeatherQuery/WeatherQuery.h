@@ -46,7 +46,7 @@ public:
 	FString SkyCondition;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString StationName;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float Tempurature;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString Weather;
