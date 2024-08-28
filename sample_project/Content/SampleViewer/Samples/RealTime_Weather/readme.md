@@ -32,7 +32,7 @@ Note: You can use `UE_LOG` to print log messages in the **Output Log** window an
 ## How it works (Blueprints)
 
 1. Go to plugins within Unreal Engine and enable the `HTTPBlueprint` Plugin
-2. Create a new blueprint class and make an HTTP request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
+2. Create a new Blueprint Class and make an HTTP request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
 3. Create a new Blueprint Actor class
    - Create the event to place the data returned from the Weather Query.
    - Create a function to spawn the weather actor according to the data received in the query.
