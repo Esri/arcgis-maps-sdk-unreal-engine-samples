@@ -123,7 +123,8 @@ void AXRTableTopInteractor::UpdatePanning()
 		auto panDeltaEngine = PanStartEnginePos - hitLocation;
 		
 		// Limit panning amount per frame
-		if (FVector3d::Dist(hitLocation, PanLastEnginePos) > MaxEnginePanDistancePerTick) {
+		if (FVector3d::Dist(hitLocation, PanLastEnginePos) > MaxEnginePanDistancePerTick) 
+		{
 			panDeltaEngine *= (panDeltaEngine.Length() + MaxEnginePanDistancePerTick) / panDeltaEngine.Length();
 		}
 		PanLastEnginePos = hitLocation;
@@ -140,7 +141,7 @@ void AXRTableTopInteractor::OnThumbstickTilted(const FInputActionValue& value)
 		return;
 	}
 
-	if (GrabbedComponent) // If grabbing the table, move is closer or farther
+	if (GrabbedComponent) // If grabbing the table, move it closer or farther
 	{
 		GrabbedComponent->AddGrabDistance(value.Get<float>()*4);
 	}

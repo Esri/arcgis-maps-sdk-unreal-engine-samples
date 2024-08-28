@@ -49,7 +49,6 @@ UXRDistanceGrabbable* UXRDistanceGrabber::TryGrab()
 				return GrabbedComponent;
 			}
 		}
-
 	}
 
 	return nullptr;

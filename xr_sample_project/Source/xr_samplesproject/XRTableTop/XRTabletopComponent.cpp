@@ -15,7 +15,6 @@
 
 #include "XRTabletopComponent.h"
 
-
 UXRTabletopComponent::UXRTabletopComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -298,6 +297,7 @@ FGeoPosition UXRTabletopComponent::GetExtentCenter()
 {
 	return CenterPosition;
 }
+
 void UXRTabletopComponent::SetExtentCenter(FGeoPosition InValue)
 {
 	if (CenterPosition != InValue)
@@ -314,6 +314,7 @@ EMapExtentShapes UXRTabletopComponent::GetShape()
 {
 	return Shape;
 }
+
 void UXRTabletopComponent::SetShape(EMapExtentShapes InValue)
 {
 	if (Shape != InValue)
@@ -354,7 +355,10 @@ bool UXRTabletopComponent::FindArcGISCameraLocationInHierarchy()
 	for (auto a : actors)
 	{
 		if (a->FindComponentByClass<UArcGISCameraComponent>() && a->FindComponentByClass<UArcGISLocationComponent>())
+		{
 			ArcGISCameraLocation = a->FindComponentByClass<UArcGISLocationComponent>();
+		}
+
 		if (ArcGISCameraLocation)
 		{
 			break;

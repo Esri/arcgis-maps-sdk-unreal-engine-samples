@@ -123,6 +123,4 @@ private:
 	const float MinExtentDimension{ 150. };
 	const float WrapperScaleFactor{ 0.9 };
 	const float ZoomFactor{ 0.07 };
-
-
 };

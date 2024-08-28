@@ -25,7 +25,7 @@ void UXRDistanceGrabbable::TickComponent(float DeltaTime, ELevelTick TickType, F
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (bIsGrabbed)
+	if (bIsGrabbed) // Move the table with controller to rotate it to face camera
 	{
 		auto newLocation = CurrentGrabber->GetComponentLocation() + CurrentGrabber->GetForwardVector() * GrabDistance + GrabOffset;
 		auto playerLookDirection = newLocation - CurrentGrabber->GetOwner()->GetActorLocation();
@@ -55,6 +55,7 @@ bool UXRDistanceGrabbable::OnGrabbed_Implementation(UXRDistanceGrabber* Grabber,
 	CurrentGrabber = Grabber;
 	GrabOffset = GetOwner()->GetActorLocation() - Hit.ImpactPoint;
 	GrabDistance = FVector3d::Dist(Grabber->GetComponentLocation(), Hit.ImpactPoint);
+
 	return true;
 }
 
