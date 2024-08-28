@@ -143,13 +143,13 @@ void AXRTableTopInteractor::OnThumbstickTilted(const FInputActionValue& value)
 
 	if (GrabbedComponent) // If grabbing the table, move it closer or farther
 	{
-		GrabbedComponent->AddGrabDistance(value.Get<float>()*4);
+		GrabbedComponent->AddGrabDistance(value.Get<float>() * GrabDistanceIncrement);
 	}
 	else // Zoom the map in discrete steps
 	{
 		ZoomLevel += value.Get<float>();
 
-		if (FMath::Abs(ZoomLevel) > MinZoomStep)
+		if (FMath::Abs(ZoomLevel) > MinZoomIncrement)
 		{
 			TabletopComponent->ZoomMap(ZoomLevel);
 			ZoomLevel = 0;
