@@ -115,9 +115,9 @@ private:
 
 	bool bIsPanning;
 	bool bUseRightHand;
+	const float GrabDistanceIncrement{ 4. };
 	const double MaxEnginePanDistancePerTick{ 5. };
 	const float MinZoomIncrement{ 4. };
-	const float GrabDistanceIncrement{ 4. };
 	float ZoomLevel;
 	FTransform PanStartWorldTransform{FTransform::Identity};
 	FVector3d PanLastEnginePos{FVector3d::ZeroVector};
