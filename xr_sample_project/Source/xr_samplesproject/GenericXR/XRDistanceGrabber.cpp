@@ -65,3 +65,8 @@ bool UXRDistanceGrabber::TryRelease()
 
 	return false;
 }
+
+float UXRDistanceGrabber::ClampGrabDistance(const float& Distance)
+{
+	return FMath::Clamp(Distance, MinGrabbableDistance, MaxGrabbableDistance);
+}

@@ -34,10 +34,13 @@ public:
 	
 	bool TryRelease();
 
+	float ClampGrabDistance(const float& Distance);
+
 private:
 	bool bIsTracking = false;
 	
-	const float MaxGrabbableDistance{ 5000. };
+	const float MaxGrabbableDistance{ 2000. };
+	const float MinGrabbableDistance{ 5. };
 
 	UXRDistanceGrabbable* GrabbedComponent; 
 };

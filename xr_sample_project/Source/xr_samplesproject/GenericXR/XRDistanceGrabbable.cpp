@@ -66,5 +66,5 @@ void UXRDistanceGrabbable::OnGrabReleased_Implementation()
 
 void UXRDistanceGrabbable::AddGrabDistance(float Offset)
 {
-	GrabDistance += Offset;
+	GrabDistance = CurrentGrabber->ClampGrabDistance(GrabDistance + Offset);
 }
