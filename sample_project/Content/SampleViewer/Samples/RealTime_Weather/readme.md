@@ -17,7 +17,7 @@ Query Weather Data from the Weather Stations feature layer provided in order to 
 2. Input your API key under the **API Key Drop-down**.
 3. Click the **Sample Drop-Down** and select **Weather Query**.
 
-## How it works (c++)
+## How it works (C++)
 
 1. Create a new C++ class and make an HTTP request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
 2. Create a new Blueprint Actor class
