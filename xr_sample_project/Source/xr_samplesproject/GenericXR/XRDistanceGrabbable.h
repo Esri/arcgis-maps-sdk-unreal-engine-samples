@@ -17,6 +17,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "XRDistanceGrabbable.generated.h"
 

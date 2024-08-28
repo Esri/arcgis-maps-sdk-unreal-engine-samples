@@ -28,8 +28,14 @@ void UXRDistanceGrabbable::TickComponent(float DeltaTime, ELevelTick TickType, F
 	if (bIsGrabbed)
 	{
 		auto newLocation = CurrentGrabber->GetComponentLocation() + CurrentGrabber->GetForwardVector() * GrabDistance + GrabOffset;
-		
 		auto playerLookDirection = newLocation - CurrentGrabber->GetOwner()->GetActorLocation();
+		
+		auto lookComponent = CurrentGrabber->GetOwner()->GetComponentByClass<UCameraComponent>();
+		if (lookComponent) 
+		{
+			playerLookDirection -=  lookComponent->GetRelativeLocation();
+		}
+		
 		playerLookDirection.Z = 0;
 
 		auto newRotation = FRotationMatrix::MakeFromX(playerLookDirection).Rotator();
