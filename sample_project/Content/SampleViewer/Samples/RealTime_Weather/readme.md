@@ -35,7 +35,7 @@ Note: You can use `UE_LOG` to print log messages in the **Output Log** window an
 2. Create a new Blueprint Class and make an HTTP request to [query a feature layer](https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-.htm). 
 3. Create a new Blueprint Actor class
    - Create the event to place the data returned from the Weather Query.
-   - Create a function to spawn the weather actor according to the data received in the query.
+   - Create a function to spawn the Weather Actor according to the data received in the query.
    - Attach the [**ArcGIS Location Component**](https://developers.arcgis.com/unreal-engine/maps/location-component/) to the weather actor blueprint class.
    - Add additional functionality to spawn/show different **Niagra Particle Effects** based on the current weather data returned from the **Weather Query**.
 4. Create a widget for the viewport so users can select a city from the list fed from the feature service.
