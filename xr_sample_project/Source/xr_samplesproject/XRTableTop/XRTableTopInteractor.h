@@ -15,8 +15,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Camera/CameraComponent.h"
+#include "Components/WidgetInteractionComponent.h"
+#include "CoreMinimal.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/Pawn.h"
@@ -25,17 +26,14 @@
 #include "IXRTrackingSystem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "MotionControllerComponent.h"
-#include "Components/WidgetInteractionComponent.h"
-#include "xr_samplesproject/VRSample/VRHandAnimInstance.h"
 #include "xr_samplesproject/GenericXR/XRDistanceGrabbable.h"
 #include "xr_samplesproject/GenericXR/XRDistanceGrabber.h"
+#include "xr_samplesproject/VRSample/VRHandAnimInstance.h"
 #include "XRTableTopInteractor.generated.h"
 
-
-
 class AGeocoder;
-class UWidgetInteractionComponent;
 class UVRHandAnimInstance;
+class UWidgetInteractionComponent;
 class UXRDistanceGrabComponent;
 class UXRTabletopComponent;
 
@@ -67,26 +65,26 @@ private:
 	void HandleWidgetInteraction(bool ButtonPressed);
 	void OnGrabLeft();
 	void OnGrabReleaseLeft();
-	void OnGrabRight();
 	void OnGrabReleaseRight();
+	void OnGrabRight();
 	void OnPanLeft();
 	void OnPanReleaseLeft();
-	void OnPanRight();
 	void OnPanReleaseRight();
+	void OnPanRight();
+	void OnThumbstickTilted(const FInputActionValue& value);
 	void OnTriggerPressedLeft();
 	void OnTriggerPressedRight();
 	void SetGripAxisValue(const float& value);
-	void SetTriggerAxisValue(const float& value);
 	void SetTabletopComponent();
+	void SetTriggerAxisValue(const float& value);
 	void UpdatePanning();
-	void OnThumbstickTilted(const FInputActionValue& value);
 
-	UInputMappingContext* inputContext = LoadObject<UInputMappingContext>(nullptr, TEXT("InputMappingContext'/Game/Samples/XRTableTop/Input/IAC_XRTableTop.IAC_XRTableTop'"));
 	UInputAction* grabLeft = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Grip_Left.IA_Grip_Left'"));
 	UInputAction* grabRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Grip_Right.IA_Grip_Right'"));
 	UInputAction* panLeft = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Pan_Left.IA_Pan_Left'"));
 	UInputAction* panRight = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Pan_Right.IA_Pan_Right'"));
 	UInputAction* zoom = LoadObject<UInputAction>(nullptr, TEXT("InputAction'/Game/Samples/XRTableTop/Input/IA_Zoom.IA_Zoom'"));
+	UInputMappingContext* inputContext = LoadObject<UInputMappingContext>(nullptr, TEXT("InputMappingContext'/Game/Samples/XRTableTop/Input/IAC_XRTableTop.IAC_XRTableTop'"));
 	
 	UMotionControllerComponent* CurrentPanningController;
 	
@@ -115,14 +113,12 @@ private:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	TEnumAsByte<EHMDTrackingOrigin::Type> TrackingOrigin;
 
-	bool bUseRightHand;
-	
 	bool bIsPanning;
-	const double MaxEnginePanDistancePerTick = 5.;
-	FVector3d PanStartEnginePos{FVector3d::ZeroVector};
-	FVector3d PanLastEnginePos{FVector3d::ZeroVector};
-	FTransform PanStartWorldTransform{FTransform::Identity};
-
-	float ZoomLevel;
+	bool bUseRightHand;
+	const double MaxEnginePanDistancePerTick{ 5. };
 	const float MinZoomStep{4.};
+	float ZoomLevel;
+	FTransform PanStartWorldTransform{FTransform::Identity};
+	FVector3d PanLastEnginePos{FVector3d::ZeroVector};
+	FVector3d PanStartEnginePos{FVector3d::ZeroVector};
 };

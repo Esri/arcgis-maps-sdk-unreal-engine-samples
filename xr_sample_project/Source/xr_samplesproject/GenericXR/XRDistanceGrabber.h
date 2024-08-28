@@ -15,9 +15,9 @@
 
 #pragma once
 
+#include "Components/SceneComponent.h"
 #include "CoreMinimal.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Components/SceneComponent.h"
 #include "XRDistanceGrabbable.h"
 #include "XRDistanceGrabber.generated.h"
 

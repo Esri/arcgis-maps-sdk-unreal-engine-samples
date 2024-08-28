@@ -15,9 +15,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Components/SceneComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SceneComponent.h"
+#include "CoreMinimal.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "XRDistanceGrabbable.generated.h"
 
@@ -29,6 +29,8 @@ class XR_SAMPLESPROJECT_API UXRDistanceGrabbable : public USceneComponent
 
 public:	
 	UXRDistanceGrabbable();
+		
+	void AddGrabDistance(float Offset);
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
@@ -39,8 +41,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnGrabReleased();
 	virtual void OnGrabReleased_Implementation();
-		
-	void AddGrabDistance(float Offset);
 
 private:
 	bool bIsGrabbed{ false };

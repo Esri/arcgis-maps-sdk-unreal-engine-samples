@@ -15,19 +15,19 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
-#include "ArcGISTabletopPlayerController.h"
+#include "ArcGISMapsSDK/API/GameEngine/Extent/ArcGISExtentType.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "ArcGISMapsSDK/Components/ArcGISCameraComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
-#include "ArcGISMapsSDK/API/GameEngine/Extent/ArcGISExtentType.h"
-#include "ArcGISMapsSDK/Utils/ArcGISMapExtentShapes.h"
-#include "XRTableTopInteractor.h"
 #include "ArcGISMapsSDK/Utils/ArcGISExtentInstanceData.h"
+#include "ArcGISMapsSDK/Utils/ArcGISMapExtentShapes.h"
+#include "ArcGISTabletopPlayerController.h"
+#include "Components/ActorComponent.h"
+#include "CoreMinimal.h"
 #include "Kismet/GameplayStatics.h"
+#include "XRTableTopInteractor.h"
 #include "XRTabletopComponent.generated.h"
 
 
@@ -112,16 +112,17 @@ private:
 
 	FDelegateHandle ExtentChangeHandle;
 
-	double LocalZOffset{ 0 };
-	const float MinExtentDimension{ 150. };
-	const float MaxExtentDimension{ 7500000. };
-	const float WrapperScaleFactor{ 0.9 };
-	const float ZoomFactor{ 0.07 };
-	const float CameraHeightFactor{ 500. };
-
 	bool bExtentChanged = false;
 	bool bNeedsExtentChange = true;
 	bool bNeedsOffsetChange = true;
+	
+	double LocalZOffset{ 0 };
+
+	const float CameraHeightFactor{ 500. };
+	const float MaxExtentDimension{ 7500000. };
+	const float MinExtentDimension{ 150. };
+	const float WrapperScaleFactor{ 0.9 };
+	const float ZoomFactor{ 0.07 };
 
 
 };
