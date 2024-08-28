@@ -115,7 +115,7 @@ private:
 	double LocalZOffset{ 0 };
 	const float MinExtentDimension{ 150. };
 	const float MaxExtentDimension{ 7500000. };
-	const float WrapperScaleFactor{ 0.8 };
+	const float WrapperScaleFactor{ 0.9 };
 	const float ZoomFactor{ 0.07 };
 	const float CameraHeightFactor{ 500. };
 
