@@ -38,6 +38,7 @@ This repository is composed of two separate Unity projects. If you would like to
 ## Features in XR Sample Project
 
 * [VR Sample](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/xr_sample_project/Content/Samples/VRSample/readme.md) - Explore different cities using Virtual Reality.
+* [Tabletop XR Sample](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/xr_sample_project/Content/Samples/XRTableTop/readme.md) - Explore the world in tabletop XR.
 
 ## Instructions
 
