@@ -58,11 +58,13 @@ private:
 	void AddStop();
 
 	float traceLength = 10000000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	UUserWidget* UIWidget;
 	UArcGISMapComponent* MapComponent;
 	TDoubleLinkedList < USplineMeshComponent*> SplineMeshComponents;
-	UStaticMesh* RouteMesh;
+	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 	TDoubleLinkedList<ARouteMarker*> Stops;
 	TDoubleLinkedList<ABreadcrumb*> Breadcrumbs;
 	bool bIsRouting = false;

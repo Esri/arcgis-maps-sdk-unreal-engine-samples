@@ -23,10 +23,6 @@
 AStreamLayerQuery::AStreamLayerQuery()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	/*static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("WidgetBlueprint'/Game/SampleViewer/Samples/StreamLayer/UserInterface/StreamLayer_wbp.StreamLayer_wbp_C'"));
-	if (WidgetAsset.Succeeded()) {
-		UIWidgetClass = WidgetAsset.Object;
-	}*/
 }
 
 void AStreamLayerQuery::Connect()

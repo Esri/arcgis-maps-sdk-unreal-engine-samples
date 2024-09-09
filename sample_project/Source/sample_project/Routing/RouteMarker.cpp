@@ -28,6 +28,7 @@ ARouteMarker::ARouteMarker()
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MarkerMesh"));
 	MeshComponent->SetupAttachment(Root);
+	MeshComponent->SetStaticMesh(Mesh);
 	MeshComponent->SetWorldScale3D(MeshScale);
 	/*static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Game/SampleViewer/SharedResources/Geometries/Pin.Pin'"));
 	if (MeshAsset.Succeeded()) {

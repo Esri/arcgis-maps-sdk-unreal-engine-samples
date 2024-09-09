@@ -56,7 +56,9 @@ private:
 	AQueryLocation* QueryLocation;
 	bool bWaitingForResponse = false;
 	bool bShouldSendLocationQuery = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	UUserWidget* UIWidget;
 	UFunction* WidgetSetInfoFunction;
 	UFunction* HideInstructions;

@@ -70,9 +70,9 @@ public:
 	FString CityName;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<FWeatherData> Weather;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UUserWidget* UIWidget;
 	
 protected:

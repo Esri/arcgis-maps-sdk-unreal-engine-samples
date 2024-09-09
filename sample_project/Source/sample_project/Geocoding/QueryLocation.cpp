@@ -52,10 +52,11 @@ AQueryLocation::AQueryLocation()
 	TextComponent->SetupAttachment(Root);
 	TextComponent->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	TextComponent->SetTextRenderColor(FColor::Black);
-	/*static ConstructorHelpers::FObjectFinder<UMaterial> TextMaterialAsset(TEXT("Material'/Game/SampleViewer/SharedResources/Materials/TextMaterialWithBackground.TextMaterialWithBackground'"));
-	if (TextMaterialAsset.Succeeded()) {
-		TextComponent->SetMaterial(0, TextMaterialAsset.Object);
-	}*/
+	auto textMaterialAsset = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/SampleViewer/SharedResources/Materials/TextMaterialWithBackground.TextMaterialWithBackground'"));
+	if (textMaterialAsset != nullptr)
+	{
+		TextComponent->SetMaterial(0, textMaterialAsset);
+	}
 
 	// Add an ArcGISLocation component
 	ArcGISLocation = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("ArcGISLocation"));

@@ -24,11 +24,6 @@ AWeatherQuery::AWeatherQuery()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	/*static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("WidgetBlueprint'/Game/SampleViewer/Samples/RealTime_Weather/UserInterface/Weather_WBP.Weather_WBP_C'"));
-	if (WidgetAsset.Succeeded()) {
-		UIWidgetClass = WidgetAsset.Object;
-	}*/
 }
 
 void AWeatherQuery::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
