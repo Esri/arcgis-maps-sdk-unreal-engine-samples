@@ -22,15 +22,15 @@ ARouteManager::ARouteManager()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Load the necessary assets
-	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Routing/Blueprints/UI.UI_C"));
+	/*static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Routing/Blueprints/UI.UI_C"));
 	if (WidgetAsset.Succeeded()) {
 		UIWidgetClass = WidgetAsset.Object;
-	}
+	}*/
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
+	/*static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 	if (MeshAsset.Succeeded()) {
 		RouteMesh = MeshAsset.Object;
-	}
+	}*/
 }
 
 // Called when the game starts or when spawned

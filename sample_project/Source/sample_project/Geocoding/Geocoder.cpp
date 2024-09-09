@@ -19,10 +19,10 @@ AGeocoder::AGeocoder()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("WidgetBlueprint'/Game/SampleViewer/Samples/Geocoding/GeocodingUI.GeocodingUI_C'"));
+	/*static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("WidgetBlueprint'/Game/SampleViewer/Samples/Geocoding/GeocodingUI.GeocodingUI_C'"));
 	if (WidgetAsset.Succeeded()) {
 		UIWidgetClass = WidgetAsset.Object;
-	}
+	}*/
 }
 
 void AGeocoder::BeginPlay()

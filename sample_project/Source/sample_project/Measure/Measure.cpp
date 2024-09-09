@@ -24,19 +24,19 @@ AMeasure::AMeasure()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Load the necessary assets
-	ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Measure/Blueprints/UI_Measure.UI_Measure_C"));
+	/*ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Measure/Blueprints/UI_Measure.UI_Measure_C"));
 
 	if (WidgetAsset.Succeeded())
 	{
 		UIWidgetClass = WidgetAsset.Object;
-	}
+	}*/
 
-	ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
+	/*ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 
 	if (MeshAsset.Succeeded())
 	{
 		RouteMesh = MeshAsset.Object;
-	}
+	}*/
 }
 
 // Called when the game starts or when spawned
