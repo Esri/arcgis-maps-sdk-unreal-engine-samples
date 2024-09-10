@@ -30,31 +30,16 @@ AQueryLocation::AQueryLocation()
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MarkerMesh"));
 	MeshComponent->SetupAttachment(Root);
 	MeshComponent->SetWorldScale3D(MeshScale);
-	
-	// Load the static mesh asset for the pin shape
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAssetPin(TEXT("StaticMesh'/Game/SampleViewer/SharedResources/Geometries/Pin.Pin'"));
-	if (MeshAssetPin.Succeeded()) {
-		PinMesh = MeshAssetPin.Object;
-	}
-	
-	// Load the static mesh asset and the material for the point shape
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAssetPoint(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
-	if (MeshAssetPoint.Succeeded()) {
-		PointMesh = MeshAssetPoint.Object;
-	}
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAssetPoint(TEXT("Material'/Game/SampleViewer/SharedResources/Materials/M_PinHead.M_PinHead'"));
-	if (MaterialAssetPoint.Succeeded()) {
-		PointMaterial = MaterialAssetPoint.Object;
-	}
 
 	// Add a text render component and set the properties
 	TextComponent = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextComponent"));
 	TextComponent->SetupAttachment(Root);
 	TextComponent->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	TextComponent->SetTextRenderColor(FColor::Black);
-	static ConstructorHelpers::FObjectFinder<UMaterial> TextMaterialAsset(TEXT("Material'/Game/SampleViewer/SharedResources/Materials/TextMaterialWithBackground.TextMaterialWithBackground'"));
-	if (TextMaterialAsset.Succeeded()) {
-		TextComponent->SetMaterial(0, TextMaterialAsset.Object);
+	auto textMaterialAsset = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/SampleViewer/SharedResources/Materials/TextMaterialWithBackground.TextMaterialWithBackground'"));
+	if (textMaterialAsset != nullptr)
+	{
+		TextComponent->SetMaterial(0, textMaterialAsset);
 	}
 
 	// Add an ArcGISLocation component
