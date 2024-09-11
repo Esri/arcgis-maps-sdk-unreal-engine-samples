@@ -52,65 +52,12 @@ void AQueryLocation::BeginPlay()
 	Super::BeginPlay();
 
 	PawnActor = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	ArcGISLocation->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
 }
 
 void AQueryLocation::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	// If needed determine the elevation at the location returned for the geocoding query
-	if (bShouldUpdateElevation) {
-		APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
-		
-		// Skip if too many attempts have been made
-		if (RaycastCounter >= MaxRaycastAttemts) {
-			bShouldUpdateElevation = false;
-			CameraManager->StartCameraFade(1, 0, .2, FColor::Black, false, true);
-			UE_LOG(LogTemp, Warning, TEXT("The elevation at the queried location could not be determined after %d raycast attempts. The vertical position of the marker may be inaccurate."), MaxRaycastAttemts);
-			return;
-		}
-
-		bool bTraceSuccess = false;
-		float TraceLength = 1000000.;
-		FVector3d TraceDirection = GetActorUpVector() * -1.;
-		FVector3d WorldLocation = PawnActor->GetActorLocation();
-		FHitResult TraceHit;
-		RaycastCounter++;
-
-		// Perform a raycast from the current location in the direction towards the map
-		bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
-			WorldLocation + TraceDirection * TraceLength, ECC_Visibility, FCollisionQueryParams());
-
-		// Check if the map actor was hit by the ray
-		if (bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass()) {
-			// Raycast reult differs from the previous frame indicating the map is still loading: reset the counter.
-			if (StableFramesCounter < FramesToWaitForLoading && TraceHit.ImpactPoint != GetActorLocation()) {
-				StableFramesCounter = 0;
-				SetActorLocation(TraceHit.ImpactPoint);
-			}
-			// Raycast result stayed unchanged for a number of frames (i.e., map finished loading)
-			else if (StableFramesCounter >= FramesToWaitForLoading) {
-				SetActorLocation(TraceHit.ImpactPoint);
-
-				RemoveTickPrerequisiteComponent(ArcGISLocation);
-				RemoveTickPrerequisiteActor(PawnActor);
-				bShouldUpdateElevation = false;
-				CameraManager->StartCameraFade(1, 0, .2, FColor::Black, false, true);
-
-				// Place the pawn above this instance and point it towards the map
-				PawnActor->SetActorLocation(TraceHit.ImpactPoint - TraceDirection * 100000);
-				PawnActor->SetActorRotation(TraceDirection.Rotation());
-				
-				// Update the address cue with the appropriate text and orientation
-				TextComponent->SetText(FText::FromString(Address));
-				TextComponent->SetWorldRotation(PawnActor->GetActorRotation() + FRotator3d(180, 0, 180));
-			}
-			// Raycast result was the same as in the previous frame: increase the counter.
-			else {
-				StableFramesCounter++;
-			}
-		}
-	}
 }
 
 // Set this instance up for a geocoding query  
