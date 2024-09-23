@@ -21,6 +21,8 @@
 #include "Json.h"
 #include "Http.h"
 #include "QueryLocation.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
@@ -39,7 +41,7 @@ public:
 	void SendAddressQuery(FString Address);
 
 	UFUNCTION(BlueprintCallable)
-	void SelectLocation();
+	void SelectLocation(const FInputActionValue& value);
 
 	UFUNCTION(BlueprintCallable)
 	void HideDirections();
@@ -48,7 +50,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	void SetupInput();
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 	void ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void SendLocationQuery(UArcGISPoint* InPoint);
@@ -62,4 +64,9 @@ private:
 	UUserWidget* UIWidget;
 	UFunction* WidgetSetInfoFunction;
 	UFunction* HideInstructions;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputAction* mousePress;
 };

@@ -29,6 +29,8 @@
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "RouteManager.generated.h"
 UCLASS()
 class SAMPLE_PROJECT_API ARouteManager : public AActor
@@ -54,7 +56,7 @@ private:
 	
 	void PostRoutingRequest();
 	void ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
-	void SetupInput();
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 	void AddStop();
 
 	float traceLength = 10000000.0f;
@@ -72,4 +74,9 @@ private:
 	FVector2D RouteCueScale = FVector2D(5.);
 	int StopCount = 2;
 	UFunction* HideInstructions;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputAction* mousePress;
 };

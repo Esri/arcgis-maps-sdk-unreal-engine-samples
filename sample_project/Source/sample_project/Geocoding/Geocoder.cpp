@@ -24,7 +24,15 @@ void AGeocoder::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupInput();
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		SetupPlayerInputComponent(PlayerController->InputComponent);
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
+			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(MappingContext, 0);
+		}
+	}
 
 	// Make sure mouse cursor remains visible
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -73,16 +81,12 @@ void AGeocoder::Tick(float DeltaTime)
 	}
 }
 
-// Bind the handler for selecting a location on the map
-void AGeocoder::SetupInput()
+void AGeocoder::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	if (!InputComponent) {
-		InputComponent = NewObject<UInputComponent>(this);
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AGeocoder::SelectLocation);
 	}
-
-	InputComponent->RegisterComponent();
-	InputComponent->BindAction("PlaceRoutePoint", IE_Pressed, this, &AGeocoder::SelectLocation);
-	EnableInput(GetWorld()->GetFirstPlayerController());
 }
 
 // Make a geocoding query for an address
@@ -244,8 +248,10 @@ void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpRespo
 }
 
 // Identify the location clicked on and make a line trace from there to find the corresponding point on the map
-void AGeocoder::SelectLocation()
+void AGeocoder::SelectLocation(const FInputActionValue& value)
 {
+	auto inputValue = value.Get<bool>();
+	UE_LOG(LogTemp, Warning, TEXT("InputValue"));
 	if (bWaitingForResponse) {
 		return;
 	}
