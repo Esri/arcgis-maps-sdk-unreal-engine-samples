@@ -93,7 +93,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
 					if (type.ToLower() == "point")
 					{
-						for (const auto Coordinate : coordinates)
+						for (auto Coordinate : coordinates)
 						{
 							featureLayerProperties.GeoProperties.Add(Coordinate->AsNumber());
 						}
@@ -181,7 +181,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
 					if (type.ToLower() == "point")
 					{
-						for (const auto Coordinate : coordinates)
+						for (auto Coordinate : coordinates)
 						{
 							featureLayerProperties.GeoProperties.Add(Coordinate->AsNumber());
 						}
@@ -212,9 +212,9 @@ bool AFeatureLayer::ErrorCheck()
 		return false;
 	}
 	
-	for (const auto feature : FeatureData)
+	for (auto feature : FeatureData)
 	{		
-		for (const auto property : feature.FeatureProperties)
+		for (auto property : feature.FeatureProperties)
 		{
 			if(property.Len() == 0)
 			{
