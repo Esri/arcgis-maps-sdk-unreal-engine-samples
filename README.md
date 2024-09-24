@@ -44,20 +44,20 @@ This repository is composed of two separate Unity projects. If you would like to
 
 1. Clone this repo. **Note** On Windows there is a 260 character limit in your file path. The ArcGISMapsSDK for Unreal Engine Plugin is ~160 characters at the longest point. This samples repo by default adds `arcgis-maps-sdk-unreal-engine-samples\sample_project` for a total of ~215 characters. You can use `git clone <git_repo_url> <your_custom_directory_name>` to remove the lengthy `arcgis-maps-sdk-unreal-engine-samples` to give you more freedom for where it can be cloned.
 2. Refer to the [ArcGIS Maps SDK for Unreal Engine's documentation on getting started](https://developers.arcgis.com/unreal-engine/get-started/) on how to download `Unreal Engine 5` and the `ArcGIS Maps SDK for Unreal Engine`.
-3. Launch the Unreal Engine project. **Note** If you are prompted that there is a version mismatch, the project may need to be re-compiled. You will need to [launch it through Visual Studio](https://docs.unrealengine.com/5.0/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/).
+3. Launch the Unreal Engine project. **Note** If you are prompted that there is a version mismatch, the project may need to be re-compiled. You will need to [launch it through Visual Studio](https://dev.epicgames.com/documentation/en-us/unreal-engine/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine).
 4. [Install the plugin](https://developers.arcgis.com/unreal-engine/install-and-set-up/add-the-plugin-to-an-existing-project/#install-the-plugin) into this project.
-5. Launch the `SampleViewer` level. You will be prompted to enter an API Key for the samples to work. To avoid entering it each time you run the viewer, go to `Edit -> Project Settings -> Plugins -> ArcGIS Maps SDK` and set the API Key for the project. To learn more about API keys, read the [developer documentation](https://links.esri.com/arcgis-api-keys).
+5. Launch the `SampleViewer` level. You will be prompted to enter an [API key](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/) for the samples to work. To avoid entering it each time you run the viewer, go to `Edit -> Project Settings -> Plugins -> ArcGIS Maps SDK` and set the API key for the project. For the detailed steps to create an API key, see [Create and manage an API key tutorials](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/tutorials/create-an-api-key/) in the _Security and authentication guide_. If you don't have the API keys page in your dashboard, upgrade your account to an [ArcGIS Location Platform account](https://location.arcgis.com/sign-up/).
 
 ## Requirements
 
-* Refer to the [ArcGIS Maps SDK for Unreal Engine's documentation on system requirements](https://developers.arcgis.com/unreal-engine/reference/system-requirements/)
+* Refer to the [ArcGIS Maps SDK for Unreal Engine's documentation on system requirements](https://developers.arcgis.com/unreal-engine/system-requirements/)
 
 ## Resources
 
 * [ArcGIS Maps SDK for Unreal Engine's documentation](https://developers.arcgis.com/unreal-engine/)
 * [Esri Community forum](https://community.esri.com/t5/arcgis-maps-sdks-for-unreal-engine-questions/bd-p/arcgis-maps-sdks-unreal-engine-questions)
-* [Obtaining an API key](https://links.esri.com/arcgis-api-keys)
-* [Unreal Engine's documentation](https://docs.unrealengine.com/5.0/en-US/)
+* [Obtaining an API key](https://developers.arcgis.com/documentation/security-and-authentication/api-key-authentication/tutorials/create-an-api-key/)
+* [Unreal Engine's documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/)
 
 ## Issues
 
@@ -69,7 +69,7 @@ Esri welcomes contributions from anyone and everyone. Please see our [guidelines
 
 ## Licensing
 
-Copyright 2022 Esri
+Copyright 2024 Esri
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
