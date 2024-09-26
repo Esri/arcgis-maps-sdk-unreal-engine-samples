@@ -38,6 +38,8 @@
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "sample_project/Routing/Breadcrumb.h"
 #include "sample_project/Routing/RouteMarker.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 
 #include "Measure.generated.h"
 
@@ -98,8 +100,13 @@ private:
 	float MarkerHeight = 7000.0f;
 	UFunction* HideInstructions;
 
-	void AddStop();
+	void AddStop(const FInputActionValue& value);
 	void Interpolate(AActor* start, AActor* end);
 	void SetElevation(AActor* stop);
-	void SetupInput();
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputAction* mousePress;
 };
