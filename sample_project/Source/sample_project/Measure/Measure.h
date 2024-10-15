@@ -38,6 +38,8 @@
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "sample_project/Routing/Breadcrumb.h"
 #include "sample_project/Routing/RouteMarker.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 
 #include "Measure.generated.h"
 
@@ -71,7 +73,7 @@ public:
 		TEnumAsByte<ESelection> Selection;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		float GeodeticDistance;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TObjectPtr<UUserWidget> UIWidget;
 	
 	UFUNCTION(BlueprintCallable)
@@ -84,9 +86,10 @@ private:
 	TArray<AActor*> FeaturePoints;
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 	FVector2D RouteCueScale = FVector2D(5);
-	TObjectPtr<UStaticMesh> RouteMesh;
+	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	TArray<ARouteMarker*> Stops;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
@@ -97,8 +100,13 @@ private:
 	float MarkerHeight = 7000.0f;
 	UFunction* HideInstructions;
 
-	void AddStop();
+	void AddStop(const FInputActionValue& value);
 	void Interpolate(AActor* start, AActor* end);
 	void SetElevation(AActor* stop);
-	void SetupInput();
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputAction* mousePress;
 };

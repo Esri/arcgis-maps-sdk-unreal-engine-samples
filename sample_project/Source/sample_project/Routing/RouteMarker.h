@@ -36,6 +36,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* MeshComponent;
+	UStaticMesh* Mesh = LoadObject<UStaticMesh>(nullptr, TEXT("StaticMesh'/Game/SampleViewer/SharedResources/Geometries/Pin.Pin'"));
 
 	UPROPERTY(VisibleAnywhere)
 	FVector3d MeshScale = FVector3d(35.);

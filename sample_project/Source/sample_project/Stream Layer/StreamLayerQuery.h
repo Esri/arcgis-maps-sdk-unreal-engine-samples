@@ -31,9 +31,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bConnectionStatus;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UUserWidget* UIWidget;
 
 private:

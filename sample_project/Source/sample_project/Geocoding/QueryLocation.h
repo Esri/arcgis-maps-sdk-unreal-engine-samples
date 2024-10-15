@@ -60,7 +60,10 @@ private:
 	int FramesToWaitForLoading = 30; // Threshold for comparing the StableFramesCounter against
 	int RaycastCounter; // Counting the total number of raycasts performed for this location
 	int MaxRaycastAttemts = 200; // Threshold for comparing the RaycastCounter against
-	UStaticMesh* PinMesh;
-	UStaticMesh* PointMesh;
-	UMaterial* PointMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
+	UStaticMesh* PinMesh = LoadObject<UStaticMesh>(nullptr, TEXT("StaticMesh'/Game/SampleViewer/SharedResources/Geometries/Pin.Pin'"));
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
+	UStaticMesh* PointMesh = LoadObject<UStaticMesh>(nullptr, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
+	UMaterial* PointMaterial = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/SampleViewer/SharedResources/Materials/M_PinHead.M_PinHead'"));
 };

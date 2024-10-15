@@ -20,17 +20,6 @@ ARouteManager::ARouteManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// Load the necessary assets
-	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Routing/Blueprints/UI.UI_C"));
-	if (WidgetAsset.Succeeded()) {
-		UIWidgetClass = WidgetAsset.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
-	if (MeshAsset.Succeeded()) {
-		RouteMesh = MeshAsset.Object;
-	}
 }
 
 // Called when the game starts or when spawned
@@ -38,7 +27,15 @@ void ARouteManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupInput();
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		SetupPlayerInputComponent(PlayerController->InputComponent);
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
+			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(MappingContext, 0);
+		}
+	}
 
 	// Make sure mouse cursor remains visible
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -125,16 +122,11 @@ void ARouteManager::Tick(float DeltaTime)
 	}
 }
 
-// Bind the handler for selecting a stop point
-void ARouteManager::SetupInput()
+void ARouteManager::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	InputComponent = NewObject<UInputComponent>(this);
-	InputComponent->RegisterComponent();
-
-	if (InputComponent)
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		InputComponent->BindAction("PlaceRoutePoint", IE_Pressed, this, &ARouteManager::AddStop);
-		EnableInput(GetWorld()->GetFirstPlayerController());
+		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &ARouteManager::AddStop);
 	}
 }
 

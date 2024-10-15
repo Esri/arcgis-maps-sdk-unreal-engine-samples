@@ -22,21 +22,6 @@ constexpr int TraceLength = 1000000;
 AMeasure::AMeasure()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	// Load the necessary assets
-	ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Measure/Blueprints/UI_Measure.UI_Measure_C"));
-
-	if (WidgetAsset.Succeeded())
-	{
-		UIWidgetClass = WidgetAsset.Object;
-	}
-
-	ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
-
-	if (MeshAsset.Succeeded())
-	{
-		RouteMesh = MeshAsset.Object;
-	}
 }
 
 // Called when the game starts or when spawned
@@ -44,7 +29,15 @@ void AMeasure::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupInput();
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		SetupPlayerInputComponent(PlayerController->InputComponent);
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
+			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(MappingContext, 0);
+		}
+	}
 
 	// Make sure mouse cursor remains visible
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -72,19 +65,15 @@ void AMeasure::BeginPlay()
 	Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
 }
 
-void AMeasure::SetupInput()
+void AMeasure::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	InputComponent = NewObject<UInputComponent>(this);
-	InputComponent->RegisterComponent();
-
-	if (InputComponent)
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		InputComponent->BindAction("PlaceRoutePoint", IE_Pressed, this, &AMeasure::AddStop);
-		EnableInput(GetWorld()->GetFirstPlayerController());
+		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AMeasure::AddStop);
 	}
 }
 
-void AMeasure::AddStop()
+void AMeasure::AddStop(const FInputActionValue& value)
 {
 	FVector direction;
 	FHitResult hit;

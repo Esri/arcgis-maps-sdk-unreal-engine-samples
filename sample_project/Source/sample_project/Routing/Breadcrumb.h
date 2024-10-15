@@ -35,7 +35,7 @@ public:
 	UArcGISLocationComponent* ArcGISLocation;
 
 	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* MeshComponent;
+	UStaticMeshComponent* MeshComponent = LoadObject<UStaticMeshComponent>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 
 	UPROPERTY(VisibleAnywhere)
 	FVector3d MeshScale = FVector3d(15.0f);
