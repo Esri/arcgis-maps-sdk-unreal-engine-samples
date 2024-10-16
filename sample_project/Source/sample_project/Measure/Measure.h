@@ -16,6 +16,7 @@
 #pragma once
 
 #include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/SplineMeshComponent.h"
 #include "CoreMinimal.h"
@@ -76,8 +77,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TObjectPtr<UUserWidget> UIWidget;
 	
-	UFUNCTION(BlueprintCallable)
-	void HideDirections();
+/* UFUNCTION(BlueprintCallable)
+	void HideDirections();*/
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -91,14 +92,18 @@ private:
 	TArray<ARouteMarker*> Stops;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
+	UPROPERTY()
+	UButton* ExitButton; 
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
 	FString UnitText;
 	UFunction* WidgetFunction;
+	UFUNCTION()
+	void HandleButtonClicked();
 	double SegmentDistance;
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	float MarkerHeight = 7000.0f;
-	UFunction* HideInstructions;
+	//UFunction* HideInstructions;
 
 	void AddStop(const FInputActionValue& value);
 	void Interpolate(AActor* start, AActor* end);

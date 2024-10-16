@@ -53,12 +53,24 @@ void AMeasure::BeginPlay()
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
-		HideInstructions = UIWidget->FindFunction(FName("HideDirections"));
+		UUserWidget* InstructionWidget = Cast<UUserWidget>(UIWidget->GetWidgetFromName(TEXT("wbp_measureInstructions")));
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
 			WidgetFunction = UIWidget->FindFunction(FName("SetDistance"));
 			UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));
+			if (UIWidget->FindFunction("ShowInstruction"))
+			{
+				UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
+			}
+			if (InstructionWidget)
+			{
+				ExitButton = Cast<UButton>(InstructionWidget->GetWidgetFromName(TEXT("ExitButton")));
+				if (ExitButton)
+				{
+					ExitButton->OnClicked.AddDynamic(this, &AMeasure::HandleButtonClicked);
+				}
+			}	
 		}
 	}
 	
@@ -271,6 +283,17 @@ void AMeasure::UnitChanged()
 	}
 }
 
+void AMeasure::HandleButtonClicked()
+{
+	if (UIWidget)
+	{
+		if (UFunction* PlayAnimationFunction = UIWidget->FindFunction(FName("HideInstruction")))
+		{
+			UIWidget->ProcessEvent(PlayAnimationFunction, nullptr);
+		}
+	}
+}
+/*
 void AMeasure::HideDirections()
 {
 	AActor* self = this;
@@ -278,4 +301,4 @@ void AMeasure::HideDirections()
 		UIWidget->ProcessEvent(HideInstructions, &self);
 	}
 }
-
+*/
