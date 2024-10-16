@@ -13,9 +13,8 @@
 // Sets default values
 AArcGISRaycast::AArcGISRaycast()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -27,7 +26,7 @@ void AArcGISRaycast::BeginPlay()
 	{
 		PlayerController->bShowMouseCursor = true;
 		PlayerController->bEnableClickEvents = true;
-		
+
 		SetupPlayerInputComponent(PlayerController->InputComponent);
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
 			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
@@ -46,14 +45,14 @@ void AArcGISRaycast::BeginPlay()
 			UIWidget->AddToViewport();
 		}
 	}
-	
-	mapComponent = UArcGISMapComponent::GetMapComponent(this);
 }
 
 void AArcGISRaycast::CreateLink(FString objectID)
 {
-	webLink = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Buildings_Boston_USA/FeatureServer/0/query?f=geojson&where=1=1&objectids=" +
-	objectID + "&outfields=AREA_SQ_FT,DISTRICT,Height,SUBDISTRIC,ZONE_";
+	webLink =
+		"https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Buildings_Boston_USA/FeatureServer/0/query?f=geojson&where=1=1&objectids="
+		+
+		objectID + "&outfields=AREA_SQ_FT,DISTRICT,Height,SUBDISTRIC,ZONE_";
 
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AArcGISRaycast::OnResponseRecieved);
@@ -65,7 +64,7 @@ void AArcGISRaycast::CreateLink(FString objectID)
 void AArcGISRaycast::CreateProperties()
 {
 	AActor* self = this;
-	
+
 	if (createProperties)
 	{
 		UIWidget->ProcessEvent(createProperties, &self);
@@ -77,15 +76,23 @@ void AArcGISRaycast::GetHit()
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
 		resultText.Empty();
-		
+
 		FVector Location, Direction;
 		const TArray<AActor*> ActorsToIgnore;
 		FHitResult HitResult;
 		PlayerController->DeprojectMousePositionToWorld(Location, Direction);
 
 		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0,
-			TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true))
+		                                          TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true))
 		{
+			auto mapComponent = UArcGISMapComponent::GetMapComponent(this);
+
+			if (!mapComponent)
+			{
+				UE_LOG(LogTemp, Error, TEXT("Could not find map component."));
+				return;
+			}
+
 			auto result = mapComponent->GetArcGISRaycastHit(HitResult);
 
 			if (result.Layer != nullptr && result.FeatureId != -1)
@@ -93,13 +100,14 @@ void AArcGISRaycast::GetHit()
 				HitLocation->SetActorLocation(HitResult.ImpactPoint);
 				featureID = result.FeatureId;
 				auto geoPosition = mapComponent->EngineToGeographic(HitResult.ImpactPoint);
-				auto point = Esri::GameEngine::Geometry::ArcGISGeometryEngine::Project(geoPosition, Esri::GameEngine::Geometry::ArcGISSpatialReference::WGS84());
-				/*auto location = StaticCast<Esri::GameEngine::Geometry::ArcGISPoint>(&point);
+				auto point = Esri::GameEngine::Geometry::ArcGISGeometryEngine::Project(
+					geoPosition, Esri::GameEngine::Geometry::ArcGISSpatialReference::WGS84());
+				auto location = StaticCast<const Esri::GameEngine::Geometry::ArcGISPoint*>(&point);
 
 				if (location)
 				{
-					position = "lat: " + FString::SanitizeFloat(location.GetY()) + " Long: " + FString::SanitizeFloat(location.GetX());
-				}*/
+					position = "- lat: " + FString::SanitizeFloat(location->GetY()) + " Long: " + FString::SanitizeFloat(location->GetX());
+				}
 
 				CreateLink(FString::FromInt(result.FeatureId));
 			}
@@ -114,7 +122,7 @@ void AArcGISRaycast::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePt
 		UE_LOG(LogTemp, Error, TEXT("Could not connect to feature server. Please try again."));
 		return;
 	}
-	
+
 	resultText.Add("- FeatureID: " + FString::FromInt(featureID));
 
 	for (auto outfield : outfields)
@@ -124,8 +132,9 @@ void AArcGISRaycast::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePt
 			resultText.Add("- " + outfield + ": " + GetObjectIDs(Response->GetContentAsString(), outfield));
 		}
 	}
-	
+
 	resultText.Add(position);
+	resultText.Add("\n");
 	CreateProperties();
 }
 
@@ -157,4 +166,3 @@ void AArcGISRaycast::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AArcGISRaycast::GetHit);
 	}
 }
-

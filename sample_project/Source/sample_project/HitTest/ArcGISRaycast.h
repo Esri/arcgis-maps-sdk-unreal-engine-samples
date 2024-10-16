@@ -16,8 +16,8 @@ UCLASS()
 class SAMPLE_PROJECT_API AArcGISRaycast : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AArcGISRaycast();
 
@@ -34,7 +34,7 @@ private:
 	FString GetObjectIDs(FString response, FString outfield);
 
 	int featureID;
-	TArray<FString> outfields = {"AREA_SQ_FT", "DISTRICT", "Height", "SUBDISTRIC", "ZONE_" };
+	TArray<FString> outfields = {"AREA_SQ_FT", "DISTRICT", "Height", "SUBDISTRIC", "ZONE_"};
 	FString position;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	TArray<FString> resultText;
@@ -45,7 +45,6 @@ private:
 	UInputMappingContext* MappingContext;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	UInputAction* mousePress;
-	UArcGISMapComponent* mapComponent;
 	FString webLink;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
