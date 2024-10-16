@@ -36,7 +36,7 @@ private:
 	int featureID;
 	TArray<FString> outfields = {"AREA_SQ_FT", "DISTRICT", "Height", "SUBDISTRIC", "ZONE_"};
 	FString position;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta=(AllowPrivateAccess))
 	TArray<FString> resultText;
 	UFunction* createProperties;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))

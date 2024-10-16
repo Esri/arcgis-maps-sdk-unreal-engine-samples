@@ -106,7 +106,7 @@ void AArcGISRaycast::GetHit()
 
 				if (location)
 				{
-					position = "- lat: " + FString::SanitizeFloat(location->GetY()) + " Long: " + FString::SanitizeFloat(location->GetX());
+					position = "- Lat: " + FString::SanitizeFloat(location->GetY()) + ", Long: " + FString::SanitizeFloat(location->GetX());
 				}
 
 				CreateLink(FString::FromInt(result.FeatureId));
