@@ -21,8 +21,11 @@ public class sample_projectEditorTarget : TargetRules
 	public sample_projectEditorTarget( TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		ExtraModuleNames.AddRange( new string[] { "sample_project" } );
+		bLegacyParentIncludePaths = false;
+		CppStandard = CppStandardVersion.Default;
+		DefaultBuildSettings = BuildSettingsVersion.Latest;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Oldest;
 		WindowsPlatform.bStrictConformanceMode = true;
+		ExtraModuleNames.AddRange( new string[] { "sample_project" } );
     }
 }

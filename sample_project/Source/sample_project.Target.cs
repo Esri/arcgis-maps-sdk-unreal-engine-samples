@@ -21,7 +21,11 @@ public class sample_projectTarget : TargetRules
 	public sample_projectTarget( TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
+		bLegacyParentIncludePaths = false;
+		CppStandard = CppStandardVersion.Default;
+		DefaultBuildSettings = BuildSettingsVersion.Latest;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Oldest;
+		WindowsPlatform.bStrictConformanceMode = true;
 		ExtraModuleNames.AddRange( new string[] { "sample_project" } );
 	}
 }
