@@ -26,6 +26,7 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapElevation.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapType.h"
+#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 
 #include "ArcGISPawn.h"
 #include "Blueprint/UserWidget.h"
