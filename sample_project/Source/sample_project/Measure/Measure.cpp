@@ -94,7 +94,7 @@ void AMeasure::BeginPlay()
 				ExitButton = Cast<UButton>(InstructionWidget->GetWidgetFromName(TEXT("ExitButton")));
 				if (ExitButton)
 				{
-					ExitButton->OnClicked.AddDynamic(this, &AMeasure::HandleClearButtonClicked);
+					ExitButton->OnClicked.AddDynamic(this, &AMeasure::HandleExitButtonClicked);
 				}
 			}	
 		}
@@ -348,13 +348,7 @@ void AMeasure::HandleMButtonClicked()
 
 void AMeasure::HandleClearButtonClicked()
 {
-	if (UIWidget)
-	{
-		if (UFunction* PlayAnimationFunction = UIWidget->FindFunction(FName("HideInstruction")))
-		{
-			ClearLine();
-		}
-	}
+	ClearLine();
 }
 
 void AMeasure::UpdateDistance(float Value)
