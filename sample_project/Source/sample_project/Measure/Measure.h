@@ -16,8 +16,10 @@
 #pragma once
 
 #include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/SplineMeshComponent.h"
+#include "Components/TextBlock.h"
 #include "CoreMinimal.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
@@ -57,7 +59,6 @@ class AMeasure : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	AMeasure();
 
 	UFUNCTION(BlueprintCallable)
@@ -76,8 +77,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TObjectPtr<UUserWidget> UIWidget;
 	
-	UFUNCTION(BlueprintCallable)
-	void HideDirections();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -91,14 +90,40 @@ private:
 	TArray<ARouteMarker*> Stops;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
+	UPROPERTY()
+	UButton* ExitButton; 
+	UPROPERTY()
+	UButton* ClearButton; 
+	UPROPERTY()
+	UButton* MiButton;
+	UPROPERTY()
+	UButton* FtButton;
+	UPROPERTY()
+	UButton* KmButton;
+	UPROPERTY()
+	UButton* MButton;
+	UPROPERTY()
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
 	FString UnitText;
 	UFunction* WidgetFunction;
+	UFUNCTION()
+	void HandleExitButtonClicked();
+	UFUNCTION()
+	void HandleClearButtonClicked();
+	UFUNCTION()
+	void HandleMiButtonClicked();
+	UFUNCTION()
+	void HandleFtButtonClicked();
+	UFUNCTION()
+	void HandleKmButtonClicked();
+	UFUNCTION()
+	void HandleMButtonClicked();
+	UFUNCTION()
+	void UpdateDistance(float Value);
 	double SegmentDistance;
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	float MarkerHeight = 7000.0f;
-	UFunction* HideInstructions;
 
 	void AddStop(const FInputActionValue& value);
 	void Interpolate(AActor* start, AActor* end);

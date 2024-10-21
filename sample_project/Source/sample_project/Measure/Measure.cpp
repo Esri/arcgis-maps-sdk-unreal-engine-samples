@@ -53,12 +53,50 @@ void AMeasure::BeginPlay()
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
-		HideInstructions = UIWidget->FindFunction(FName("HideDirections"));
+		UUserWidget* InstructionWidget = Cast<UUserWidget>(UIWidget->GetWidgetFromName(TEXT("wbp_measureInstructions")));
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
-			WidgetFunction = UIWidget->FindFunction(FName("SetDistance"));
 			UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));
+			ClearButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("clearButton")));
+			ClearButton->OnClicked.AddDynamic(this, &AMeasure::HandleClearButtonClicked);
+			MiButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("mi")));
+			FtButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("ft")));
+			KmButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("km")));
+			MButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("m")));
+
+			if (MiButton)
+			{
+				MiButton->OnClicked.AddDynamic(this, &AMeasure::HandleMiButtonClicked);
+			}
+
+			if (FtButton)
+			{
+				FtButton->OnClicked.AddDynamic(this, &AMeasure::HandleFtButtonClicked);
+			}
+
+			if (KmButton)
+			{
+				KmButton->OnClicked.AddDynamic(this, &AMeasure::HandleKmButtonClicked);
+			}
+
+			if (MButton)
+			{
+				MButton->OnClicked.AddDynamic(this, &AMeasure::HandleMButtonClicked);
+			}
+
+			if (UIWidget->FindFunction("ShowInstruction"))
+			{
+				UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
+			}
+			if (InstructionWidget)
+			{
+				ExitButton = Cast<UButton>(InstructionWidget->GetWidgetFromName(TEXT("ExitButton")));
+				if (ExitButton)
+				{
+					ExitButton->OnClicked.AddDynamic(this, &AMeasure::HandleExitButtonClicked);
+				}
+			}	
 		}
 	}
 	
@@ -104,6 +142,7 @@ void AMeasure::AddStop(const FInputActionValue& value)
 																	  EArcGISGeodeticCurveType::Geodesic)
 								  ->GetDistance();
 			GeodeticDistance += SegmentDistance;
+			UpdateDistance(GeodeticDistance);
 
 			// Confirm FeaturePoints list does not already contain element
 
@@ -269,13 +308,65 @@ void AMeasure::UnitChanged()
 		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet), GeodeticDistance);
 		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet);
 	}
+	UpdateDistance(GeodeticDistance);
 }
 
-void AMeasure::HideDirections()
+void AMeasure::HandleExitButtonClicked()
 {
-	AActor* self = this;
-	if (HideInstructions) {
-		UIWidget->ProcessEvent(HideInstructions, &self);
+	if (UIWidget)
+	{
+		if (UFunction* PlayAnimationFunction = UIWidget->FindFunction(FName("HideInstruction")))
+		{
+			UIWidget->ProcessEvent(PlayAnimationFunction, nullptr);
+		}
+	}
+}
+
+void AMeasure::HandleMiButtonClicked()
+{
+	Selection = isMiles; 
+	UnitChanged();
+}
+
+void AMeasure::HandleFtButtonClicked()
+{
+	Selection = isFeet; 
+	UnitChanged();
+}
+
+void AMeasure::HandleKmButtonClicked()
+{
+	Selection = isKilometers; 
+	UnitChanged();
+}
+
+void AMeasure::HandleMButtonClicked()
+{
+	Selection = isMetes; 
+	UnitChanged();
+}
+
+void AMeasure::HandleClearButtonClicked()
+{
+	ClearLine();
+}
+
+void AMeasure::UpdateDistance(float Value)
+{
+	if (UIWidget)
+	{
+		FText NewText = FText::AsNumber(Value);
+
+		FName VariableName(TEXT("Distance")); 
+		FProperty* text = UIWidget->GetClass()->FindPropertyByName(VariableName);
+		if (text)
+		{
+			FTextProperty* Distance = CastField<FTextProperty>(text);
+			if (Distance)
+			{
+				Distance->SetPropertyValue_InContainer(UIWidget, NewText);
+			}
+		}
 	}
 }
 
