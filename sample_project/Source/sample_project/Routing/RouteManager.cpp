@@ -244,8 +244,6 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 	if (FJsonSerializer::Deserialize(Reader, JsonObj) 
 		&& Response->GetResponseCode()>199 && Response->GetResponseCode() < 300) {
 		
-		FHitResult TraceHit;
-		FVector3d WorldLocation;
 		ABreadcrumb* BC;
 		double Minutes;
 		FString InfoMessage;
