@@ -16,9 +16,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
 #include "Engine/StaticMeshActor.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "GameFramework/Actor.h"
 #include "Http.h"
 #include "ArcGISRaycast.generated.h"
@@ -31,11 +31,9 @@ class SAMPLE_PROJECT_API AArcGISRaycast : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	AArcGISRaycast();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 
@@ -43,24 +41,24 @@ private:
 	void CreateLink(FString objectID);
 	void CreateProperties();
 	void GetHit();
-	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	FString GetObjectIDs(FString response, FString outfield);
+	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 
+	UFunction* createProperties;
 	int featureID;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	AStaticMeshActor* HitLocation;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	UInputAction* mousePress;
 	TArray<FString> outfields = {"AREA_SQ_FT", "DISTRICT", "Height", "SUBDISTRIC", "ZONE_"};
 	FString position;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta=(AllowPrivateAccess))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	TArray<FString> resultText;
-	UFunction* createProperties;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
-	AStaticMeshActor* HitLocation;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
-	UInputMappingContext* MappingContext;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
-	UInputAction* mousePress;
-	FString webLink;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
-	TSubclassOf<class UUserWidget> UIWidgetClass;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	UUserWidget* UIWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	TSubclassOf<class UUserWidget> UIWidgetClass;
+	FString webLink;
 };

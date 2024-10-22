@@ -13,13 +13,12 @@
  * limitations under the License.
  */
 
-
 #include "ArcGISRaycast.h"
 
-#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometryEngine.h"
-#include "Json.h"
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "Blueprint/UserWidget.h"
+#include "Json.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
@@ -40,8 +39,8 @@ void AArcGISRaycast::BeginPlay()
 		PlayerController->bEnableClickEvents = true;
 
 		SetupPlayerInputComponent(PlayerController->InputComponent);
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
-			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(MappingContext, 0);
 		}
@@ -61,10 +60,9 @@ void AArcGISRaycast::BeginPlay()
 
 void AArcGISRaycast::CreateLink(FString objectID)
 {
-	webLink =
-		"https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Buildings_Boston_USA/FeatureServer/0/query?f=geojson&where=1=1&objectids="
-		+
-		objectID + "&outfields=AREA_SQ_FT,DISTRICT,Height,SUBDISTRIC,ZONE_";
+	webLink = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Buildings_Boston_USA/FeatureServer/0/"
+			  "query?f=geojson&where=1=1&objectids=" +
+			  objectID + "&outfields=AREA_SQ_FT,DISTRICT,Height,SUBDISTRIC,ZONE_";
 
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AArcGISRaycast::OnResponseRecieved);
@@ -94,8 +92,8 @@ void AArcGISRaycast::GetHit()
 		FHitResult HitResult;
 		PlayerController->DeprojectMousePositionToWorld(Location, Direction);
 
-		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0,
-		                                          TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true))
+		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
+												  EDrawDebugTrace::None, HitResult, true))
 		{
 			auto mapComponent = UArcGISMapComponent::GetMapComponent(this);
 
@@ -112,8 +110,8 @@ void AArcGISRaycast::GetHit()
 				HitLocation->SetActorLocation(HitResult.ImpactPoint);
 				featureID = result.FeatureId;
 				auto geoPosition = mapComponent->EngineToGeographic(HitResult.ImpactPoint);
-				auto point = Esri::GameEngine::Geometry::ArcGISGeometryEngine::Project(
-					geoPosition, Esri::GameEngine::Geometry::ArcGISSpatialReference::WGS84());
+				auto point = Esri::GameEngine::Geometry::ArcGISGeometryEngine::Project(geoPosition,
+																					   Esri::GameEngine::Geometry::ArcGISSpatialReference::WGS84());
 				auto location = StaticCast<const Esri::GameEngine::Geometry::ArcGISPoint*>(&point);
 
 				if (location)
@@ -125,6 +123,25 @@ void AArcGISRaycast::GetHit()
 			}
 		}
 	}
+}
+
+FString AArcGISRaycast::GetObjectIDs(FString response, FString outfield)
+{
+	TSharedPtr<FJsonObject> ResponseObj;
+	auto Reader = TJsonReaderFactory<>::Create(response);
+	FString property = "";
+
+	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
+	{
+		TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
+
+		for (auto feature : Features)
+		{
+			property = feature->AsObject()->GetObjectField("properties")->GetStringField(outfield);
+		}
+	}
+
+	return property;
 }
 
 void AArcGISRaycast::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
@@ -148,27 +165,6 @@ void AArcGISRaycast::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePt
 	resultText.Add(position);
 	resultText.Add("\n");
 	CreateProperties();
-}
-
-FString AArcGISRaycast::GetObjectIDs(FString response, FString outfield)
-{
-	TSharedPtr<FJsonObject> ResponseObj;
-	auto Reader = TJsonReaderFactory<>::Create(response);
-	FString property = "";
-
-	//deserialize the json data received in the http request
-	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
-	{
-		//get the array field features
-		TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
-
-		for (auto feature : Features)
-		{
-			property = feature->AsObject()->GetObjectField("properties")->GetStringField(outfield);
-		}
-	}
-
-	return property;
 }
 
 void AArcGISRaycast::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
