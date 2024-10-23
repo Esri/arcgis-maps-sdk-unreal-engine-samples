@@ -53,50 +53,15 @@ void AMeasure::BeginPlay()
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
-		UUserWidget* InstructionWidget = Cast<UUserWidget>(UIWidget->GetWidgetFromName(TEXT("wbp_measureInstructions")));
+
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
 			UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));
-			ClearButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("clearButton")));
-			ClearButton->OnClicked.AddDynamic(this, &AMeasure::HandleClearButtonClicked);
-			MiButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("mi")));
-			FtButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("ft")));
-			KmButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("km")));
-			MButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("m")));
-
-			if (MiButton)
-			{
-				MiButton->OnClicked.AddDynamic(this, &AMeasure::HandleMiButtonClicked);
-			}
-
-			if (FtButton)
-			{
-				FtButton->OnClicked.AddDynamic(this, &AMeasure::HandleFtButtonClicked);
-			}
-
-			if (KmButton)
-			{
-				KmButton->OnClicked.AddDynamic(this, &AMeasure::HandleKmButtonClicked);
-			}
-
-			if (MButton)
-			{
-				MButton->OnClicked.AddDynamic(this, &AMeasure::HandleMButtonClicked);
-			}
-
 			if (UIWidget->FindFunction("ShowInstruction"))
 			{
 				UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
 			}
-			if (InstructionWidget)
-			{
-				ExitButton = Cast<UButton>(InstructionWidget->GetWidgetFromName(TEXT("ExitButton")));
-				if (ExitButton)
-				{
-					ExitButton->OnClicked.AddDynamic(this, &AMeasure::HandleExitButtonClicked);
-				}
-			}	
 		}
 	}
 	
@@ -286,71 +251,6 @@ void AMeasure::ClearLine()
 	}
 }
 
-void AMeasure::UnitChanged()
-{
-	if (Selection == isMetes)
-	{
-		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), GeodeticDistance);
-		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
-	}
-	else if (Selection == isKilometers)
-	{
-		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers), GeodeticDistance);
-		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers);
-	}
-	else if (Selection == isMiles)
-	{
-		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles), GeodeticDistance);
-		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
-	}
-	else if (Selection == isFeet)
-	{
-		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet), GeodeticDistance);
-		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet);
-	}
-	UpdateDistance(GeodeticDistance);
-}
-
-void AMeasure::HandleExitButtonClicked()
-{
-	if (UIWidget)
-	{
-		if (UFunction* PlayAnimationFunction = UIWidget->FindFunction(FName("HideInstruction")))
-		{
-			UIWidget->ProcessEvent(PlayAnimationFunction, nullptr);
-		}
-	}
-}
-
-void AMeasure::HandleMiButtonClicked()
-{
-	Selection = isMiles; 
-	UnitChanged();
-}
-
-void AMeasure::HandleFtButtonClicked()
-{
-	Selection = isFeet; 
-	UnitChanged();
-}
-
-void AMeasure::HandleKmButtonClicked()
-{
-	Selection = isKilometers; 
-	UnitChanged();
-}
-
-void AMeasure::HandleMButtonClicked()
-{
-	Selection = isMetes; 
-	UnitChanged();
-}
-
-void AMeasure::HandleClearButtonClicked()
-{
-	ClearLine();
-}
-
 void AMeasure::UpdateDistance(float Value)
 {
 	if (UIWidget)
@@ -369,4 +269,37 @@ void AMeasure::UpdateDistance(float Value)
 		}
 	}
 }
+
+void AMeasure::HideInstruction()
+{
+	if (UIWidget)
+	{
+		if (UFunction* PlayAnimationFunction = UIWidget->FindFunction(FName("HideInstruction")))
+		{
+			UIWidget->ProcessEvent(PlayAnimationFunction, nullptr);
+		}
+	}
+}
+
+float AMeasure::GetDistance()
+{
+	return GeodeticDistance;
+}
+
+void AMeasure::SetDistance(float distance)
+{
+	GeodeticDistance = distance;
+}
+
+UArcGISLinearUnit* AMeasure::GetUnit()
+{
+	return Unit;
+}
+
+void AMeasure::SetUnit(UArcGISLinearUnit* unit)
+{
+	Unit = unit;
+}
+
+
 

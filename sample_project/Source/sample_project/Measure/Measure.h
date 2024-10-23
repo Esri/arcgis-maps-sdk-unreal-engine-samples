@@ -68,7 +68,15 @@ public:
 	void ClearLine();
 
 	UFUNCTION(BlueprintCallable)
-	void UnitChanged();
+	void SetDistance(float distance);
+	UFUNCTION(BlueprintCallable)
+	float GetDistance();
+	UFUNCTION(BlueprintCallable)
+	void SetUnit(UArcGISLinearUnit* unit);
+	UFUNCTION(BlueprintCallable)
+	UArcGISLinearUnit* GetUnit();
+	UFUNCTION(BlueprintCallable)
+	void HideInstruction();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TEnumAsByte<ESelection> Selection;
@@ -88,37 +96,14 @@ private:
 	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	TArray<ARouteMarker*> Stops;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
-	UPROPERTY()
-	UButton* ExitButton; 
-	UPROPERTY()
-	UButton* ClearButton; 
-	UPROPERTY()
-	UButton* MiButton;
-	UPROPERTY()
-	UButton* FtButton;
-	UPROPERTY()
-	UButton* KmButton;
-	UPROPERTY()
-	UButton* MButton;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
 	FString UnitText;
 	UFunction* WidgetFunction;
-	UFUNCTION()
-	void HandleExitButtonClicked();
-	UFUNCTION()
-	void HandleClearButtonClicked();
-	UFUNCTION()
-	void HandleMiButtonClicked();
-	UFUNCTION()
-	void HandleFtButtonClicked();
-	UFUNCTION()
-	void HandleKmButtonClicked();
-	UFUNCTION()
-	void HandleMButtonClicked();
+	UFunction* HideInstructions;
 	UFUNCTION()
 	void UpdateDistance(float Value);
 	double SegmentDistance;
@@ -134,4 +119,6 @@ private:
 	UInputMappingContext* MappingContext;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	UInputAction* mousePress;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	bool isHidden = false;
 };
