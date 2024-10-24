@@ -300,6 +300,3 @@ void AMeasure::SetUnit(UArcGISLinearUnit* unit)
 {
 	Unit = unit;
 }
-
-
-
