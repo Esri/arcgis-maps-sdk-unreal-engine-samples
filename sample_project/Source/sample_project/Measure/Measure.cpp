@@ -53,8 +53,11 @@ void AMeasure::BeginPlay()
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
-
-		if (UIWidget)
+		if (!UIWidget)
+		{
+			return;
+		}
+		else
 		{
 			UIWidget->AddToViewport();
 			UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));

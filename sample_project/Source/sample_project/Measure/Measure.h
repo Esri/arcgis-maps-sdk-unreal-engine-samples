@@ -18,7 +18,6 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/ComboBoxString.h"
 #include "Components/SplineMeshComponent.h"
-#include "Components/TextBlock.h"
 #include "CoreMinimal.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
