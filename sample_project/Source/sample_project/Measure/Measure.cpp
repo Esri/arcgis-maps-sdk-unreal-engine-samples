@@ -57,14 +57,12 @@ void AMeasure::BeginPlay()
 		{
 			return;
 		}
-		else
+
+		UIWidget->AddToViewport();
+		UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));
+		if (UIWidget->FindFunction("ShowInstruction"))
 		{
-			UIWidget->AddToViewport();
-			UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));
-			if (UIWidget->FindFunction("ShowInstruction"))
-			{
-				UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
-			}
+			UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
 		}
 	}
 	
