@@ -20,6 +20,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextRenderComponent.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
+#include "ArcGISMapsSDK/API/GameEngine/MapView/ArcGISDrawStatus.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
@@ -32,7 +34,6 @@ class SAMPLE_PROJECT_API AQueryLocation : public AActor
 	
 public:	
 	AQueryLocation();
-	virtual void Tick(float DeltaTime) override;
 	void SetupAddressQuery(UArcGISPoint* InPoint, FString InAddress);
 	void SetupLocationQuery(FVector3d InPoint);
 	void UpdateAddressCue(FString inAddress);
@@ -53,13 +54,11 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	bool bShouldUpdateElevation = false;
-	FString Address;
+	void FinalizeAddressQuery();
+
+	const float CameraDistanceToGround{1000};
+	UArcGISMapComponent* MapComponent;
 	APawn* PawnActor;
-	int StableFramesCounter; // Counting the frames during which the raycast has returned the same hit result
-	int FramesToWaitForLoading = 30; // Threshold for comparing the StableFramesCounter against
-	int RaycastCounter; // Counting the total number of raycasts performed for this location
-	int MaxRaycastAttemts = 200; // Threshold for comparing the RaycastCounter against
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	UStaticMesh* PinMesh = LoadObject<UStaticMesh>(nullptr, TEXT("StaticMesh'/Game/SampleViewer/SharedResources/Geometries/Pin.Pin'"));
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
