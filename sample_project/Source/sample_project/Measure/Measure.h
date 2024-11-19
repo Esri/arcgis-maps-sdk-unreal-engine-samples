@@ -73,8 +73,6 @@ public:
 	void SetUnit(UArcGISLinearUnit* unit);
 	UFUNCTION(BlueprintCallable)
 	UArcGISLinearUnit* GetUnit();
-	UFUNCTION(BlueprintCallable)
-	void HideInstruction();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TEnumAsByte<ESelection> Selection;
