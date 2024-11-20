@@ -45,6 +45,7 @@ AQueryLocation::AQueryLocation()
 	// Add an ArcGISLocation component
 	ArcGISLocation = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("ArcGISLocation"));
 	ArcGISLocation->SetupAttachment(Root);
+	ArcGISLocation->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
 }
 
 void AQueryLocation::BeginPlay()
@@ -52,12 +53,35 @@ void AQueryLocation::BeginPlay()
 	Super::BeginPlay();
 
 	PawnActor = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	ArcGISLocation->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+	
+	auto mapActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	if (mapActor)
+	{
+		MapComponent = mapActor->GetComponentByClass<UArcGISMapComponent>();
+	}
 }
 
-void AQueryLocation::Tick(float DeltaTime)
+void AQueryLocation::FinalizeAddressQuery()
 {
-	Super::Tick(DeltaTime);
+	auto point = ArcGISLocation->GetPosition();
+	
+	// Place the pawn above the current query location
+	auto PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
+	PawnLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+		point->GetX(), point->GetY(), point->GetZ() + CameraDistanceToGround, UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+	
+	// Set up the text render component with the appropriate transform
+	TextComponent->SetWorldScale3D(FVector3d(125.));
+	TextComponent->SetWorldRotation(PawnActor->GetActorRotation() + FRotator3d(180, 0, 180));
+	TextComponent->SetRelativeLocation(FVector3d(2000, 0, 4000));
+
+	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+	CameraManager->StartCameraFade(1, 0, .1, FColor::Black, false, true);
+	
+	// Remove the callback for draw status and tick prerequisites 
+	MapComponent->GetView()->APIObject->SetDrawStatusChanged(nullptr);
+	RemoveTickPrerequisiteComponent(ArcGISLocation);
+	RemoveTickPrerequisiteActor(PawnActor);
 }
 
 // Set this instance up for a geocoding query  
@@ -67,32 +91,31 @@ void AQueryLocation::SetupAddressQuery(UArcGISPoint* InPoint, FString InAddress)
 	ArcGISLocation->SetPosition(InPoint);
 	ArcGISLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(90., 0., 0.));
 
-	// Place and rotate the pawn at the location returned for the query
-	UArcGISLocationComponent* PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
+	// Place and rotate the pawn at the location returned for the query at a high altitude 
+	auto PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
 	PawnLocation->SetPosition(InPoint);
 	PawnLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(0., 0., 0.));
 
-	// Make sure the location components have updated the transform before determining the elevation
+	// Make sure the location components have updated the transform before determining the pawn elevation
 	AddTickPrerequisiteActor(PawnActor);
 	AddTickPrerequisiteComponent(ArcGISLocation);
-	
-	Address = InAddress;
-	StableFramesCounter = 0;
-	RaycastCounter = 0;
-	bShouldUpdateElevation = true;
 
 	// Fade the camera until the elevation at the location has been determined
 	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
-	CameraManager->StartCameraFade(0., 1., 0.2, FColor::Black, false, true);
 	CameraManager->SetManualCameraFade(1, FColor::Black, false);
 	
-	// Set up the static mesh component with the appropriate shape and scale
+	// Set up the static mesh component and the address cue
 	MeshComponent->SetStaticMesh(PinMesh);
 	MeshComponent->SetWorldScale3D(FVector3d(MeshScale));
+	TextComponent->SetText(FText::FromString(InAddress));
 
-	// Set up the text render component with the appropriate transform
-	TextComponent->SetWorldScale3D(FVector3d(125.));
-	TextComponent->SetRelativeLocation(FVector3d(2000, 0, 4000));
+	// Finalize the placement of the pawn once map is done loading at the new location 
+	MapComponent->GetView()->APIObject->SetDrawStatusChanged([this](Esri::GameEngine::MapView::ArcGISDrawStatus DrawStatus) {
+		if (DrawStatus == Esri::GameEngine::MapView::ArcGISDrawStatus::Completed)
+		{
+			FinalizeAddressQuery();
+		}
+	});
 }
 
 // Set this instance up for a reverse geocoding query  
@@ -106,11 +129,6 @@ void AQueryLocation::SetupLocationQuery(FVector3d InLocation)
 	UArcGISRotation* PawnRotation = PawnActor->FindComponentByClass<UArcGISLocationComponent>()->GetRotation();
 	ArcGISLocation->SetRotation(PawnRotation);
 
-	Address = TEXT("");
-	StableFramesCounter = 0;
-	RaycastCounter = 0;
-	bShouldUpdateElevation = false;
-
 	// Set up the static mesh component with the appropriate shape, material and scale
 	MeshComponent->SetStaticMesh(PointMesh);
 	MeshComponent->SetMaterial(0, PointMaterial);
@@ -120,7 +138,7 @@ void AQueryLocation::SetupLocationQuery(FVector3d InLocation)
 	TextComponent->SetRelativeRotation(FRotator3d(0, 180, 0)); // Text faces the pawn
 	TextComponent->SetRelativeLocation(FVector3d(-0.02 * DistanceToPawn, 0, 0.04 * DistanceToPawn));
 	TextComponent->SetWorldScale3D(FVector3d(0.00125 * DistanceToPawn));
-	TextComponent->SetVisibility(false); // Hid the address cue until it has been updated
+	TextComponent->SetVisibility(false); // Hide the address cue until it has been updated
 }
 
 // Update the address cue with the new address
