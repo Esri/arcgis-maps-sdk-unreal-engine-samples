@@ -42,9 +42,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SelectLocation(const FInputActionValue& value);
-
-	UFUNCTION(BlueprintCallable)
-	void HideDirections();
 	
 protected:
 	virtual void BeginPlay() override;

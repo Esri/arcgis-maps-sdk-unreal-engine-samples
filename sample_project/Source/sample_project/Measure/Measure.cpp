@@ -271,17 +271,6 @@ void AMeasure::UpdateDistance(float Value)
 	}
 }
 
-void AMeasure::HideInstruction()
-{
-	if (UIWidget)
-	{
-		if (UFunction* PlayAnimationFunction = UIWidget->FindFunction(FName("HideInstruction")))
-		{
-			UIWidget->ProcessEvent(PlayAnimationFunction, nullptr);
-		}
-	}
-}
-
 float AMeasure::GetDistance()
 {
 	return GeodeticDistance;

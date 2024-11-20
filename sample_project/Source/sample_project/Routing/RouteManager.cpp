@@ -228,13 +228,6 @@ void ARouteManager::PostRoutingRequest()
 	Request->ProcessRequest();
 }
 
-void ARouteManager::HideDirections()
-{
-	AActor* self = this;
-	if (HideInstructions) {
-		UIWidget->ProcessEvent(HideInstructions, &self);
-	}
-}
 void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
 	TSharedPtr<FJsonObject> JsonObj;

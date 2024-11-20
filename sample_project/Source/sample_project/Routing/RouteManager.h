@@ -42,9 +42,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	// Sets default values for this actor's properties
 	ARouteManager();
-
-	UFUNCTION(BlueprintCallable)
-	void HideDirections();
+	
 	UFUNCTION(BlueprintCallable)
 	void ClearMap();
 
