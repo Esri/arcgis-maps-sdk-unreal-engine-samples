@@ -1,4 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright 2024 Esri.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
 
 #include "ArcGISXRAttributionComponent.h"
 
@@ -32,15 +35,18 @@ void UArcGISXRAttributionComponent::OnArcGISMapComponentChanged(UArcGISMapCompon
 	}
 
 	MapComponent->GetView()->APIObject->SetAttributionChanged([this]() {
-		BroadcastAttributionChange();
-		});
+			AsyncTask(ENamedThreads::GameThread, [this]() {
+				UE_LOG(LogTemp, Display, TEXT("%s"), *MapComponent->GetView()->GetAttributionText());
+				BroadcastAttributionChange();
+			});
+		}
+	);
 }
 
 void UArcGISXRAttributionComponent::BroadcastAttributionChange()
 {
 	if (MapComponent.IsValid())
 	{
-		//MapComponent->GetView()->GetAttributionText()
 		OnAttributionChanged.Broadcast();
 	}
 }
