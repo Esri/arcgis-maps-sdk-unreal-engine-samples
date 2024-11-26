@@ -57,7 +57,6 @@ class AMeasure : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	AMeasure();
 
 	UFUNCTION(BlueprintCallable)
@@ -67,7 +66,13 @@ public:
 	void ClearLine();
 
 	UFUNCTION(BlueprintCallable)
-	void UnitChanged();
+	void SetDistance(float distance);
+	UFUNCTION(BlueprintCallable)
+	float GetDistance();
+	UFUNCTION(BlueprintCallable)
+	void SetUnit(UArcGISLinearUnit* unit);
+	UFUNCTION(BlueprintCallable)
+	UArcGISLinearUnit* GetUnit();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TEnumAsByte<ESelection> Selection;
@@ -76,8 +81,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TObjectPtr<UUserWidget> UIWidget;
 	
-	UFUNCTION(BlueprintCallable)
-	void HideDirections();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -89,16 +92,19 @@ private:
 	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	TArray<ARouteMarker*> Stops;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
 	FString UnitText;
 	UFunction* WidgetFunction;
+	UFunction* HideInstructions;
+	UFUNCTION()
+	void UpdateDistance(float Value);
 	double SegmentDistance;
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	float MarkerHeight = 7000.0f;
-	UFunction* HideInstructions;
 
 	void AddStop(const FInputActionValue& value);
 	void Interpolate(AActor* start, AActor* end);
@@ -109,4 +115,6 @@ private:
 	UInputMappingContext* MappingContext;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	UInputAction* mousePress;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	bool isHidden = false;
 };

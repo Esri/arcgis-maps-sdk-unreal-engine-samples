@@ -60,15 +60,6 @@ void AGeocoder::BeginPlay()
 	}
 }
 
-void AGeocoder::HideDirections()
-{
-	AActor* self = this;
-	if (HideInstructions) {
-		UIWidget->ProcessEvent(HideInstructions, &self);
-	}
-}
-
-
 void AGeocoder::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
