@@ -36,7 +36,6 @@ void UArcGISXRAttributionComponent::OnArcGISMapComponentChanged(UArcGISMapCompon
 
 	MapComponent->GetView()->APIObject->SetAttributionChanged([this]() {
 			AsyncTask(ENamedThreads::GameThread, [this]() {
-				UE_LOG(LogTemp, Display, TEXT("%s"), *MapComponent->GetView()->GetAttributionText());
 				BroadcastAttributionChange();
 			});
 		}
@@ -47,6 +46,7 @@ void UArcGISXRAttributionComponent::BroadcastAttributionChange()
 {
 	if (MapComponent.IsValid())
 	{
+		UE_LOG(LogTemp, Display, TEXT("%s"), *MapComponent->GetView()->GetAttributionText());
 		OnAttributionChanged.Broadcast();
 	}
 }
