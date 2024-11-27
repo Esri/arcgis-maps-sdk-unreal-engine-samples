@@ -5,11 +5,10 @@
 
 #include "ArcGISXRAttributionComponent.h"
 
-#include "Delegates/Delegate.h"
-
 #include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
 #include "ArcGISMapsSDK/Actors/ArcGISActor.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "Delegates/Delegate.h"
 
 UArcGISXRAttributionComponent::UArcGISXRAttributionComponent()
 {
@@ -35,8 +34,8 @@ void UArcGISXRAttributionComponent::OnArcGISMapComponentChanged(UArcGISMapCompon
 	}
 
 	MapComponent->GetView()->APIObject->SetAttributionChanged([this]() {
-			AsyncTask(ENamedThreads::GameThread, [this]() {
-				BroadcastAttributionChange();
+		AsyncTask(ENamedThreads::GameThread, [this]() {
+			BroadcastAttributionChange();
 			});
 		}
 	);
