@@ -90,7 +90,7 @@ public:
 	FWebLink WebLink;
 	
 private:
-	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
 	
 protected:
 	virtual void BeginPlay() override;

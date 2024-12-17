@@ -15,7 +15,6 @@
 
 
 #include "FeatureLayer.h"
-#include "Json.h"
 
 AFeatureLayer::AFeatureLayer()
 {
@@ -23,9 +22,9 @@ AFeatureLayer::AFeatureLayer()
 
 }
 
-void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
+void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully)
 {
-	if (bConnectedSucessfully)
+	if (bConnectedSuccessfully)
 	{
 		bLinkReturnError = false;
 		TSharedPtr<FJsonObject> ResponseObj;
@@ -36,7 +35,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 		if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 		{
 			//get the array field features
-			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
+			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField(TEXT("features"));
 
 
 			if (!bNewLink && !bGetAll)
@@ -57,14 +56,14 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					{
 						for (auto outfield : WebLink.OutFields)
 						{
-							auto propertyOutfield = feature->GetObjectField("properties")->GetStringField(outfield);
+							auto propertyOutfield = feature->GetObjectField(TEXT("properties"))->GetStringField(outfield);
 							if (propertyOutfield.IsEmpty())
 							{
-								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField("properties")->GetIntegerField(outfield)));
+								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 							}
 							else
 							{
-								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));	
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));	
 							}
 						}	
 					}
@@ -72,21 +71,21 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					{
 						for (auto outfield : OutFieldsToGet)
 						{
-							auto propertyOutfield = feature->GetObjectField("properties")->GetStringField(outfield);
+							auto propertyOutfield = feature->GetObjectField(TEXT("properties"))->GetStringField(outfield);
 							if (propertyOutfield.IsEmpty())
 							{
-								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField("properties")->GetIntegerField(outfield)));
+								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 							}
 							else
 							{
-								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));	
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));	
 							}
 						}	
 					}
 					//this will get the type of feature
-					auto type = feature->GetObjectField("geometry")->GetStringField("type");
+					auto type = feature->GetObjectField(TEXT("geometry"))->GetStringField(TEXT("type"));
 					//this will get the geometry or coordinates of the feature
-					auto coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
+					auto coordinates = feature->GetObjectField(TEXT("geometry"))->GetArrayField(TEXT("coordinates"));
 
 					//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
 					//if not, it will return an error
@@ -112,7 +111,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 				//Get every feature property and add them to an array
 				//These properties show up in the editor and automatically change when the user changes the link, assuming the link is valid
 				//The user may click on these properties from the drop down in order to select which ones they would like to get.
-				auto properties = Features[0]->AsObject()->GetObjectField("properties");
+				auto properties = Features[0]->AsObject()->GetObjectField(TEXT("properties"));
 				auto propertyFields = properties->Values;
 			
 				for (auto key : propertyFields)
@@ -122,7 +121,7 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 			}
 			else if (bGetAll)
 			{
-				auto properties = Features[0]->AsObject()->GetObjectField("properties");
+				auto properties = Features[0]->AsObject()->GetObjectField(TEXT("properties"));
 				auto propertyFields = properties->Values;
 			
 				for (auto key : propertyFields)
@@ -145,14 +144,14 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					{
 						for (auto outfield : WebLink.OutFields)
 						{
-							auto propertyOutfield = feature->GetObjectField("properties")->GetStringField(outfield);
+							auto propertyOutfield = feature->GetObjectField(TEXT("properties"))->GetStringField(outfield);
 							if (propertyOutfield.IsEmpty())
 							{
-								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField("properties")->GetIntegerField(outfield)));
+								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 							}
 							else
 							{
-								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));	
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));	
 							}
 						}	
 					}
@@ -160,21 +159,21 @@ void AFeatureLayer::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 					{
 						for (auto outfield : OutFieldsToGet)
 						{
-							auto propertyOutfield = feature->GetObjectField("properties")->GetStringField(outfield);
+							auto propertyOutfield = feature->GetObjectField(TEXT("properties"))->GetStringField(outfield);
 							if (propertyOutfield.IsEmpty())
 							{
-								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField("properties")->GetIntegerField(outfield)));
+								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 							}
 							else
 							{
-								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField("properties")->GetStringField(outfield));	
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));	
 							}
 						}	
 					}
 					//this will get the type of feature
-					auto type = feature->GetObjectField("geometry")->GetStringField("type");
+					auto type = feature->GetObjectField(TEXT("geometry"))->GetStringField(TEXT("type"));
 					//this will get the geometry or coordinates of the feature
-					auto coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
+					auto coordinates = feature->GetObjectField(TEXT("geometry"))->GetArrayField(TEXT("coordinates"));
 
 					//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
 					//if not, it will return an error
@@ -256,7 +255,7 @@ void AFeatureLayer::ProcessWebRequest()
 {
 	FeatureData.Empty();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &AFeatureLayer::OnResponseRecieved);
+	Request->OnProcessRequestComplete().BindUObject(this, &AFeatureLayer::OnResponseReceived);
 	Request->SetURL(WebLink.Link);
 	Request->SetVerb("Get");
 	Request->ProcessRequest();
