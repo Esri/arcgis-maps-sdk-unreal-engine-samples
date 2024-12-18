@@ -21,8 +21,17 @@ public class sample_projectEditorTarget : TargetRules
 	public sample_projectEditorTarget( TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		ExtraModuleNames.AddRange( new string[] { "sample_project" } );
 		WindowsPlatform.bStrictConformanceMode = true;
+		ExtraModuleNames.AddRange( new string[] { "sample_project" } );
+		
+#if !UE_5_4_OR_LATER
+		DefaultBuildSettings = BuildSettingsVersion.V2;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
+#else
+		bLegacyParentIncludePaths = false;
+		CppStandard = CppStandardVersion.Default;
+		DefaultBuildSettings = BuildSettingsVersion.Latest;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+#endif
     }
 }

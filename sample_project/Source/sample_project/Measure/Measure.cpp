@@ -22,21 +22,6 @@ constexpr int TraceLength = 1000000;
 AMeasure::AMeasure()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	// Load the necessary assets
-	ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/Measure/Blueprints/UI_Measure.UI_Measure_C"));
-
-	if (WidgetAsset.Succeeded())
-	{
-		UIWidgetClass = WidgetAsset.Object;
-	}
-
-	ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
-
-	if (MeshAsset.Succeeded())
-	{
-		RouteMesh = MeshAsset.Object;
-	}
 }
 
 // Called when the game starts or when spawned
@@ -44,7 +29,15 @@ void AMeasure::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupInput();
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		SetupPlayerInputComponent(PlayerController->InputComponent);
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
+			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(MappingContext, 0);
+		}
+	}
 
 	// Make sure mouse cursor remains visible
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -60,31 +53,31 @@ void AMeasure::BeginPlay()
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
-		HideInstructions = UIWidget->FindFunction(FName("HideDirections"));
-		if (UIWidget)
+		if (!UIWidget)
 		{
-			UIWidget->AddToViewport();
-			WidgetFunction = UIWidget->FindFunction(FName("SetDistance"));
-			UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));
+			return;
+		}
+
+		UIWidget->AddToViewport();
+		UnitDropdown = (UComboBoxString*)UIWidget->GetWidgetFromName(TEXT("UnitDropDown"));
+		if (UIWidget->FindFunction("ShowInstruction"))
+		{
+			UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
 		}
 	}
 	
 	Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
 }
 
-void AMeasure::SetupInput()
+void AMeasure::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	InputComponent = NewObject<UInputComponent>(this);
-	InputComponent->RegisterComponent();
-
-	if (InputComponent)
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		InputComponent->BindAction("PlaceRoutePoint", IE_Pressed, this, &AMeasure::AddStop);
-		EnableInput(GetWorld()->GetFirstPlayerController());
+		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AMeasure::AddStop);
 	}
 }
 
-void AMeasure::AddStop()
+void AMeasure::AddStop(const FInputActionValue& value)
 {
 	FVector direction;
 	FHitResult hit;
@@ -115,6 +108,7 @@ void AMeasure::AddStop()
 																	  EArcGISGeodeticCurveType::Geodesic)
 								  ->GetDistance();
 			GeodeticDistance += SegmentDistance;
+			UpdateDistance(GeodeticDistance);
 
 			// Confirm FeaturePoints list does not already contain element
 
@@ -258,35 +252,41 @@ void AMeasure::ClearLine()
 	}
 }
 
-void AMeasure::UnitChanged()
+void AMeasure::UpdateDistance(float Value)
 {
-	if (Selection == isMetes)
+	if (UIWidget)
 	{
-		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters), GeodeticDistance);
-		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Meters);
-	}
-	else if (Selection == isKilometers)
-	{
-		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers), GeodeticDistance);
-		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Kilometers);
-	}
-	else if (Selection == isMiles)
-	{
-		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles), GeodeticDistance);
-		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
-	}
-	else if (Selection == isFeet)
-	{
-		GeodeticDistance = Unit->ConvertTo(UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet), GeodeticDistance);
-		Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Feet);
+		FText NewText = FText::AsNumber(Value);
+
+		FName VariableName(TEXT("Distance")); 
+		FProperty* text = UIWidget->GetClass()->FindPropertyByName(VariableName);
+		if (text)
+		{
+			FTextProperty* Distance = CastField<FTextProperty>(text);
+			if (Distance)
+			{
+				Distance->SetPropertyValue_InContainer(UIWidget, NewText);
+			}
+		}
 	}
 }
 
-void AMeasure::HideDirections()
+float AMeasure::GetDistance()
 {
-	AActor* self = this;
-	if (HideInstructions) {
-		UIWidget->ProcessEvent(HideInstructions, &self);
-	}
+	return GeodeticDistance;
 }
 
+void AMeasure::SetDistance(float distance)
+{
+	GeodeticDistance = distance;
+}
+
+UArcGISLinearUnit* AMeasure::GetUnit()
+{
+	return Unit;
+}
+
+void AMeasure::SetUnit(UArcGISLinearUnit* unit)
+{
+	Unit = unit;
+}

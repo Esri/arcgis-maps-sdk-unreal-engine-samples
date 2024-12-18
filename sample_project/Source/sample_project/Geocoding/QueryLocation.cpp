@@ -30,36 +30,22 @@ AQueryLocation::AQueryLocation()
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MarkerMesh"));
 	MeshComponent->SetupAttachment(Root);
 	MeshComponent->SetWorldScale3D(MeshScale);
-	
-	// Load the static mesh asset for the pin shape
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAssetPin(TEXT("StaticMesh'/Game/SampleViewer/SharedResources/Geometries/Pin.Pin'"));
-	if (MeshAssetPin.Succeeded()) {
-		PinMesh = MeshAssetPin.Object;
-	}
-	
-	// Load the static mesh asset and the material for the point shape
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAssetPoint(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
-	if (MeshAssetPoint.Succeeded()) {
-		PointMesh = MeshAssetPoint.Object;
-	}
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAssetPoint(TEXT("Material'/Game/SampleViewer/SharedResources/Materials/M_PinHead.M_PinHead'"));
-	if (MaterialAssetPoint.Succeeded()) {
-		PointMaterial = MaterialAssetPoint.Object;
-	}
 
 	// Add a text render component and set the properties
 	TextComponent = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextComponent"));
 	TextComponent->SetupAttachment(Root);
 	TextComponent->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	TextComponent->SetTextRenderColor(FColor::Black);
-	static ConstructorHelpers::FObjectFinder<UMaterial> TextMaterialAsset(TEXT("Material'/Game/SampleViewer/SharedResources/Materials/TextMaterialWithBackground.TextMaterialWithBackground'"));
-	if (TextMaterialAsset.Succeeded()) {
-		TextComponent->SetMaterial(0, TextMaterialAsset.Object);
+	auto textMaterialAsset = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/SampleViewer/SharedResources/Materials/TextMaterialWithBackground.TextMaterialWithBackground'"));
+	if (textMaterialAsset != nullptr)
+	{
+		TextComponent->SetMaterial(0, textMaterialAsset);
 	}
 
 	// Add an ArcGISLocation component
 	ArcGISLocation = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("ArcGISLocation"));
 	ArcGISLocation->SetupAttachment(Root);
+	ArcGISLocation->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
 }
 
 void AQueryLocation::BeginPlay()
@@ -67,65 +53,35 @@ void AQueryLocation::BeginPlay()
 	Super::BeginPlay();
 
 	PawnActor = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	
+	auto mapActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	if (mapActor)
+	{
+		MapComponent = mapActor->GetComponentByClass<UArcGISMapComponent>();
+	}
 }
 
-void AQueryLocation::Tick(float DeltaTime)
+void AQueryLocation::FinalizeAddressQuery()
 {
-	Super::Tick(DeltaTime);
+	auto point = ArcGISLocation->GetPosition();
+	
+	// Place the pawn above the current query location
+	auto PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
+	PawnLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+		point->GetX(), point->GetY(), point->GetZ() + CameraDistanceToGround, UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
+	
+	// Set up the text render component with the appropriate transform
+	TextComponent->SetWorldScale3D(FVector3d(125.));
+	TextComponent->SetWorldRotation(PawnActor->GetActorRotation() + FRotator3d(180, 0, 180));
+	TextComponent->SetRelativeLocation(FVector3d(2000, 0, 4000));
 
-	// If needed determine the elevation at the location returned for the geocoding query
-	if (bShouldUpdateElevation) {
-		APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
-		
-		// Skip if too many attempts have been made
-		if (RaycastCounter >= MaxRaycastAttemts) {
-			bShouldUpdateElevation = false;
-			CameraManager->StartCameraFade(1, 0, .2, FColor::Black, false, true);
-			UE_LOG(LogTemp, Warning, TEXT("The elevation at the queried location could not be determined after %d raycast attempts. The vertical position of the marker may be inaccurate."), MaxRaycastAttemts);
-			return;
-		}
-
-		bool bTraceSuccess = false;
-		float TraceLength = 1000000.;
-		FVector3d TraceDirection = GetActorUpVector() * -1.;
-		FVector3d WorldLocation = PawnActor->GetActorLocation();
-		FHitResult TraceHit;
-		RaycastCounter++;
-
-		// Perform a raycast from the current location in the direction towards the map
-		bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation,
-			WorldLocation + TraceDirection * TraceLength, ECC_Visibility, FCollisionQueryParams());
-
-		// Check if the map actor was hit by the ray
-		if (bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass()) {
-			// Raycast reult differs from the previous frame indicating the map is still loading: reset the counter.
-			if (StableFramesCounter < FramesToWaitForLoading && TraceHit.ImpactPoint != GetActorLocation()) {
-				StableFramesCounter = 0;
-				SetActorLocation(TraceHit.ImpactPoint);
-			}
-			// Raycast result stayed unchanged for a number of frames (i.e., map finished loading)
-			else if (StableFramesCounter >= FramesToWaitForLoading) {
-				SetActorLocation(TraceHit.ImpactPoint);
-
-				RemoveTickPrerequisiteComponent(ArcGISLocation);
-				RemoveTickPrerequisiteActor(PawnActor);
-				bShouldUpdateElevation = false;
-				CameraManager->StartCameraFade(1, 0, .2, FColor::Black, false, true);
-
-				// Place the pawn above this instance and point it towards the map
-				PawnActor->SetActorLocation(TraceHit.ImpactPoint - TraceDirection * 100000);
-				PawnActor->SetActorRotation(TraceDirection.Rotation());
-				
-				// Update the address cue with the appropriate text and orientation
-				TextComponent->SetText(FText::FromString(Address));
-				TextComponent->SetWorldRotation(PawnActor->GetActorRotation() + FRotator3d(180, 0, 180));
-			}
-			// Raycast result was the same as in the previous frame: increase the counter.
-			else {
-				StableFramesCounter++;
-			}
-		}
-	}
+	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+	CameraManager->StartCameraFade(1, 0, .1, FColor::Black, false, true);
+	
+	// Remove the callback for draw status and tick prerequisites 
+	MapComponent->GetView()->APIObject->SetDrawStatusChanged(nullptr);
+	RemoveTickPrerequisiteComponent(ArcGISLocation);
+	RemoveTickPrerequisiteActor(PawnActor);
 }
 
 // Set this instance up for a geocoding query  
@@ -135,32 +91,31 @@ void AQueryLocation::SetupAddressQuery(UArcGISPoint* InPoint, FString InAddress)
 	ArcGISLocation->SetPosition(InPoint);
 	ArcGISLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(90., 0., 0.));
 
-	// Place and rotate the pawn at the location returned for the query
-	UArcGISLocationComponent* PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
+	// Place and rotate the pawn at the location returned for the query at a high altitude 
+	auto PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
 	PawnLocation->SetPosition(InPoint);
 	PawnLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(0., 0., 0.));
 
-	// Make sure the location components have updated the transform before determining the elevation
+	// Make sure the location components have updated the transform before determining the pawn elevation
 	AddTickPrerequisiteActor(PawnActor);
 	AddTickPrerequisiteComponent(ArcGISLocation);
-	
-	Address = InAddress;
-	StableFramesCounter = 0;
-	RaycastCounter = 0;
-	bShouldUpdateElevation = true;
 
 	// Fade the camera until the elevation at the location has been determined
 	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
-	CameraManager->StartCameraFade(0., 1., 0.2, FColor::Black, false, true);
 	CameraManager->SetManualCameraFade(1, FColor::Black, false);
 	
-	// Set up the static mesh component with the appropriate shape and scale
+	// Set up the static mesh component and the address cue
 	MeshComponent->SetStaticMesh(PinMesh);
 	MeshComponent->SetWorldScale3D(FVector3d(MeshScale));
+	TextComponent->SetText(FText::FromString(InAddress));
 
-	// Set up the text render component with the appropriate transform
-	TextComponent->SetWorldScale3D(FVector3d(125.));
-	TextComponent->SetRelativeLocation(FVector3d(2000, 0, 4000));
+	// Finalize the placement of the pawn once map is done loading at the new location 
+	MapComponent->GetView()->APIObject->SetDrawStatusChanged([this](Esri::GameEngine::MapView::ArcGISDrawStatus DrawStatus) {
+		if (DrawStatus == Esri::GameEngine::MapView::ArcGISDrawStatus::Completed)
+		{
+			FinalizeAddressQuery();
+		}
+	});
 }
 
 // Set this instance up for a reverse geocoding query  
@@ -174,11 +129,6 @@ void AQueryLocation::SetupLocationQuery(FVector3d InLocation)
 	UArcGISRotation* PawnRotation = PawnActor->FindComponentByClass<UArcGISLocationComponent>()->GetRotation();
 	ArcGISLocation->SetRotation(PawnRotation);
 
-	Address = TEXT("");
-	StableFramesCounter = 0;
-	RaycastCounter = 0;
-	bShouldUpdateElevation = false;
-
 	// Set up the static mesh component with the appropriate shape, material and scale
 	MeshComponent->SetStaticMesh(PointMesh);
 	MeshComponent->SetMaterial(0, PointMaterial);
@@ -188,7 +138,7 @@ void AQueryLocation::SetupLocationQuery(FVector3d InLocation)
 	TextComponent->SetRelativeRotation(FRotator3d(0, 180, 0)); // Text faces the pawn
 	TextComponent->SetRelativeLocation(FVector3d(-0.02 * DistanceToPawn, 0, 0.04 * DistanceToPawn));
 	TextComponent->SetWorldScale3D(FVector3d(0.00125 * DistanceToPawn));
-	TextComponent->SetVisibility(false); // Hid the address cue until it has been updated
+	TextComponent->SetVisibility(false); // Hide the address cue until it has been updated
 }
 
 // Update the address cue with the new address

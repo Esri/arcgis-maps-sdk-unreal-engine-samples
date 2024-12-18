@@ -29,6 +29,8 @@
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "RouteManager.generated.h"
 UCLASS()
 class SAMPLE_PROJECT_API ARouteManager : public AActor
@@ -40,9 +42,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	// Sets default values for this actor's properties
 	ARouteManager();
-
-	UFUNCTION(BlueprintCallable)
-	void HideDirections();
+	
 	UFUNCTION(BlueprintCallable)
 	void ClearMap();
 
@@ -54,15 +54,17 @@ private:
 	
 	void PostRoutingRequest();
 	void ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
-	void SetupInput();
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 	void AddStop();
 
 	float traceLength = 10000000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	UUserWidget* UIWidget;
 	UArcGISMapComponent* MapComponent;
 	TDoubleLinkedList < USplineMeshComponent*> SplineMeshComponents;
-	UStaticMesh* RouteMesh;
+	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 	TDoubleLinkedList<ARouteMarker*> Stops;
 	TDoubleLinkedList<ABreadcrumb*> Breadcrumbs;
 	bool bIsRouting = false;
@@ -70,4 +72,9 @@ private:
 	FVector2D RouteCueScale = FVector2D(5.);
 	int StopCount = 2;
 	UFunction* HideInstructions;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputAction* mousePress;
 };

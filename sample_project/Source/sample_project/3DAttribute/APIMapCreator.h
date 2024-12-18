@@ -56,7 +56,9 @@ class SAMPLE_PROJECT_API AAPIMapCreator : public AArcGISActor
 	TObjectPtr<UAttributeComponent> AttributeComponent;
 	UPROPERTY(Category = "ArcGISSamples|SampleAPIMapCreator", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UViewStateLoggingComponent> ViewStateLogging;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	UUserWidget* UIWidget;
 	UFunction* HideInstructions;
 	

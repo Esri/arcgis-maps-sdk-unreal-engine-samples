@@ -26,6 +26,7 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapElevation.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapType.h"
+#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 
 #include "ArcGISPawn.h"
 #include "Blueprint/UserWidget.h"
@@ -38,12 +39,6 @@ AAPIMapCreator::AAPIMapCreator()
 	PrimaryActorTick.bCanEverTick = false;
 
 	ViewStateLogging = CreateDefaultSubobject<UViewStateLoggingComponent>(TEXT("ArcGISViewStateLoggingComponent"));
-
-	static ConstructorHelpers::FObjectFinder<UClass> WidgetAsset(TEXT("/Game/SampleViewer/Samples/MaterialByAttribute/UserInterface/WBP_3DAttribute.WBP_3DAttribute_c"));
-	if (WidgetAsset.Succeeded())
-	{
-		UIWidgetClass = WidgetAsset.Object;
-	}
 }
 // @@End(CallTick)
 

@@ -38,6 +38,8 @@
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "sample_project/Routing/Breadcrumb.h"
 #include "sample_project/Routing/RouteMarker.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 
 #include "Measure.generated.h"
 
@@ -55,7 +57,6 @@ class AMeasure : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	AMeasure();
 
 	UFUNCTION(BlueprintCallable)
@@ -65,17 +66,21 @@ public:
 	void ClearLine();
 
 	UFUNCTION(BlueprintCallable)
-	void UnitChanged();
+	void SetDistance(float distance);
+	UFUNCTION(BlueprintCallable)
+	float GetDistance();
+	UFUNCTION(BlueprintCallable)
+	void SetUnit(UArcGISLinearUnit* unit);
+	UFUNCTION(BlueprintCallable)
+	UArcGISLinearUnit* GetUnit();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TEnumAsByte<ESelection> Selection;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		float GeodeticDistance;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TObjectPtr<UUserWidget> UIWidget;
 	
-	UFUNCTION(BlueprintCallable)
-	void HideDirections();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -84,21 +89,32 @@ private:
 	TArray<AActor*> FeaturePoints;
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 	FVector2D RouteCueScale = FVector2D(5);
-	TObjectPtr<UStaticMesh> RouteMesh;
+	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	TArray<ARouteMarker*> Stops;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISLinearUnit> Unit;
 	TObjectPtr<UComboBoxString> UnitDropdown;
 	FString UnitText;
 	UFunction* WidgetFunction;
+	UFunction* HideInstructions;
+	UFUNCTION()
+	void UpdateDistance(float Value);
 	double SegmentDistance;
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	float MarkerHeight = 7000.0f;
-	UFunction* HideInstructions;
 
-	void AddStop();
+	void AddStop(const FInputActionValue& value);
 	void Interpolate(AActor* start, AActor* end);
 	void SetElevation(AActor* stop);
-	void SetupInput();
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputAction* mousePress;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	bool isHidden = false;
 };

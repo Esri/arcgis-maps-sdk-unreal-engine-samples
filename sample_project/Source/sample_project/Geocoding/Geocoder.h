@@ -21,6 +21,8 @@
 #include "Json.h"
 #include "Http.h"
 #include "QueryLocation.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
@@ -39,16 +41,13 @@ public:
 	void SendAddressQuery(FString Address);
 
 	UFUNCTION(BlueprintCallable)
-	void SelectLocation();
-
-	UFUNCTION(BlueprintCallable)
-	void HideDirections();
+	void SelectLocation(const FInputActionValue& value);
 	
 protected:
 	virtual void BeginPlay() override;
 
 private:
-	void SetupInput();
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 	void ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void SendLocationQuery(UArcGISPoint* InPoint);
@@ -56,8 +55,15 @@ private:
 	AQueryLocation* QueryLocation;
 	bool bWaitingForResponse = false;
 	bool bShouldSendLocationQuery = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	UUserWidget* UIWidget;
 	UFunction* WidgetSetInfoFunction;
 	UFunction* HideInstructions;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UInputAction* mousePress;
 };
