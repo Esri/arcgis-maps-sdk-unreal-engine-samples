@@ -20,12 +20,17 @@
 #include "Http.h"
 #include "ArcGISSamples/Public/ArcGISPawn.h"
 #include "Engine/DataTable.h"
+#include "EnhancedInputSubsystems.h"
 #include "FeatureLayer.generated.h"
+
+class UInputAction;
+class UInputMappingContext;
 
 USTRUCT(BlueprintType)
 struct SAMPLE_PROJECT_API FWebLink : public FTableRowBase
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString Link;
@@ -41,6 +46,7 @@ USTRUCT(BlueprintType)
 struct SAMPLE_PROJECT_API FFeatureLayerProperties
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> FeatureProperties;
@@ -52,8 +58,13 @@ UCLASS()
 class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 {
 	GENERATED_BODY()
-	
+
 public:
+	UFUNCTION(BlueprintCallable)
+	void MoveCamera(AActor* Item);
+	UFUNCTION(BlueprintCallable)
+	void ParseData();
+	void SelectFeature();
 	UFUNCTION(BlueprintCallable)
 	void ProcessWebRequest();
 	UFUNCTION(BlueprintCallable)
@@ -80,19 +91,34 @@ public:
 	AArcGISPawn* ArcGISPawn;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FFeatureLayerProperties> FeatureData;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<AActor*> featureItems;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int LastValue;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> OutFieldsToGet;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> PropertiesToGet;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int StartValue;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FWebLink WebLink;
-	
+
 private:
 	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
-	
+
+	UArcGISMapComponent* mapComponent;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	UInputAction* mousePress;
+	FTimerHandle startDelayHandle;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UUserWidget* UIWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	TSubclassOf<UUserWidget> UIWidgetClass;
+
 protected:
 	virtual void BeginPlay() override;
-	
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 };

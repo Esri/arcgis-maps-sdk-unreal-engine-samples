@@ -15,11 +15,17 @@
 
 
 #include "FeatureLayer.h"
+#include "EnhancedInputComponent.h"
+#include "FeatureItem.h"
+#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
+#include "ArcGISMapsSDK/Components/ArcGISSurfacePlacementMode.h"
+#include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 AFeatureLayer::AFeatureLayer()
 {
 	PrimaryActorTick.bCanEverTick = false;
-
 }
 
 void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully)
@@ -36,7 +42,6 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 		{
 			//get the array field features
 			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField(TEXT("features"));
-
 
 			if (!bNewLink && !bGetAll)
 			{
@@ -59,13 +64,14 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 							auto propertyOutfield = feature->GetObjectField(TEXT("properties"))->GetStringField(outfield);
 							if (propertyOutfield.IsEmpty())
 							{
-								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
+								featureLayerProperties.FeatureProperties.Add(
+									FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 							}
 							else
 							{
-								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));	
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));
 							}
-						}	
+						}
 					}
 					else
 					{
@@ -74,13 +80,14 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 							auto propertyOutfield = feature->GetObjectField(TEXT("properties"))->GetStringField(outfield);
 							if (propertyOutfield.IsEmpty())
 							{
-								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
+								featureLayerProperties.FeatureProperties.Add(
+									FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 							}
 							else
 							{
-								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));	
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));
 							}
-						}	
+						}
 					}
 					//this will get the type of feature
 					auto type = feature->GetObjectField(TEXT("geometry"))->GetStringField(TEXT("type"));
@@ -113,7 +120,7 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 				//The user may click on these properties from the drop down in order to select which ones they would like to get.
 				auto properties = Features[0]->AsObject()->GetObjectField(TEXT("properties"));
 				auto propertyFields = properties->Values;
-			
+
 				for (auto key : propertyFields)
 				{
 					WebLink.OutFields.Add(key.Key);
@@ -123,7 +130,7 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 			{
 				auto properties = Features[0]->AsObject()->GetObjectField(TEXT("properties"));
 				auto propertyFields = properties->Values;
-			
+
 				for (auto key : propertyFields)
 				{
 					WebLink.OutFields.Add(key.Key);
@@ -147,13 +154,14 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 							auto propertyOutfield = feature->GetObjectField(TEXT("properties"))->GetStringField(outfield);
 							if (propertyOutfield.IsEmpty())
 							{
-								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
+								featureLayerProperties.FeatureProperties.Add(
+									FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 							}
 							else
 							{
-								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));	
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));
 							}
-						}	
+						}
 					}
 					else
 					{
@@ -162,13 +170,14 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 							auto propertyOutfield = feature->GetObjectField(TEXT("properties"))->GetStringField(outfield);
 							if (propertyOutfield.IsEmpty())
 							{
-								featureLayerProperties.FeatureProperties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
+								featureLayerProperties.FeatureProperties.Add(
+									FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 							}
 							else
 							{
-								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));	
+								featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));
 							}
-						}	
+						}
 					}
 					//this will get the type of feature
 					auto type = feature->GetObjectField(TEXT("geometry"))->GetStringField(TEXT("type"));
@@ -210,12 +219,12 @@ bool AFeatureLayer::ErrorCheck()
 		bLinkReturnError = true;
 		return false;
 	}
-	
+
 	for (auto feature : FeatureData)
-	{		
+	{
 		for (auto property : feature.FeatureProperties)
 		{
-			if(property.Len() == 0)
+			if (property.Len() == 0)
 			{
 				return true;
 			}
@@ -229,7 +238,6 @@ void AFeatureLayer::CreateLink()
 {
 	for (auto header : WebLink.RequestHeaders)
 	{
-		
 		if (!WebLink.Link.Contains(header))
 		{
 			WebLink.Link += header;
@@ -239,14 +247,204 @@ void AFeatureLayer::CreateLink()
 			continue;
 		}
 	}
-	
+
 	if (WebLink.Link.EndsWith("outfields=*"))
 	{
-		bButtonActive = true;	
+		bButtonActive = true;
 	}
 	else
 	{
 		bButtonActive = false;
+	}
+}
+
+void AFeatureLayer::MoveCamera(AActor* Item)
+{
+	if (!ArcGISPawn)
+	{
+		return;
+	}
+
+	const auto featureItem = Cast<AFeatureItem>(Item);
+
+	if (!featureItem)
+	{
+		return;
+	}
+
+	if (const auto locationComponent = Cast<UArcGISLocationComponent>(ArcGISPawn->GetComponentByClass(UArcGISLocationComponent::StaticClass())))
+	{
+		locationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+			featureItem->Longitude, featureItem->Latitude, 1000, mapComponent->GetOriginPosition()->GetSpatialReference()));
+		locationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(0, 0, 0));
+	}
+
+	if (!mapComponent)
+	{
+		return;
+	}
+
+	mapComponent->SetOriginPosition(
+		UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(featureItem->Longitude, featureItem->Latitude, 0,
+		                                                       mapComponent->GetOriginPosition()->GetSpatialReference()));
+}
+
+void AFeatureLayer::ParseData()
+{
+	if (FeatureData.IsEmpty())
+	{
+		GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, "Empty");
+
+		return;
+	}
+
+	if (bGetAllFeatures)
+	{
+		for (auto featureData : FeatureData)
+		{
+			auto featureItem = GetWorld()->SpawnActor(AFeatureItem::StaticClass());
+
+			if (!featureItem)
+			{
+				return;
+			}
+
+			const auto item = Cast<AFeatureItem>(featureItem);
+
+			if (!item)
+			{
+				return;
+			}
+
+			item->Properties = featureData.FeatureProperties;
+			item->Longitude = featureData.GeoProperties[0];
+			item->Latitude = featureData.GeoProperties[1];
+			featureItem->SetOwner(this);
+			item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+				item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
+			item->locationComponent->SetPosition(position);
+			featureItems.Add(featureItem);
+		}
+	}
+	else
+	{
+		if (StartValue == LastValue)
+		{
+			auto featureItem = GetWorld()->SpawnActor(AFeatureItem::StaticClass());
+
+			if (!featureItem)
+			{
+				return;
+			}
+
+			const auto item = Cast<AFeatureItem>(featureItem);
+
+			if (!item)
+			{
+				return;
+			}
+
+			item->Properties = FeatureData[StartValue].FeatureProperties;
+			item->Longitude = FeatureData[StartValue].GeoProperties[0];
+			item->Latitude = FeatureData[StartValue].GeoProperties[1];
+			featureItem->SetOwner(this);
+			item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+				item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
+			item->locationComponent->SetPosition(position);
+			featureItems.Add(featureItem);
+			return;
+		}
+
+		if (LastValue >= FeatureData.Num())
+		{
+			for (int index = StartValue; index < FeatureData.Num(); ++index)
+			{
+				auto featureItem = GetWorld()->SpawnActor(AFeatureItem::StaticClass());
+
+				if (!featureItem)
+				{
+					return;
+				}
+
+				const auto item = Cast<AFeatureItem>(featureItem);
+
+				if (!item)
+				{
+					return;
+				}
+
+				item->Properties = FeatureData[index].FeatureProperties;
+				item->Longitude = FeatureData[index].GeoProperties[0];
+				item->Latitude = FeatureData[index].GeoProperties[1];
+				featureItem->SetOwner(this);
+				item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+					item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
+				item->locationComponent->SetPosition(position);
+				featureItems.Add(featureItem);
+			}
+		}
+		else
+		{
+			for (int index = StartValue; index < LastValue; ++index)
+			{
+				auto featureItem = GetWorld()->SpawnActor(AFeatureItem::StaticClass());
+
+				if (!featureItem)
+				{
+					return;
+				}
+
+				const auto item = Cast<AFeatureItem>(featureItem);
+
+				if (!item)
+				{
+					return;
+				}
+
+				item->Properties = FeatureData[index].FeatureProperties;
+				item->Longitude = FeatureData[index].GeoProperties[0];
+				item->Latitude = FeatureData[index].GeoProperties[1];
+				item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+					item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
+				item->locationComponent->SetPosition(position);
+				featureItem->SetOwner(this);
+				featureItems.Add(featureItem);
+			}
+		}
+	}
+
+	MoveCamera(featureItems[0]);
+
+	if (GetWorldTimerManager().IsTimerActive(startDelayHandle))
+	{
+		GetWorldTimerManager().ClearTimer(startDelayHandle);
+	}
+}
+
+void AFeatureLayer::SelectFeature()
+{
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		FVector Location, Direction;
+		const TArray<AActor*> ActorsToIgnore;
+		FHitResult HitResult;
+		PlayerController->DeprojectMousePositionToWorld(Location, Direction);
+
+		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
+		                                          EDrawDebugTrace::None, HitResult, true))
+		{
+			auto featureItem = Cast<AFeatureItem>(HitResult.GetActor());
+			GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, HitResult.GetActor()->GetName());
+			
+			if (!featureItem)
+			{
+				return;
+			}
+		}
 	}
 }
 
@@ -265,5 +463,40 @@ void AFeatureLayer::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		PlayerController->bShowMouseCursor = true;
+		PlayerController->bEnableClickEvents = true;
+
+		SetupPlayerInputComponent(PlayerController->InputComponent);
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(MappingContext, 0);
+		}
+	}
+
+	// Create the UI and add it to the viewport
+	if (UIWidgetClass)
+	{
+		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+		if (UIWidget)
+		{
+			UIWidget->AddToViewport();
+		}
+	}
+
+	mapComponent = UArcGISMapComponent::GetMapComponent(this);
+	ArcGISPawn = Cast<AArcGISPawn>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
 	CreateLink();
+	ProcessWebRequest();
+}
+
+void AFeatureLayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AFeatureLayer::SelectFeature);
+	}
 }
