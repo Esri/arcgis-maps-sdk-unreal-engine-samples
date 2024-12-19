@@ -41,7 +41,7 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 		if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 		{
 			//get the array field features
-			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField(TEXT("features"));
+			Features = ResponseObj->GetArrayField(TEXT("features"));
 
 			if (!bNewLink && !bGetAll)
 			{
@@ -258,6 +258,46 @@ void AFeatureLayer::CreateLink()
 	}
 }
 
+void AFeatureLayer::RefreshProperties(AActor* Feature)
+{
+	auto FeatureItem = Cast<AFeatureItem>(Feature->StaticClass());
+
+	if(!Feature)
+	{
+		return;
+	}
+
+	FeatureItem->Properties.Empty();
+	auto properties = Features[FeatureItem->Index]->AsObject()->GetObjectField(TEXT("Properties"));
+
+	if (bGetAllOutfields)
+	{
+		for (auto property : properties->Values)
+		{
+			auto key = property.Key;
+			auto value = property.Value->AsString();
+			FeatureItem->PropertiesNames.Add(key);
+			FeatureItem->Properties.Add(value);
+		}
+	}
+	else
+	{
+		for (auto OutField : OutFieldsToGet)
+		{
+			auto propertyOutfield = Features[FeatureItem->Index]->AsObject()->GetObjectField(TEXT("properties"))->GetStringField(OutField);
+			if (propertyOutfield.IsEmpty())
+			{
+				featureLayerProperties.FeatureProperties.Add(
+					FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
+			}
+			else
+			{
+				featureLayerProperties.FeatureProperties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));
+			}
+		}
+	}
+}
+
 void AFeatureLayer::MoveCamera(AActor* Item)
 {
 	if (!ArcGISPawn)
@@ -438,12 +478,45 @@ void AFeatureLayer::SelectFeature()
 		                                          EDrawDebugTrace::None, HitResult, true))
 		{
 			auto featureItem = Cast<AFeatureItem>(HitResult.GetActor());
-			GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, HitResult.GetActor()->GetName());
 			
 			if (!featureItem)
 			{
 				return;
 			}
+
+			if (bGetAllOutfields)
+			{
+				for (int index = 0; index < WebLink.OutFields.Num(); index++)
+				{
+					resultProperties.Add(WebLink.OutFields[index] + ": " + featureItem->Properties[index]);
+				}
+
+				FString output = "Properties: \n";
+			
+				for (auto ResultProperty : resultProperties)
+				{
+					output += ResultProperty + "\n";
+				}
+				
+				GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, output);
+			}
+			else
+			{
+				for (int index = 0; index < OutFieldsToGet.Num(); index++)
+				{
+					resultProperties.Add(OutFieldsToGet[index] + ": " + featureItem->Properties[index]);
+				}
+
+				FString output = "Properties: \n";
+			
+				for (auto ResultProperty : resultProperties)
+				{
+					output += ResultProperty + "\n";
+				}
+				
+				GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, output);
+			}
+			
 		}
 	}
 }

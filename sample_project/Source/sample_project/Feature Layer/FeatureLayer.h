@@ -60,6 +60,7 @@ class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 	GENERATED_BODY()
 
 public:
+	void RefreshProperties(AActor* Feature);
 	UFUNCTION(BlueprintCallable)
 	void MoveCamera(AActor* Item);
 	UFUNCTION(BlueprintCallable)
@@ -104,9 +105,13 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FWebLink WebLink;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> resultProperties;
+
 private:
 	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
 
+	TArray<TSharedPtr<FJsonValue>> Features;
 	UArcGISMapComponent* mapComponent;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	UInputMappingContext* MappingContext;

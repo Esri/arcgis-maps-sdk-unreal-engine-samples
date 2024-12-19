@@ -25,6 +25,7 @@ AFeatureItem::AFeatureItem()
 	collider->SetupAttachment(Root);
 	collider->SetRelativeLocation(FVector(0, 0, 1150));
 	collider->SetWorldScale3D(FVector(10, 10, 35));
+	collider->SetCollisionProfileName(FName("BlockAll"));
 	
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>("Location Component");
 	locationComponent->SetupAttachment(Root);

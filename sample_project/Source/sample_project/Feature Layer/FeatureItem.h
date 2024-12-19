@@ -22,9 +22,13 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FString> Properties;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<FString> PropertiesNames;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	double Latitude;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	double Longitude;
+	UPROPERTY(VisibleAnywhere)
+	int Index;
 
 private:
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
