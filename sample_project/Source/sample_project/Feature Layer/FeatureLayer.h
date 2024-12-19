@@ -15,10 +15,10 @@
 
 #pragma once
 
+#include "ArcGISSamples/Public/ArcGISPawn.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Http.h"
-#include "ArcGISSamples/Public/ArcGISPawn.h"
 #include "Engine/DataTable.h"
 #include "EnhancedInputSubsystems.h"
 #include "FeatureLayer.generated.h"
@@ -60,20 +60,23 @@ class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 	GENERATED_BODY()
 
 public:
-	void RefreshProperties(AActor* Feature);
+	AFeatureLayer();
+
+	UFUNCTION(BlueprintCallable)
+	void CreateLink();
+	UFUNCTION(BlueprintCallable)
+	bool ErrorCheck();
 	UFUNCTION(BlueprintCallable)
 	void MoveCamera(AActor* Item);
 	UFUNCTION(BlueprintCallable)
 	void ParseData();
-	void SelectFeature();
 	UFUNCTION(BlueprintCallable)
 	void ProcessWebRequest();
-	UFUNCTION(BlueprintCallable)
-	bool ErrorCheck();
-	UFUNCTION(BlueprintCallable)
-	void CreateLink();
-	AFeatureLayer();
+	void RefreshProperties(AFeatureItem* FeatureItem);
+	void SelectFeature();
 
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	AArcGISPawn* ArcGISPawn;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bButtonActive;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
@@ -88,8 +91,6 @@ public:
 	bool bNewLink;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bGetAll;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	AArcGISPawn* ArcGISPawn;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FFeatureLayerProperties> FeatureData;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
@@ -100,18 +101,21 @@ public:
 	TArray<FString> OutFieldsToGet;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> PropertiesToGet;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<FString> resultProperties;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int StartValue;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FWebLink WebLink;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> resultProperties;
-
 private:
 	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
-
+	void GetMapComponent();
+	
+	UFunction* clearProperties;
+	UFunction* createProperties;
 	TArray<TSharedPtr<FJsonValue>> Features;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UArcGISMapComponent* mapComponent;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	UInputMappingContext* MappingContext;
