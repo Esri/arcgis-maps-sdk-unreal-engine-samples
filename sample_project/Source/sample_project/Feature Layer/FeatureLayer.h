@@ -23,6 +23,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "FeatureLayer.generated.h"
 
+class AFeatureItem;
 class UInputAction;
 class UInputMappingContext;
 
@@ -72,7 +73,7 @@ public:
 	void ParseData();
 	UFUNCTION(BlueprintCallable)
 	void ProcessWebRequest();
-	void RefreshProperties(AFeatureItem* FeatureItem);
+	void RefreshProperties(AFeatureItem* Item);
 	void SelectFeature();
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
@@ -109,12 +110,17 @@ public:
 	FWebLink WebLink;
 
 private:
+	static void AddAdditionalMaterial(const AFeatureItem* Item, UMaterialInstance* Material);
 	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
 	void GetMapComponent();
+	static void RemoveAdditionalMaterial(const AFeatureItem* Item);
 	
 	UFunction* clearProperties;
 	UFunction* createProperties;
+	AFeatureItem* currentFeature;
 	TArray<TSharedPtr<FJsonValue>> Features;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+	UMaterialInstance* highlightMaterial;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UArcGISMapComponent* mapComponent;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))

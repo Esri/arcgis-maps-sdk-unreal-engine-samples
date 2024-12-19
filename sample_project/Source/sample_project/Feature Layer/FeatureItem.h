@@ -31,6 +31,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	UArcGISLocationComponent* locationComponent;
+	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
+	UStaticMeshComponent* pin;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FString> Properties;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
@@ -45,8 +47,6 @@ public:
 private:
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
 	UStaticMesh* pinMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Script/Engine.StaticMesh'/Game/SampleViewer/SharedResources/Geometries/Pin.Pin'"));
-	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
-	UStaticMeshComponent* pin;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	class UBoxComponent* collider;
 };

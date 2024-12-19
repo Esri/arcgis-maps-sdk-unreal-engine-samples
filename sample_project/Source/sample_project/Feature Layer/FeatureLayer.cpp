@@ -28,6 +28,16 @@ AFeatureLayer::AFeatureLayer()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
+void AFeatureLayer::AddAdditionalMaterial(const AFeatureItem* Item, UMaterialInstance* Material)
+{
+	if (!Material)
+	{
+		return;
+	}
+	
+	Item->pin->SetOverlayMaterial(Material);
+}
+
 void AFeatureLayer::BeginPlay()
 {
 	Super::BeginPlay();
@@ -238,7 +248,7 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 					{
 						bCoordinatesErrorReturn = true;
 					}
-					//Add the data recieved into the object and load the object into an array for use later.
+					//Add the data received into the object and load the object into an array for use later.
 					FeatureData.Add(featureLayerProperties);
 				}
 			}
@@ -246,7 +256,7 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 			{
 				//Get every feature property and add them to an array
 				//These properties show up in the editor and automatically change when the user changes the link, assuming the link is valid
-				//The user may click on these properties from the drop down in order to select which ones they would like to get.
+				//The user may click on these properties from the drop-down in order to select which ones they would like to get.
 				auto properties = Features[0]->AsObject()->GetObjectField(TEXT("properties"));
 				auto propertyFields = properties->Values;
 
@@ -329,7 +339,7 @@ void AFeatureLayer::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 					{
 						bCoordinatesErrorReturn = true;
 					}
-					//Add the data recieved into the object and load the object into an array for use later.
+					//Add the data received into the object and load the object into an array for use later.
 					FeatureData.Add(featureLayerProperties);
 				}
 			}
@@ -505,14 +515,15 @@ void AFeatureLayer::ProcessWebRequest()
 	Request->SetURL(WebLink.Link);
 	Request->SetVerb("Get");
 	Request->ProcessRequest();
+	currentFeature = nullptr;
 }
 
-void AFeatureLayer::RefreshProperties(AFeatureItem* FeatureItem)
+void AFeatureLayer::RefreshProperties(AFeatureItem* Item)
 {
-	FeatureItem->Properties.Empty();
-	FeatureItem->PropertiesNames.Empty();
+	Item->Properties.Empty();
+	Item->PropertiesNames.Empty();
 	resultProperties.Empty();
-	const auto properties = Features[FeatureItem->Index]->AsObject()->GetObjectField(TEXT("Properties"));
+	const auto properties = Features[Item->Index]->AsObject()->GetObjectField(TEXT("Properties"));
 
 	if (bGetAllOutfields)
 	{
@@ -520,8 +531,8 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* FeatureItem)
 		{
 			auto key = property.Key;
 			auto value = property.Value->AsString();
-			FeatureItem->PropertiesNames.Add(key);
-			FeatureItem->Properties.Add(value);
+			Item->PropertiesNames.Add(key);
+			Item->Properties.Add(value);
 			resultProperties.Add(key + ": " + value);
 		}
 
@@ -534,7 +545,7 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* FeatureItem)
 	}
 	else
 	{
-		const auto feature = Features[FeatureItem->Index]->AsObject();
+		const auto feature = Features[Item->Index]->AsObject();
 
 		for (auto outfield : OutFieldsToGet)
 		{
@@ -542,12 +553,12 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* FeatureItem)
 
 			if (propertyOutfield.IsEmpty())
 			{
-				FeatureItem->Properties.Add(
+				Item->Properties.Add(
 					FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 			}
 			else
 			{
-				FeatureItem->Properties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));
+				Item->Properties.Add(feature->GetObjectField(TEXT("properties"))->GetStringField(outfield));
 			}
 
 			resultProperties.Add(outfield + ": " + propertyOutfield);
@@ -562,6 +573,11 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* FeatureItem)
 	}
 }
 
+void AFeatureLayer::RemoveAdditionalMaterial(const AFeatureItem* Item)
+{
+	Item->pin->SetOverlayMaterial(nullptr);
+}
+
 void AFeatureLayer::SelectFeature()
 {
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
@@ -574,14 +590,20 @@ void AFeatureLayer::SelectFeature()
 		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
 		                                          EDrawDebugTrace::None, HitResult, true))
 		{
-			auto featureItem = Cast<AFeatureItem>(HitResult.GetActor());
-
-			if (!featureItem)
+			if (currentFeature)
+			{
+				RemoveAdditionalMaterial(currentFeature);
+			}
+			
+			currentFeature = Cast<AFeatureItem>(HitResult.GetActor());
+			
+			if (!currentFeature)
 			{
 				return;
 			}
 
-			RefreshProperties(featureItem);
+			RefreshProperties(currentFeature);
+			AddAdditionalMaterial(currentFeature, highlightMaterial);
 
 			if (clearProperties)
 			{
