@@ -34,7 +34,7 @@ void AFeatureLayer::AddAdditionalMaterial(const AFeatureItem* Item, UMaterialIns
 	{
 		return;
 	}
-	
+
 	Item->pin->SetOverlayMaterial(Material);
 }
 
@@ -124,12 +124,12 @@ void AFeatureLayer::MoveCamera(AActor* Item)
 	{
 		return;
 	}
-	
+
 	if (mapComponent == nullptr)
 	{
 		GetMapComponent();
 	}
-	
+
 	if (!mapComponent)
 	{
 		return;
@@ -149,7 +149,7 @@ void AFeatureLayer::MoveCamera(AActor* Item)
 		locationComponent->SetPosition(position);
 		locationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(0, 0, 0));
 	}
-	
+
 	const auto originPosition = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(featureItem->Longitude, featureItem->Latitude, 0,
 	                                                                                   mapComponent->GetOriginPosition()->GetSpatialReference());
 	mapComponent->SetOriginPosition(originPosition);
@@ -529,9 +529,9 @@ void AFeatureLayer::SelectFeature()
 			{
 				RemoveAdditionalMaterial(currentFeature);
 			}
-			
+
 			currentFeature = Cast<AFeatureItem>(HitResult.GetActor());
-			
+
 			if (!currentFeature)
 			{
 				return;
