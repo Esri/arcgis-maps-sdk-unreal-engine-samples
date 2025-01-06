@@ -28,12 +28,12 @@ AFeatureItem::AFeatureItem()
 	pin = CreateDefaultSubobject<UStaticMeshComponent>("PinMesh");
 	pin->SetStaticMesh(pinMesh);
 	pin->SetupAttachment(Root);
-	pin->SetWorldScale3D(FVector(10, 10, 10));
+	pin->SetWorldScale3D(FVector(5, 5, 5));
 
 	collider = CreateDefaultSubobject<UBoxComponent>("Collider");
 	collider->SetupAttachment(Root);
 	collider->SetRelativeLocation(FVector(0, 0, 1150));
-	collider->SetWorldScale3D(FVector(10, 10, 35));
+	collider->SetWorldScale3D(FVector(5, 5, 10));
 	collider->SetCollisionProfileName(FName("BlockAll"));
 
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>("Location Component");

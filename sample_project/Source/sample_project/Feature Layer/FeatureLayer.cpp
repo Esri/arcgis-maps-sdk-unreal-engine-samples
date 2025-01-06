@@ -88,18 +88,11 @@ void AFeatureLayer::CreateLink()
 		}
 	}
 
-	if (WebLink.Link.EndsWith("outfields=*"))
-	{
-		bButtonActive = true;
-	}
-	else
-	{
-		bButtonActive = false;
-	}
+	bButtonActive = WebLink.Link.EndsWith("outfields=*");
 }
 
 //check for errors that could result in a crash or null return
-bool AFeatureLayer::ErrorCheck()
+bool AFeatureLayer::HasErrors()
 {
 	if (FeatureData.IsEmpty())
 	{
@@ -151,13 +144,8 @@ void AFeatureLayer::MoveCamera(AActor* Item)
 
 	if (const auto locationComponent = Cast<UArcGISLocationComponent>(ArcGISPawn->GetComponentByClass(UArcGISLocationComponent::StaticClass())))
 	{
-		if (!mapComponent)
-		{
-			return;
-		}
-
 		const auto position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-			featureItem->Longitude, featureItem->Latitude, 1000, mapComponent->GetOriginPosition()->GetSpatialReference());
+			featureItem->Longitude, featureItem->Latitude, 250, mapComponent->GetOriginPosition()->GetSpatialReference());
 		locationComponent->SetPosition(position);
 		locationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(0, 0, 0));
 	}
@@ -423,79 +411,26 @@ void AFeatureLayer::ParseData()
 			item->Properties = FeatureData[StartValue].FeatureProperties;
 			item->Longitude = FeatureData[StartValue].GeoProperties[0];
 			item->Latitude = FeatureData[StartValue].GeoProperties[1];
-			featureItem->SetOwner(this);
 			item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
-			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-				item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
-			item->locationComponent->SetPosition(position);
+
+			if (mapComponent)
+			{
+				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+					item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
+				item->locationComponent->SetPosition(position);
+			}
+
+			featureItem->SetOwner(this);
 			featureItems.Add(featureItem);
-			return;
 		}
 
 		if (LastValue >= FeatureData.Num())
 		{
-			for (int index = StartValue; index < FeatureData.Num(); ++index)
-			{
-				auto featureItem = GetWorld()->SpawnActor(AFeatureItem::StaticClass());
-
-				if (!featureItem)
-				{
-					return;
-				}
-
-				const auto item = Cast<AFeatureItem>(featureItem);
-
-				if (!item)
-				{
-					return;
-				}
-
-				item->Index = index;
-				item->Properties = FeatureData[index].FeatureProperties;
-				item->Longitude = FeatureData[index].GeoProperties[0];
-				item->Latitude = FeatureData[index].GeoProperties[1];
-				featureItem->SetOwner(this);
-				item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
-				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-					item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
-				item->locationComponent->SetPosition(position);
-				featureItems.Add(featureItem);
-			}
+			SpawnFeatures(StartValue, FeatureData.Num());
 		}
 		else
 		{
-			for (int index = StartValue; index < LastValue; ++index)
-			{
-				auto featureItem = GetWorld()->SpawnActor(AFeatureItem::StaticClass());
-
-				if (!featureItem)
-				{
-					return;
-				}
-
-				const auto item = Cast<AFeatureItem>(featureItem);
-
-				if (!item)
-				{
-					return;
-				}
-
-				item->Index = index;
-				item->Properties = FeatureData[index].FeatureProperties;
-				item->Longitude = FeatureData[index].GeoProperties[0];
-				item->Latitude = FeatureData[index].GeoProperties[1];
-				item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
-
-				if (mapComponent)
-				{
-					UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-						item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
-					item->locationComponent->SetPosition(position);
-				}
-
-				featureItem->SetOwner(this);
-				featureItems.Add(featureItem);
-			}
+			SpawnFeatures(StartValue, LastValue);
 		}
 	}
 
@@ -617,6 +552,42 @@ void AFeatureLayer::SelectFeature()
 				UIWidget->ProcessEvent(createProperties, &self);
 			}
 		}
+	}
+}
+
+void AFeatureLayer::SpawnFeatures(int Start, int Last)
+{
+	for (int index = Start; index <= Last; ++index)
+	{
+		auto featureItem = GetWorld()->SpawnActor(AFeatureItem::StaticClass());
+
+		if (!featureItem)
+		{
+			return;
+		}
+
+		const auto item = Cast<AFeatureItem>(featureItem);
+
+		if (!item)
+		{
+			return;
+		}
+
+		item->Index = index;
+		item->Properties = FeatureData[index].FeatureProperties;
+		item->Longitude = FeatureData[index].GeoProperties[0];
+		item->Latitude = FeatureData[index].GeoProperties[1];
+		item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+
+		if (mapComponent)
+		{
+			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+				item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
+			item->locationComponent->SetPosition(position);
+		}
+
+		featureItem->SetOwner(this);
+		featureItems.Add(featureItem);
 	}
 }
 

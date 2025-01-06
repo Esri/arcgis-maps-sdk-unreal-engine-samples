@@ -66,7 +66,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CreateLink();
 	UFUNCTION(BlueprintCallable)
-	bool ErrorCheck();
+	bool HasErrors();
 	UFUNCTION(BlueprintCallable)
 	void MoveCamera(AActor* Item);
 	UFUNCTION(BlueprintCallable)
@@ -75,6 +75,7 @@ public:
 	void ProcessWebRequest();
 	void RefreshProperties(AFeatureItem* Item);
 	void SelectFeature();
+	void SpawnFeatures(int Start, int Last);
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	AArcGISPawn* ArcGISPawn;
@@ -92,6 +93,8 @@ public:
 	bool bNewLink;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bGetAll;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	AFeatureItem* currentFeature;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FFeatureLayerProperties> FeatureData;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
@@ -117,7 +120,6 @@ private:
 	
 	UFunction* clearProperties;
 	UFunction* createProperties;
-	AFeatureItem* currentFeature;
 	TArray<TSharedPtr<FJsonValue>> Features;
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
 	UMaterialInstance* highlightMaterial;
