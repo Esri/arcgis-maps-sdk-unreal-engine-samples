@@ -15,17 +15,23 @@
 
 #pragma once
 
+#include "ArcGISSamples/Public/ArcGISPawn.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Http.h"
-#include "ArcGISSamples/Public/ArcGISPawn.h"
 #include "Engine/DataTable.h"
+#include "EnhancedInputSubsystems.h"
 #include "FeatureLayer.generated.h"
+
+class AFeatureItem;
+class UInputAction;
+class UInputMappingContext;
 
 USTRUCT(BlueprintType)
 struct SAMPLE_PROJECT_API FWebLink : public FTableRowBase
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString Link;
@@ -41,6 +47,7 @@ USTRUCT(BlueprintType)
 struct SAMPLE_PROJECT_API FFeatureLayerProperties
 {
 	GENERATED_BODY()
+
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> FeatureProperties;
@@ -52,16 +59,26 @@ UCLASS()
 class SAMPLE_PROJECT_API AFeatureLayer : public AActor
 {
 	GENERATED_BODY()
-	
+
 public:
-	UFUNCTION(BlueprintCallable)
-	void ProcessWebRequest();
-	UFUNCTION(BlueprintCallable)
-	bool ErrorCheck();
-	UFUNCTION(BlueprintCallable)
-	void CreateLink();
 	AFeatureLayer();
 
+	UFUNCTION(BlueprintCallable)
+	void CreateLink();
+	UFUNCTION(BlueprintCallable)
+	bool HasErrors();
+	UFUNCTION(BlueprintCallable)
+	void MoveCamera(AActor* Item);
+	UFUNCTION(BlueprintCallable)
+	void ParseData();
+	UFUNCTION(BlueprintCallable)
+	void ProcessWebRequest();
+	void RefreshProperties(AFeatureItem* Item);
+	void SelectFeature();
+	void SpawnFeatures(int Start, int Last);
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	AArcGISPawn* ArcGISPawn;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bButtonActive;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
@@ -76,23 +93,49 @@ public:
 	bool bNewLink;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bGetAll;
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	AArcGISPawn* ArcGISPawn;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	AFeatureItem* currentFeature;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FFeatureLayerProperties> FeatureData;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<AActor*> featureItems;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int LastValue;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FString> OutFieldsToGet;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TArray<FString> PropertiesToGet;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<FString> resultProperties;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int StartValue;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FWebLink WebLink;
-	
+
 private:
-	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	static void AddAdditionalMaterial(const AFeatureItem* Item, UMaterialInstance* Material);
+	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
+	void GetMapComponent();
+	static void RemoveAdditionalMaterial(const AFeatureItem* Item);
 	
+	UFunction* clearProperties;
+	UFunction* createProperties;
+	TArray<TSharedPtr<FJsonValue>> Features;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+	UMaterialInstance* highlightMaterial;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UArcGISMapComponent* mapComponent;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	UInputMappingContext* MappingContext;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	UInputAction* mousePress;
+	FTimerHandle startDelayHandle;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UUserWidget* UIWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	TSubclassOf<UUserWidget> UIWidgetClass;
+
 protected:
 	virtual void BeginPlay() override;
-	
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 };
