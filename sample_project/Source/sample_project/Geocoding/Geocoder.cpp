@@ -32,14 +32,10 @@ void AGeocoder::BeginPlay()
 		{
 			Subsystem->AddMappingContext(MappingContext, 0);
 		}
-	}
 
-	// Make sure mouse cursor remains visible
-	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PC)
-	{
-		PC->bShowMouseCursor = true;
-		PC->bEnableClickEvents = true;
+		// Make sure mouse cursor remains visible
+		PlayerController->bShowMouseCursor = true;
+		PlayerController->bEnableClickEvents = true;
 	}
 
 	// Create the UI and add it to the viewport
