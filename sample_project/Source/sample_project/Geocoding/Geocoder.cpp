@@ -72,6 +72,22 @@ void AGeocoder::Tick(float DeltaTime)
 	}
 }
 
+FString AGeocoder::GetAPIKey()
+{
+	auto MapComponent = UArcGISMapComponent::GetMapComponent(this);
+	auto ApiKey = MapComponent ? MapComponent->GetAPIKey() : "";  
+
+	if (ApiKey.IsEmpty())
+	{
+		if (auto Settings = GetDefault<UArcGISMapsSDKProjectSettings>())
+		{
+			ApiKey = Settings->APIKey;
+		}
+	}
+
+	return ApiKey;
+}
+
 void AGeocoder::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
@@ -92,8 +108,7 @@ void AGeocoder::SendAddressQuery(FString Address)
 		UIWidget->ProcessEvent(WidgetSetInfoFunction, &temp);
 	}
 	FString Url = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
-	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
-	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
+	FString APIToken = GetAPIKey();
 	FString Query;
 
 	// Set up the query 
@@ -182,8 +197,6 @@ void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
 		UIWidget->ProcessEvent(WidgetSetInfoFunction, &temp);
 	}
 	FString Url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
-	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
-	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
 	FString Query;
 	UArcGISPoint* Point(InPoint);
 

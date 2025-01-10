@@ -26,6 +26,7 @@
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "ArcGISMapsSDK/Utils/ArcGISMapsSDKProjectSettings.h"
 #include "Geocoder.generated.h"
 
 UCLASS()
@@ -47,6 +48,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	FString GetAPIKey();
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 	void ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
