@@ -22,18 +22,18 @@ AQueryLocation::AQueryLocation()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Set the root component 
-	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	Root->SetMobility(EComponentMobility::Movable);
-	RootComponent = Root;
+	auto root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+	root->SetMobility(EComponentMobility::Movable);
+	RootComponent = root;
 
 	// Add a static mesh component 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MarkerMesh"));
-	MeshComponent->SetupAttachment(Root);
+	MeshComponent->SetupAttachment(root);
 	MeshComponent->SetWorldScale3D(MeshScale);
 
 	// Add a text render component and set the properties
 	TextComponent = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextComponent"));
-	TextComponent->SetupAttachment(Root);
+	TextComponent->SetupAttachment(root);
 	TextComponent->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	TextComponent->SetTextRenderColor(FColor::Black);
 	auto textMaterialAsset = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/SampleViewer/SharedResources/Materials/TextMaterialWithBackground.TextMaterialWithBackground'"));
@@ -44,7 +44,7 @@ AQueryLocation::AQueryLocation()
 
 	// Add an ArcGISLocation component
 	ArcGISLocation = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("ArcGISLocation"));
-	ArcGISLocation->SetupAttachment(Root);
+	ArcGISLocation->SetupAttachment(root);
 	ArcGISLocation->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
 }
 
@@ -66,8 +66,8 @@ void AQueryLocation::FinalizeAddressQuery()
 	auto point = ArcGISLocation->GetPosition();
 	
 	// Place the pawn above the current query location
-	auto PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
-	PawnLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+	auto pawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
+	pawnLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 		point->GetX(), point->GetY(), point->GetZ() + CameraDistanceToGround, UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 	
 	// Set up the text render component with the appropriate transform
@@ -75,8 +75,8 @@ void AQueryLocation::FinalizeAddressQuery()
 	TextComponent->SetWorldRotation(PawnActor->GetActorRotation() + FRotator3d(180, 0, 180));
 	TextComponent->SetRelativeLocation(FVector3d(2000, 0, 4000));
 
-	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
-	CameraManager->StartCameraFade(1, 0, .1, FColor::Black, false, true);
+	auto cameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+	cameraManager->StartCameraFade(1, 0, .1, FColor::Black, false, true);
 	
 	// Remove the callback for draw status and tick prerequisites 
 	MapComponent->GetView()->APIObject->SetDrawStatusChanged(nullptr);
@@ -92,17 +92,17 @@ void AQueryLocation::SetupAddressQuery(UArcGISPoint* InPoint, FString InAddress)
 	ArcGISLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(90., 0., 0.));
 
 	// Place and rotate the pawn at the location returned for the query at a high altitude 
-	auto PawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
-	PawnLocation->SetPosition(InPoint);
-	PawnLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(0., 0., 0.));
+	auto pawnLocation = PawnActor->FindComponentByClass<UArcGISLocationComponent>();
+	pawnLocation->SetPosition(InPoint);
+	pawnLocation->SetRotation(UArcGISRotation::CreateArcGISRotation(0., 0., 0.));
 
 	// Make sure the location components have updated the transform before determining the pawn elevation
 	AddTickPrerequisiteActor(PawnActor);
 	AddTickPrerequisiteComponent(ArcGISLocation);
 
 	// Fade the camera until the elevation at the location has been determined
-	APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
-	CameraManager->SetManualCameraFade(1, FColor::Black, false);
+	auto cameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+	cameraManager->SetManualCameraFade(1, FColor::Black, false);
 	
 	// Set up the static mesh component and the address cue
 	MeshComponent->SetStaticMesh(PinMesh);
@@ -122,22 +122,22 @@ void AQueryLocation::SetupAddressQuery(UArcGISPoint* InPoint, FString InAddress)
 void AQueryLocation::SetupLocationQuery(FVector3d InLocation)
 {
 	// calculate the distance of the selected location from the pawn. Used for scaling the mesh and text 
-	float DistanceToPawn = FVector3d::Distance(PawnActor->GetActorLocation(), InLocation);
+	auto distanceToPawn = FVector3d::Distance(PawnActor->GetActorLocation(), InLocation);
 	
 	// Place itself in the selected location and align with with the pawn rotation
 	SetActorLocation(InLocation);
-	UArcGISRotation* PawnRotation = PawnActor->FindComponentByClass<UArcGISLocationComponent>()->GetRotation();
-	ArcGISLocation->SetRotation(PawnRotation);
+	auto pawnRotation = PawnActor->FindComponentByClass<UArcGISLocationComponent>()->GetRotation();
+	ArcGISLocation->SetRotation(pawnRotation);
 
 	// Set up the static mesh component with the appropriate shape, material and scale
 	MeshComponent->SetStaticMesh(PointMesh);
 	MeshComponent->SetMaterial(0, PointMaterial);
-	MeshComponent->SetWorldScale3D(FVector3d(0.00001 * MeshScale * DistanceToPawn));
+	MeshComponent->SetWorldScale3D(FVector3d(0.00001 * MeshScale * distanceToPawn));
 
 	// Set up the text render component with the appropriate transform 
 	TextComponent->SetRelativeRotation(FRotator3d(0, 180, 0)); // Text faces the pawn
-	TextComponent->SetRelativeLocation(FVector3d(-0.02 * DistanceToPawn, 0, 0.04 * DistanceToPawn));
-	TextComponent->SetWorldScale3D(FVector3d(0.00125 * DistanceToPawn));
+	TextComponent->SetRelativeLocation(FVector3d(-0.02 * distanceToPawn, 0, 0.04 * distanceToPawn));
+	TextComponent->SetWorldScale3D(FVector3d(0.00125 * distanceToPawn));
 	TextComponent->SetVisibility(false); // Hide the address cue until it has been updated
 }
 
