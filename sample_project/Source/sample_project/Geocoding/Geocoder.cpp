@@ -146,14 +146,17 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 					QueryLocation->SetupAddressQuery(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 						PointX, PointY, 10000,
 						UArcGISSpatialReference::CreateArcGISSpatialReference(4326)), ResponseAddress);
-					
-					// If there are more than 1 candidate, show a notification
-					Message = FString::Printf(
-						TEXT("The query returned multiple results. If the shown location is not the intended one, make your input more specific."));
-					if (WidgetSetInfoFunction && Candidates->Num() > 1) {
-						UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
-					}
 				}
+			}
+
+			// Show a notification if the query returned no results or more than one candidate
+			if (Candidates->Num() != 1 && WidgetSetInfoFunction)
+			{
+				Message = Candidates->Num() > 1 ?
+					"The query returned multiple results. If the shown location is not the intended one, make your input more specific." :
+					"The query didn't return any results. Adjust the input and, if necessary, make it more specific.";
+					
+				UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
 			}
 		}
 		// If the server responded with an error, show the error message
