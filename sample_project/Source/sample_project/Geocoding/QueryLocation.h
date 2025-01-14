@@ -15,16 +15,15 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/API/GameEngine/MapView/ArcGISDrawStatus.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
+#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/TextRenderComponent.h"
-#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
-#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
-#include "ArcGISMapsSDK/API/GameEngine/MapView/ArcGISDrawStatus.h"
-#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
-#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "QueryLocation.generated.h"
 
 UCLASS()

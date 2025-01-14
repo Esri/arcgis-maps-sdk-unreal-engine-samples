@@ -24,36 +24,32 @@ void AGeocoder::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	if (auto playerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
-		SetupPlayerInputComponent(PlayerController->InputComponent);
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
-			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		SetupPlayerInputComponent(playerController->InputComponent);
+		if (auto subsystem = ULocalPlayer::GetSubsystem
+			<UEnhancedInputLocalPlayerSubsystem>(playerController->GetLocalPlayer()))
 		{
-			Subsystem->AddMappingContext(MappingContext, 0);
+			subsystem->AddMappingContext(MappingContext, 0);
 		}
-	}
 
-	// Make sure mouse cursor remains visible
-	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PC)
-	{
-		PC->bShowMouseCursor = true;
-		PC->bEnableClickEvents = true;
+		// Make sure mouse cursor remains visible
+		playerController->bShowMouseCursor = true;
+		playerController->bEnableClickEvents = true;
 	}
 
 	// Create the UI and add it to the viewport
 	if (UIWidgetClass != nullptr)
 	{
-		AActor* self = this;
+		auto self = this;
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
-			UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetGeoCoder"));
+			auto widgetFunction = UIWidget->FindFunction(FName("SetGeoCoder"));
 			HideInstructions = UIWidget->FindFunction(FName("HideDirections"));
-			if (WidgetFunction) {
-				UIWidget->ProcessEvent(WidgetFunction, &self);
+			if (widgetFunction) {
+				UIWidget->ProcessEvent(widgetFunction, &self);
 			}
 			WidgetSetInfoFunction = UIWidget->FindFunction(FName("SetInfoString"));
 		}
@@ -72,11 +68,27 @@ void AGeocoder::Tick(float DeltaTime)
 	}
 }
 
+FString AGeocoder::GetAPIKey()
+{
+	auto mapComponent = UArcGISMapComponent::GetMapComponent(this);
+	auto apiKey = mapComponent ? mapComponent->GetAPIKey() : "";  
+
+	if (apiKey.IsEmpty())
+	{
+		if (auto settings = GetDefault<UArcGISMapsSDKProjectSettings>())
+		{
+			apiKey = settings->APIKey;
+		}
+	}
+
+	return apiKey;
+}
+
 void AGeocoder::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	if (auto enhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AGeocoder::SelectLocation);
+		enhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AGeocoder::SelectLocation);
 	}
 }
 
@@ -91,76 +103,78 @@ void AGeocoder::SendAddressQuery(FString Address)
 		FString temp = "";
 		UIWidget->ProcessEvent(WidgetSetInfoFunction, &temp);
 	}
-	FString Url = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
-	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
-	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
-	FString Query;
+	FString url = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
+	FString apiKey = GetAPIKey();
+	FString query;
 
 	// Set up the query 
-	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &AGeocoder::ProcessAddressQueryResponse);
-	Query = FString::Printf(TEXT("%s/?f=json&token=%s&address=%s"), *Url, *APIToken, *Address);
-	Request->SetURL(Query.Replace(TEXT(" "), TEXT("%20")));
-	Request->SetVerb("GET");
-	Request->SetHeader("Content-Type", "x-www-form-urlencoded");
-	Request->ProcessRequest();
+	auto request = FHttpModule::Get().CreateRequest();
+	request->OnProcessRequestComplete().BindUObject(this, &AGeocoder::ProcessAddressQueryResponse);
+	query = FString::Printf(TEXT("%s/?f=json&token=%s&address=%s"), *url, *apiKey, *Address);
+	request->SetURL(query.Replace(TEXT(" "), TEXT("%20")));
+	request->SetVerb("GET");
+	request->SetHeader("Content-Type", "x-www-form-urlencoded");
+	request->ProcessRequest();
 	bWaitingForResponse = true;
 }
 
 // Parse the response for a geocoding query
 void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
-	FString ResponseAddress = "";
-	TSharedPtr<FJsonObject> JsonObj;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+	FString responseAddress = "";
+	TSharedPtr<FJsonObject> jsonObj;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
 
 	// Check if the query was successful
-	if (FJsonSerializer::Deserialize(Reader, JsonObj) &&
+	if (FJsonSerializer::Deserialize(reader, jsonObj) &&
 		Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300) {
-		const TArray<TSharedPtr<FJsonValue>>* Candidates;
-		TSharedPtr<FJsonValue> Location;
-		TSharedPtr<FJsonValue> Error;
-		FString Message;
-		double PointX, PointY;
+		const TArray<TSharedPtr<FJsonValue>>* candidates;
+		TSharedPtr<FJsonValue> location;
+		TSharedPtr<FJsonValue> error;
+		FString message;
+		double pointX, pointY;
 
-		if (JsonObj->TryGetArrayField(TEXT("candidates"), Candidates)) {
-			if (Candidates->Num() > 0) {
-				TSharedPtr<FJsonValue> candidate = (*Candidates)[0];
+		if (jsonObj->TryGetArrayField(TEXT("candidates"), candidates)) {
+			if (candidates->Num() > 0) {
+				TSharedPtr<FJsonValue> candidate = (*candidates)[0];
 
-				JsonObj = candidate->AsObject();
-				if (!JsonObj->TryGetStringField(TEXT("Address"), ResponseAddress)) {
-					ResponseAddress = TEXT("Query did not return valid response");
+				jsonObj = candidate->AsObject();
+				if (!jsonObj->TryGetStringField(TEXT("Address"), responseAddress)) {
+					responseAddress = TEXT("Query did not return valid response");
 				}
-				if ((Location = JsonObj->TryGetField(TEXT("location")))) {
-					JsonObj = Location->AsObject();
-					JsonObj->TryGetNumberField("x", PointX);
-					JsonObj->TryGetNumberField("y", PointY);
+				if ((location = jsonObj->TryGetField(TEXT("location")))) {
+					jsonObj = location->AsObject();
+					jsonObj->TryGetNumberField("x", pointX);
+					jsonObj->TryGetNumberField("y", pointY);
 
 					// Spawn a QueryLocation actor if not already created
 					if (QueryLocation == nullptr) {
-						FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-						SpawnParam.Owner = this;
-						QueryLocation = GetWorld()->SpawnActor<AQueryLocation>(AQueryLocation::StaticClass(), FVector3d(0.), FRotator3d(0.), SpawnParam);
+						auto spawnParam = FActorSpawnParameters();
+						spawnParam.Owner = this;
+						QueryLocation = GetWorld()->SpawnActor<AQueryLocation>(AQueryLocation::StaticClass(), FVector3d(0.), FRotator3d(0.), spawnParam);
 					}
 					// Update the QueryLocation actor with the query response and place it at high altitude
 					QueryLocation->SetupAddressQuery(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-						PointX, PointY, 10000,
-						UArcGISSpatialReference::CreateArcGISSpatialReference(4326)), ResponseAddress);
-					
-					// If there are more than 1 candidate, show a notification
-					Message = FString::Printf(
-						TEXT("The query returned multiple results. If the shown location is not the intended one, make your input more specific."));
-					if (WidgetSetInfoFunction && Candidates->Num() > 1) {
-						UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
-					}
+						pointX, pointY, 10000,
+						UArcGISSpatialReference::CreateArcGISSpatialReference(4326)), responseAddress);
 				}
+			}
+
+			// Show a notification if the query returned no results or more than one candidate
+			if (candidates->Num() != 1 && WidgetSetInfoFunction)
+			{
+				message = candidates->Num() > 1 ?
+					"The query returned multiple results. If the shown location is not the intended one, make your input more specific." :
+					"The query didn't return any results. Adjust the input and, if necessary, make it more specific.";
+					
+				UIWidget->ProcessEvent(WidgetSetInfoFunction, &message);
 			}
 		}
 		// If the server responded with an error, show the error message
-		else if ((Error = JsonObj->TryGetField(TEXT("error")))) {
-			JsonObj = Error->AsObject();
-			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), Message)) {
-				UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
+		else if ((error = jsonObj->TryGetField(TEXT("error")))) {
+			jsonObj = error->AsObject();
+			if (WidgetSetInfoFunction && jsonObj->TryGetStringField(TEXT("message"), message)) {
+				UIWidget->ProcessEvent(WidgetSetInfoFunction, &message);
 			}
 		}
 	}
@@ -178,62 +192,60 @@ void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
 		FString temp = "";
 		UIWidget->ProcessEvent(WidgetSetInfoFunction, &temp);
 	}
-	FString Url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
-	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
-	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
-	FString Query;
-	UArcGISPoint* Point(InPoint);
+	FString url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
+	FString query;
+	UArcGISPoint* point(InPoint);
 
 	// If the geographic coordinates of the point are not in terms of lat & lon, project them 
 	if (InPoint->GetSpatialReference()->GetWKID() != 4326) {
-		auto ProjectedGeometry = UArcGISGeometryEngine::Project(InPoint,
+		auto projectedGeometry = UArcGISGeometryEngine::Project(InPoint,
 			UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
-		if (ProjectedGeometry != nullptr)
+		if (projectedGeometry != nullptr)
 		{
-			Point = static_cast<UArcGISPoint*>(ProjectedGeometry);
+			point = static_cast<UArcGISPoint*>(projectedGeometry);
 		}
 	}
 	// Set up the query 
-	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &AGeocoder::ProcessLocationQueryResponse);
-	Query = FString::Printf(TEXT("%s/?f=json&langCode=en&location=%f,%f"), *Url, Point->GetX(), Point->GetY());
-	Request->SetURL(Query.Replace(TEXT(" "), TEXT("%20")));
-	Request->SetVerb("GET");
-	Request->SetHeader("Content-Type", "x-www-form-urlencoded");
-	Request->ProcessRequest();
+	auto request = FHttpModule::Get().CreateRequest();
+	request->OnProcessRequestComplete().BindUObject(this, &AGeocoder::ProcessLocationQueryResponse);
+	query = FString::Printf(TEXT("%s/?f=json&langCode=en&location=%f,%f"), *url, point->GetX(), point->GetY());
+	request->SetURL(query.Replace(TEXT(" "), TEXT("%20")));
+	request->SetVerb("GET");
+	request->SetHeader("Content-Type", "x-www-form-urlencoded");
+	request->ProcessRequest();
 	bWaitingForResponse = true;
 }
 
 // Parse the response for a reverse geocoding query
 void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully) {
-	FString ResponseAddress = "";
-	FString Message;
-	TSharedPtr<FJsonValue> Error;
-	TSharedPtr<FJsonObject> JsonObj;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+	FString responseAddress = "";
+	FString message;
+	TSharedPtr<FJsonValue> error;
+	TSharedPtr<FJsonObject> jsonObj;
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
 
 	// Check if the query was successful
-	if (FJsonSerializer::Deserialize(Reader, JsonObj) &&
+	if (FJsonSerializer::Deserialize(reader, jsonObj) &&
 		Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300) {
 
-		TSharedPtr<FJsonValue> AddressField;
-		if ((AddressField = JsonObj->TryGetField((TEXT("address"))))) {
-			JsonObj = AddressField->AsObject();
-			if (!JsonObj->TryGetStringField(TEXT("Match_addr"), ResponseAddress)) {
-				ResponseAddress = TEXT("Query did not return valid response");
+		TSharedPtr<FJsonValue> addressField;
+		if ((addressField = jsonObj->TryGetField((TEXT("address"))))) {
+			jsonObj = addressField->AsObject();
+			if (!jsonObj->TryGetStringField(TEXT("Match_addr"), responseAddress)) {
+				responseAddress = TEXT("Query did not return valid response");
 			}
 		} 
 		// If the server responded with an error, show the error message
-		else if ((Error = JsonObj->TryGetField(TEXT("error")))) {
-			JsonObj = Error->AsObject();
-			if (WidgetSetInfoFunction && JsonObj->TryGetStringField(TEXT("message"), Message)) {
-				UIWidget->ProcessEvent(WidgetSetInfoFunction, &Message);
+		else if ((error = jsonObj->TryGetField(TEXT("error")))) {
+			jsonObj = error->AsObject();
+			if (WidgetSetInfoFunction && jsonObj->TryGetStringField(TEXT("message"), message)) {
+				UIWidget->ProcessEvent(WidgetSetInfoFunction, &message);
 			}
 		}
 	}
-	// Show the receivedd address 
+	// Show the received address 
 	if (QueryLocation != nullptr) {
-		QueryLocation->UpdateAddressCue(ResponseAddress);
+		QueryLocation->UpdateAddressCue(responseAddress);
 	}
 	bWaitingForResponse = false;
 }
@@ -247,29 +259,29 @@ void AGeocoder::SelectLocation(const FInputActionValue& value)
 		return;
 	}
 
-	FHitResult TraceHit;
-	FVector WorldLocation;
-	FVector WorldDirection;
-	float TraceLength = 100000000.f;
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+	FHitResult traceHit;
+	FVector worldLocation;
+	FVector worldDirection;
+	float traceLength = 100000000.f;
+	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	playerController->DeprojectMousePositionToWorld(worldLocation, worldDirection);
 
-	if (GetWorld()->LineTraceSingleByChannel(TraceHit,
-		WorldLocation, WorldLocation + TraceLength * WorldDirection, ECC_Visibility, FCollisionQueryParams()))
+	if (GetWorld()->LineTraceSingleByChannel(traceHit,
+		worldLocation, worldLocation + traceLength * worldDirection, ECC_Visibility, FCollisionQueryParams()))
 	{
-		if (TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass())
+		if (traceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass())
 		{
 			// Spawn a QueryLocation actor if it doesn't already exist
 			if (QueryLocation == nullptr)
 			{
-				FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-				SpawnParam.Owner = this;
+				auto spawnParam = FActorSpawnParameters();
+				spawnParam.Owner = this;
 				QueryLocation = GetWorld()->SpawnActor<AQueryLocation>(AQueryLocation::StaticClass(),
-					FVector3d(0.), FRotator(0.), SpawnParam);
+					FVector3d(0.), FRotator(0.), spawnParam);
 			}
 
 			// Update the QueryLocation actor with the selected location
-			QueryLocation->SetupLocationQuery(TraceHit.ImpactPoint);
+			QueryLocation->SetupLocationQuery(traceHit.ImpactPoint);
 			AddTickPrerequisiteComponent(QueryLocation->ArcGISLocation);
 			bShouldSendLocationQuery = true;
 		}

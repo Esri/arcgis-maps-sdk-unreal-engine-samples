@@ -15,17 +15,17 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "Blueprint/UserWidget.h"
-#include "Json.h"
-#include "Http.h"
-#include "QueryLocation.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
-#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "ArcGISMapsSDK/Utils/ArcGISMapsSDKProjectSettings.h"
+#include "Blueprint/UserWidget.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "GameFramework/Actor.h"
+#include "Http.h"
+#include "Json.h"
+#include "QueryLocation.h"
 #include "Geocoder.generated.h"
 
 UCLASS()
@@ -47,20 +47,24 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
+	FString GetAPIKey();
 	void ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void SendLocationQuery(UArcGISPoint* InPoint);
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
+
+	bool bShouldSendLocationQuery = false;
+	bool bWaitingForResponse = false;
 
 	AQueryLocation* QueryLocation;
-	bool bWaitingForResponse = false;
-	bool bShouldSendLocationQuery = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
-	TSubclassOf<class UUserWidget> UIWidgetClass;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	UUserWidget* UIWidget;
-	UFunction* WidgetSetInfoFunction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
+	TSubclassOf<class UUserWidget> UIWidgetClass;
+	
 	UFunction* HideInstructions;
+	UFunction* WidgetSetInfoFunction;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	UInputMappingContext* MappingContext;
