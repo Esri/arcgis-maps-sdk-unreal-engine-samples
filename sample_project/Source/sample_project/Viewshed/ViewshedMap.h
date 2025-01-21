@@ -15,17 +15,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "Materials/MaterialInterface.h"
+
+#include "ArcGISMapsSDK/Actors/ArcGISActor.h"
+
 #include "ViewshedMap.generated.h"
 
 UCLASS()
-class SAMPLE_PROJECT_API AViewshed : public AActor
+class SAMPLE_PROJECT_API AViewshedMap : public AArcGISActor
 {
 	GENERATED_BODY()
 	
 public:	
-	AViewshed();
+	AViewshedMap();
+
+	void OnArcGISMapComponentChanged(UArcGISMapComponent* InMapComponent) override;
 
 protected:
 	virtual void BeginPlay() override;

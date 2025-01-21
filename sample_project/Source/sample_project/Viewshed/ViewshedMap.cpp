@@ -13,37 +13,60 @@
  * limitations under the License.
  */
 #include "ViewshedMap.h"
+
 #include "Engine/World.h"
 #include "TimerManager.h"
+
+#include "ArcGISMapsSDK/API/GameEngine/Elevation/Base/ArcGISElevationSource.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/Base/ArcGISLayer.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/State/ArcGISElevationSourceViewState.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/State/ArcGISLayerViewState.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/State/ArcGISViewState.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/State/ArcGISViewStateMessage.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Elevation/ArcGISImageElevationSource.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Extent/ArcGISExtentCircle.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGIS3DObjectSceneLayer.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISBasemap.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapElevation.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapType.h"
+#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/Utils/ArcGISMapsSDKProjectSettings.h"
 
-AViewshed::AViewshed()
+AViewshedMap::AViewshedMap()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	// Initialize properties
-	ViewshedMaterial = nullptr;
 }
 
-void AViewshed::BeginPlay()
+void AViewshedMap::BeginPlay()
 {
 	Super::BeginPlay();
-	// Delay the initialization to simulate the Unity coroutine
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AViewshed::InitializeMap, 3.0f, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AViewshedMap::InitializeMap, 3.0f, false);
 }
 
-void AViewshed::InitializeMap()
+void AViewshedMap::OnArcGISMapComponentChanged(UArcGISMapComponent* InMapComponent)
 {
-	// Find the ArcGISMapComponent
-	UArcGISMapComponent* MapComponent = FindComponentByClass<UArcGISMapComponent>();
+	AArcGISActor::OnArcGISMapComponentChanged(InMapComponent);
+
+	if (MapComponent)
+	{
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AViewshedMap::InitializeMap, 3.0f, false);
+	}
+}
+
+void AViewshedMap::InitializeMap()
+{
 	if (!MapComponent)
 	{
 		UE_LOG(LogTemp, Error, TEXT("ArcGISMapComponent not found"));
 		return;
 	}
 
-	// Get the API key
-	FString ApiKey = "";
+	FString APIKey = "";
 	if (APIKey.IsEmpty())
 	{
 		if (const UArcGISMapsSDKProjectSettings* Settings = GetDefault<UArcGISMapsSDKProjectSettings>())
@@ -52,31 +75,26 @@ void AViewshed::InitializeMap()
 		}
 	}
 
-	if (ApiKey.IsEmpty())
+	if (APIKey.IsEmpty())
 	{
 		UE_LOG(LogTemp, Error, TEXT("An API Key must be set in the project settings for content to load"));
 		return;
 	}
 
-	// Create the map and set its properties
-	auto Map = NewObject<UEsriGameEngineMap>();
-	Map->Basemap = NewObject<UEsriGameEngineBasemap>(Map, UEsriGameEngineBasemap::StaticClass(), TEXT("ArcGISImagery"));
-	Map->Basemap->Initialize(ApiKey);
-
-	auto ElevationSource = NewObject<UEsriGameEngineElevationSource>(Map, UEsriGameEngineElevationSource::StaticClass(), TEXT("Terrain3D"));
-	ElevationSource->Initialize("https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer", "Terrain 3D", "");
-
-	Map->Elevation = ElevationSource;
-
-	auto BuildingLayer = NewObject<UEsriGameEngineLayer>(Map, UEsriGameEngineLayer::StaticClass(), TEXT("BuildingLayer"));
-	BuildingLayer->Initialize("https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer", "Building Layer", 1.0f, true, "");
+	auto map = MapComponent->GetMap();
+	
+	auto buildingLayer = UArcGIS3DObjectSceneLayer::CreateArcGIS3DObjectSceneLayerWithProperties("https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer", "NYScene", 1.0f, true, "");
+	
+	map->GetLayers()->Add(buildingLayer);
 
 	if (ViewshedMaterial)
 	{
-		BuildingLayer->SetMaterial(ViewshedMaterial);
+		buildingLayer->SetMaterialReference(ViewshedMaterial);
 	}
 
-	Map->Layers.Add(BuildingLayer);
+	map->GetLayers()->RemoveAll();
 
-	MapComponent->SetMap(Map);
+	map->GetLayers()->Add(buildingLayer);
+
+	MapComponent->SetMap(map);
 }
