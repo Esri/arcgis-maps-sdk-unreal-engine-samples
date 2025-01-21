@@ -76,3 +76,6 @@ Plugins/ArcGISMapsSDK
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+*.rsp
+*.zip
