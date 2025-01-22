@@ -17,17 +17,20 @@
 #include "CoreMinimal.h"
 #include "Materials/MaterialInterface.h"
 
-#include "ArcGISMapsSDK/Actors/ArcGISActor.h"
+#include "ArcGISMapsSDK/Components/ArcGISActorComponent.h"
 
-#include "ViewshedMap.generated.h"
+#include "ViewshedMapComponent.generated.h"
 
-UCLASS()
-class SAMPLE_PROJECT_API AViewshedMap : public AArcGISActor
+UCLASS(ClassGroup = (Viewshed),
+	   meta = (BlueprintSpawnableComponent),
+	   Category = "Viewshed",
+	   hidecategories = (Activation, AssetUserData, Collision, Cooking, LOD, Object, Physics, Rendering, SceneComponent, Tags))
+class SAMPLE_PROJECT_API UViewshedMapComponent : public UArcGISActorComponent
 {
 	GENERATED_BODY()
-	
-public:	
-	AViewshedMap();
+
+public:
+	UViewshedMapComponent();
 
 	void OnArcGISMapComponentChanged(UArcGISMapComponent* InMapComponent) override;
 
