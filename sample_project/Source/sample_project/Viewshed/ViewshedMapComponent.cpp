@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ViewshedMap.h"
+#include "ViewshedMapComponent.h"
 
 #include "Engine/World.h"
 #include "TimerManager.h"
@@ -37,36 +37,30 @@
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/Utils/ArcGISMapsSDKProjectSettings.h"
 
-AViewshedMap::AViewshedMap()
+UViewshedMapComponent::UViewshedMapComponent()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void AViewshedMap::BeginPlay()
+void UViewshedMapComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AViewshedMap::InitializeMap, 3.0f, false);
 }
 
-void AViewshedMap::OnArcGISMapComponentChanged(UArcGISMapComponent* InMapComponent)
+void UViewshedMapComponent::OnArcGISMapComponentChanged(UArcGISMapComponent* InMapComponent)
 {
-	AArcGISActor::OnArcGISMapComponentChanged(InMapComponent);
+	UArcGISActorComponent::OnArcGISMapComponentChanged(InMapComponent);
 
-	if (MapComponent)
+	if (MapComponent.IsValid())
 	{
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AViewshedMap::InitializeMap, 3.0f, false);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UViewshedMapComponent::InitializeMap, 3.0f, false);
 	}
 }
 
-void AViewshedMap::InitializeMap()
+void UViewshedMapComponent::InitializeMap()
 {
-	if (!MapComponent)
-	{
-		UE_LOG(LogTemp, Error, TEXT("ArcGISMapComponent not found"));
-		return;
-	}
-
 	FString APIKey = "";
+
 	if (APIKey.IsEmpty())
 	{
 		if (const UArcGISMapsSDKProjectSettings* Settings = GetDefault<UArcGISMapsSDKProjectSettings>())
@@ -81,20 +75,30 @@ void AViewshedMap::InitializeMap()
 		return;
 	}
 
-	auto map = MapComponent->GetMap();
-	
-	auto buildingLayer = UArcGIS3DObjectSceneLayer::CreateArcGIS3DObjectSceneLayerWithProperties("https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer", "NYScene", 1.0f, true, "");
-	
-	map->GetLayers()->Add(buildingLayer);
+	auto mapType = EArcGISMapType::Local;
+	auto map = UArcGISMap::CreateArcGISMapWithMapType(mapType);
 
+	auto basemapType = EArcGISBasemapStyle::ArcGISImagery;
+	auto basemap = UArcGISBasemap::CreateArcGISBasemapWithBasemapStyle(basemapType, APIKey);
+
+	map->SetBasemap(basemap);
+
+	auto elevationSource = UArcGISImageElevationSource::CreateArcGISImageElevationSourceWithName(
+		"https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer", "Terrain 3D", "");
+	auto mapElevation = UArcGISMapElevation::CreateArcGISMapElevationWithElevationSource(elevationSource);
+	map->SetElevation(mapElevation);
+
+	auto buildingLayer = UArcGIS3DObjectSceneLayer::CreateArcGIS3DObjectSceneLayerWithProperties("https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer", "SanFrancisco", 1.0f, true, APIKey);
+	
 	if (ViewshedMaterial)
 	{
 		buildingLayer->SetMaterialReference(ViewshedMaterial);
 	}
 
-	map->GetLayers()->RemoveAll();
-
 	map->GetLayers()->Add(buildingLayer);
 
+	FArcGISViewOptions viewOptions{true};
+
+	MapComponent->GetView()->SetViewOptions(viewOptions);
 	MapComponent->SetMap(map);
 }
