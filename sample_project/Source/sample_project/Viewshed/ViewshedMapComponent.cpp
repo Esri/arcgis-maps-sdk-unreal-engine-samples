@@ -15,17 +15,9 @@
 #include "ViewshedMapComponent.h"
 
 #include "Engine/World.h"
-#include "TimerManager.h"
 
 #include "ArcGISMapsSDK/API/GameEngine/Elevation/Base/ArcGISElevationSource.h"
-#include "ArcGISMapsSDK/API/GameEngine/Layers/Base/ArcGISLayer.h"
-#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
-#include "ArcGISMapsSDK/API/GameEngine/View/State/ArcGISElevationSourceViewState.h"
-#include "ArcGISMapsSDK/API/GameEngine/View/State/ArcGISLayerViewState.h"
-#include "ArcGISMapsSDK/API/GameEngine/View/State/ArcGISViewState.h"
-#include "ArcGISMapsSDK/API/GameEngine/View/State/ArcGISViewStateMessage.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Elevation/ArcGISImageElevationSource.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Extent/ArcGISExtentCircle.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGIS3DObjectSceneLayer.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
@@ -33,7 +25,6 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapElevation.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapType.h"
-#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/Utils/ArcGISMapsSDKProjectSettings.h"
 
@@ -53,7 +44,7 @@ void UViewshedMapComponent::OnArcGISMapComponentChanged(UArcGISMapComponent* InM
 
 	if (MapComponent.IsValid())
 	{
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UViewshedMapComponent::InitializeMap, 3.0f, false);
+		UViewshedMapComponent::InitializeMap();
 	}
 }
 
@@ -75,8 +66,10 @@ void UViewshedMapComponent::InitializeMap()
 		return;
 	}
 
+	auto spatialReference = UArcGISSpatialReference::WebMercator();
+
 	auto mapType = EArcGISMapType::Local;
-	auto map = UArcGISMap::CreateArcGISMapWithMapType(mapType);
+	auto map = UArcGISMap::CreateArcGISMapWithSpatialReferenceAndMapType(spatialReference, mapType);
 
 	auto basemapType = EArcGISBasemapStyle::ArcGISImagery;
 	auto basemap = UArcGISBasemap::CreateArcGISBasemapWithBasemapStyle(basemapType, APIKey);
@@ -97,8 +90,5 @@ void UViewshedMapComponent::InitializeMap()
 
 	map->GetLayers()->Add(buildingLayer);
 
-	FArcGISViewOptions viewOptions{true};
-
-	MapComponent->GetView()->SetViewOptions(viewOptions);
 	MapComponent->SetMap(map);
 }
