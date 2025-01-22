@@ -15,9 +15,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Materials/MaterialInterface.h"
 
 #include "ArcGISMapsSDK/Components/ArcGISActorComponent.h"
+
+class UMaterialInterface;
 
 #include "ViewshedMapComponent.generated.h"
 

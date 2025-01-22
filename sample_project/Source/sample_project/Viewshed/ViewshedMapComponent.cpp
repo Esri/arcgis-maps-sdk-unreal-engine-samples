@@ -15,6 +15,7 @@
 #include "ViewshedMapComponent.h"
 
 #include "Engine/World.h"
+#include "Materials/MaterialInterface.h"
 
 #include "ArcGISMapsSDK/API/GameEngine/Elevation/Base/ArcGISElevationSource.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Elevation/ArcGISImageElevationSource.h"
