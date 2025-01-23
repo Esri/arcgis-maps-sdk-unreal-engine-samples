@@ -45,7 +45,7 @@ void AViewshedCamera::CreateDepthTexture()
 {
 	DepthTexture = NewObject<UTextureRenderTarget2D>(this);
 	DepthTexture->InitAutoFormat(DepthWidth, DepthHeight);
-	//DepthTexture->RenderTargetFormat = ETextureRenderTargetFormat
+	DepthTexture->RenderTargetFormat = ETextureRenderTargetFormat::RTF_R32f;
 	DepthTexture->bAutoGenerateMips = false;
 	DepthTexture->Filter = TF_Bilinear;
 	DepthTexture->bForceLinearGamma = true;
