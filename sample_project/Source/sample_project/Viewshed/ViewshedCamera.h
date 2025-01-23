@@ -28,7 +28,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 DepthHeight = 1024;
 
-	UTextureRenderTarget2D* DepthTexture;
+	TObjectPtr<UTextureRenderTarget2D> DepthTexture;
 	USceneCaptureComponent2D* ViewshedCamera;
 	FVector LastViewshedCameraPosition;
 	FRotator LastViewshedCameraRotation;
