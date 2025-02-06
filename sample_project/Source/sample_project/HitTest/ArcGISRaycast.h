@@ -17,8 +17,6 @@
 
 #include "CoreMinimal.h"
 #include "Engine/StaticMeshActor.h"
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
 #include "GameFramework/Actor.h"
 #include "Http.h"
 #include "ArcGISRaycast.generated.h"
@@ -35,11 +33,12 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
-
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 private:
 	void CreateLink(FString objectID);
 	void CreateProperties();
+	UFUNCTION()
 	void GetHit();
 	FString GetObjectIDs(FString response, FString outfield);
 	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
@@ -49,9 +48,7 @@ private:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	AStaticMeshActor* HitLocation;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
-	UInputMappingContext* MappingContext;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
-	UInputAction* mousePress;
+	class AInputManager* inputManager;
 	TArray<FString> outfields = {"AREA_SQ_FT", "DISTRICT", "Height", "SUBDISTRIC", "ZONE_"};
 	FString position;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))

@@ -15,6 +15,8 @@
 
 #include "Geocoder.h"
 
+#include "sample_project/InputManager.h"
+
 AGeocoder::AGeocoder()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -24,19 +26,7 @@ void AGeocoder::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (auto playerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		SetupPlayerInputComponent(playerController->InputComponent);
-		if (auto subsystem = ULocalPlayer::GetSubsystem
-			<UEnhancedInputLocalPlayerSubsystem>(playerController->GetLocalPlayer()))
-		{
-			subsystem->AddMappingContext(MappingContext, 0);
-		}
-
-		// Make sure mouse cursor remains visible
-		playerController->bShowMouseCursor = true;
-		playerController->bEnableClickEvents = true;
-	}
+	inputManager->OnInputTrigger.AddDynamic(this, &AGeocoder::SelectLocation);
 
 	// Create the UI and add it to the viewport
 	if (UIWidgetClass != nullptr)
@@ -54,6 +44,13 @@ void AGeocoder::BeginPlay()
 			WidgetSetInfoFunction = UIWidget->FindFunction(FName("SetInfoString"));
 		}
 	}
+}
+
+void AGeocoder::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	inputManager->OnInputTrigger.RemoveDynamic(this, &AGeocoder::SelectLocation);
 }
 
 void AGeocoder::Tick(float DeltaTime)
@@ -82,14 +79,6 @@ FString AGeocoder::GetAPIKey()
 	}
 
 	return apiKey;
-}
-
-void AGeocoder::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	if (auto enhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		enhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AGeocoder::SelectLocation);
-	}
 }
 
 // Make a geocoding query for an address
@@ -251,9 +240,8 @@ void AGeocoder::ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpRespo
 }
 
 // Identify the location clicked on and make a line trace from there to find the corresponding point on the map
-void AGeocoder::SelectLocation(const FInputActionValue& value)
+void AGeocoder::SelectLocation()
 {
-	auto inputValue = value.Get<bool>();
 	UE_LOG(LogTemp, Warning, TEXT("InputValue"));
 	if (bWaitingForResponse) {
 		return;

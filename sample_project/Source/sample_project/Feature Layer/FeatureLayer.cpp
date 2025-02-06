@@ -19,9 +19,9 @@
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISSurfacePlacementMode.h"
 #include "Blueprint/UserWidget.h"
-#include "EnhancedInputComponent.h"
 #include "FeatureItem.h"
 #include "Kismet/GameplayStatics.h"
+#include "sample_project/InputManager.h"
 
 AFeatureLayer::AFeatureLayer()
 {
@@ -42,19 +42,6 @@ void AFeatureLayer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		PlayerController->bShowMouseCursor = true;
-		PlayerController->bEnableClickEvents = true;
-
-		SetupPlayerInputComponent(PlayerController->InputComponent);
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(MappingContext, 0);
-		}
-	}
-
 	// Create the UI and add it to the viewport
 	if (UIWidgetClass)
 	{
@@ -69,6 +56,13 @@ void AFeatureLayer::BeginPlay()
 
 	ArcGISPawn = Cast<AArcGISPawn>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 
+	if (!inputManager)
+	{
+		return;
+	}
+	
+	inputManager->OnInputTrigger.AddDynamic(this, &AFeatureLayer::SelectFeature);
+	
 	CreateLink();
 	ProcessWebRequest();
 }
@@ -89,6 +83,13 @@ void AFeatureLayer::CreateLink()
 	}
 
 	bButtonActive = WebLink.Link.EndsWith("outfields=*");
+}
+
+void AFeatureLayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	inputManager->OnInputTrigger.RemoveDynamic(this, &AFeatureLayer::SelectFeature);
 }
 
 //check for errors that could result in a crash or null return
@@ -588,13 +589,5 @@ void AFeatureLayer::SpawnFeatures(int Start, int Last)
 
 		featureItem->SetOwner(this);
 		featureItems.Add(featureItem);
-	}
-}
-
-void AFeatureLayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AFeatureLayer::SelectFeature);
 	}
 }

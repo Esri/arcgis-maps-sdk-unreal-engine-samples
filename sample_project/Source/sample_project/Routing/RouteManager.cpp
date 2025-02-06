@@ -15,6 +15,8 @@
 
 #include "RouteManager.h"
 
+#include "sample_project/InputManager.h"
+
 // Sets default values
 ARouteManager::ARouteManager()
 {
@@ -27,15 +29,7 @@ void ARouteManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		SetupPlayerInputComponent(PlayerController->InputComponent);
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
-			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(MappingContext, 0);
-		}
-	}
+	inputManager->OnInputTrigger.AddDynamic(this, &ARouteManager::AddStop);
 
 	// Make sure mouse cursor remains visible
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -55,6 +49,13 @@ void ARouteManager::BeginPlay()
 			UIWidget->AddToViewport();			
 		}
 	}
+}
+
+void ARouteManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	
+	inputManager->OnInputTrigger.RemoveDynamic(this, &ARouteManager::AddStop);
 }
 
 // Called every frame
@@ -119,14 +120,6 @@ void ARouteManager::Tick(float DeltaTime)
 		}
 		delete[] BCLocations;
 		bShouldUpdateBreadcrums = false;
-	}
-}
-
-void ARouteManager::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &ARouteManager::AddStop);
 	}
 }
 

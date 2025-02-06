@@ -20,6 +20,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Json.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "sample_project/InputManager.h"
 
 // Sets default values
 AArcGISRaycast::AArcGISRaycast()
@@ -33,18 +34,7 @@ void AArcGISRaycast::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		PlayerController->bShowMouseCursor = true;
-		PlayerController->bEnableClickEvents = true;
-
-		SetupPlayerInputComponent(PlayerController->InputComponent);
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(MappingContext, 0);
-		}
-	}
+	inputManager->OnInputTrigger.AddDynamic(this, &AArcGISRaycast::GetHit);
 
 	// Create the UI and add it to the viewport
 	if (UIWidgetClass)
@@ -79,6 +69,14 @@ void AArcGISRaycast::CreateProperties()
 	{
 		UIWidget->ProcessEvent(createProperties, &self);
 	}
+}
+
+
+void AArcGISRaycast::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	inputManager->OnInputTrigger.RemoveDynamic(this, &AArcGISRaycast::GetHit);
 }
 
 void AArcGISRaycast::GetHit()
@@ -165,12 +163,4 @@ void AArcGISRaycast::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePt
 	resultText.Add(position);
 	resultText.Add("\n");
 	CreateProperties();
-}
-
-void AArcGISRaycast::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AArcGISRaycast::GetHit);
-	}
 }
