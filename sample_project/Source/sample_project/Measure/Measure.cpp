@@ -15,6 +15,8 @@
 
 #include "Measure.h"
 
+#include "sample_project/InputManager.h"
+
 constexpr float ElevationOffset = 200.0f;
 constexpr double InterpolationInterval = 10000;
 constexpr int TraceLength = 1000000;
@@ -29,15 +31,7 @@ void AMeasure::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
-	{
-		SetupPlayerInputComponent(PlayerController->InputComponent);
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem
-			<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(MappingContext, 0);
-		}
-	}
+	inputManager->OnInputTrigger.AddDynamic(this, &AMeasure::AddStop);
 
 	// Make sure mouse cursor remains visible
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -69,15 +63,14 @@ void AMeasure::BeginPlay()
 	Unit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
 }
 
-void AMeasure::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AMeasure::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AMeasure::AddStop);
-	}
+	Super::EndPlay(EndPlayReason);
+
+	inputManager->OnInputTrigger.RemoveDynamic(this, &AMeasure::AddStop);
 }
 
-void AMeasure::AddStop(const FInputActionValue& value)
+void AMeasure::AddStop()
 {
 	FVector direction;
 	FHitResult hit;

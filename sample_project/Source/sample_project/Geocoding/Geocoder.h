@@ -41,21 +41,23 @@ public:
 	void SendAddressQuery(FString Address);
 
 	UFUNCTION(BlueprintCallable)
-	void SelectLocation(const FInputActionValue& value);
+	void SelectLocation();
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	FString GetAPIKey();
 	void ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void ProcessLocationQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	void SendLocationQuery(UArcGISPoint* InPoint);
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 
 	bool bShouldSendLocationQuery = false;
 	bool bWaitingForResponse = false;
-
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	class AInputManager* inputManager;
 	AQueryLocation* QueryLocation;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
@@ -65,9 +67,4 @@ private:
 	
 	UFunction* HideInstructions;
 	UFunction* WidgetSetInfoFunction;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
-	UInputMappingContext* MappingContext;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
-	UInputAction* mousePress;
 };

@@ -20,7 +20,6 @@
 #include "GameFramework/Actor.h"
 #include "Http.h"
 #include "Engine/DataTable.h"
-#include "EnhancedInputSubsystems.h"
 #include "FeatureLayer.generated.h"
 
 class AFeatureItem;
@@ -74,6 +73,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ProcessWebRequest();
 	void RefreshProperties(AFeatureItem* Item);
+	UFUNCTION()
 	void SelectFeature();
 	void SpawnFeatures(int Start, int Last);
 
@@ -117,6 +117,9 @@ private:
 	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
 	void GetMapComponent();
 	static void RemoveAdditionalMaterial(const AFeatureItem* Item);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	class AInputManager* inputManager;
 	
 	UFunction* clearProperties;
 	UFunction* createProperties;
@@ -125,10 +128,6 @@ private:
 	UMaterialInstance* highlightMaterial;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UArcGISMapComponent* mapComponent;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
-	UInputMappingContext* MappingContext;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
-	UInputAction* mousePress;
 	FTimerHandle startDelayHandle;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UUserWidget* UIWidget;
@@ -137,5 +136,5 @@ private:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

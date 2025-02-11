@@ -38,8 +38,6 @@
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "sample_project/Routing/Breadcrumb.h"
 #include "sample_project/Routing/RouteMarker.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
 
 #include "Measure.generated.h"
 
@@ -84,9 +82,12 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	TArray<AActor*> FeaturePoints;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	class AInputManager* inputManager;
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 	FVector2D RouteCueScale = FVector2D(5);
 	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
@@ -106,15 +107,11 @@ private:
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	float MarkerHeight = 7000.0f;
 
-	void AddStop(const FInputActionValue& value);
+	UFUNCTION()
+	void AddStop();
 	void Interpolate(AActor* start, AActor* end);
 	void SetElevation(AActor* stop);
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
-	UInputMappingContext* MappingContext;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
-	UInputAction* mousePress;
+	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	bool isHidden = false;
 };
