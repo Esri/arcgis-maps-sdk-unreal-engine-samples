@@ -281,7 +281,10 @@ void AXRPawn::ResetRightTriggerAxis()
 
 void AXRPawn::SimulateClickLeft()
 {
-	leftInteraction->PressPointerKey(EKeys::LeftMouseButton);
+	if (leftInteraction->IsOverFocusableWidget())
+	{
+		leftInteraction->PressPointerKey(EKeys::LeftMouseButton);
+	}
 }
 
 void AXRPawn::SimulateClickRight()
