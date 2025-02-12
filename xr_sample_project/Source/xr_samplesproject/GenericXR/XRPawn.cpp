@@ -286,7 +286,7 @@ void AXRPawn::SimulateClickLeft()
 
 void AXRPawn::SimulateClickRight()
 {
-	if (rightInteraction->IsOverInteractableWidget())
+	if (rightInteraction->IsOverFocusableWidget())
 	{
 		rightInteraction->PressPointerKey(EKeys::LeftMouseButton);
 	}
