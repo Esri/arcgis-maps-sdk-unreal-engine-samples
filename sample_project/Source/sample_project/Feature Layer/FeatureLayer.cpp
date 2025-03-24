@@ -116,7 +116,8 @@ bool AFeatureLayer::HasErrors()
 
 void AFeatureLayer::GetMapComponent()
 {
-	mapComponent = UArcGISMapComponent::GetMapComponent(this);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
+	mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
 }
 
 void AFeatureLayer::MoveCamera(AActor* Item)

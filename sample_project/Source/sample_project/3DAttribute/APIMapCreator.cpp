@@ -29,6 +29,8 @@
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 
 #include "ArcGISPawn.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/View/ArcGISViewOptions.h"
+#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "Blueprint/UserWidget.h"
 // @@End(Header)
 
@@ -86,7 +88,7 @@ void AAPIMapCreator::OnArcGISMapComponentChanged(UArcGISMapComponent* InMapCompo
 {
 	AArcGISActor::OnArcGISMapComponentChanged(InMapComponent);
 
-	if (MapComponent)
+	if (MapComponent.IsValid())
 	{
 		CreateArcGISMap();
 	}
@@ -100,7 +102,7 @@ void AAPIMapCreator::PostEditChangeProperty(FPropertyChangedEvent& PropertyChang
 
 	if (PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(AAPIMapCreator, APIKey))
 	{
-		if (MapComponent)
+		if (MapComponent.IsValid())
 		{
 			CreateArcGISMap();
 		}

@@ -19,6 +19,7 @@
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "Blueprint/UserWidget.h"
 #include "Json.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "sample_project/InputManager.h"
 
@@ -93,7 +94,8 @@ void AArcGISRaycast::GetHit()
 		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
 												  EDrawDebugTrace::None, HitResult, true))
 		{
-			auto mapComponent = UArcGISMapComponent::GetMapComponent(this);
+			const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
+			const auto mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
 
 			if (!mapComponent)
 			{
