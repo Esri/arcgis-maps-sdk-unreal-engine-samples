@@ -1,8 +1,8 @@
-// Copyright 2022 Esri.
+// COPYRIGHT 1995-2025 ESRI
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
-// @@Start(Script)
+// @@Start(Scripting)
 // @@Start(Header)
 #pragma once
 
@@ -10,23 +10,23 @@
 
 #include "ArcGISMapsSDK/Actors/ArcGISActor.h"
 
+#include "ArcGISViewStateLoggingComponent.h"
 #include "AttributeComponent.h"
-#include "ViewStateLoggingComponent.h"
 
 #include "APIMapCreator.generated.h"
-// @@End(Header)
 
-// @@Start(Class)
-// The declaration of our Actor class
+/**
+ *
+ */
 UCLASS()
 class SAMPLE_PROJECT_API AAPIMapCreator : public AArcGISActor
 {
 	GENERATED_BODY()
 
 	// @@Start(mapcreator)
-	public:
+public:
 	AAPIMapCreator();
-	
+
 	UFUNCTION(BlueprintCallable)
 	void HideDirections();
 	UFUNCTION(BlueprintCallable)
@@ -51,17 +51,18 @@ class SAMPLE_PROJECT_API AAPIMapCreator : public AArcGISActor
 	void CreateArcGISMap();
 	// @@End(createmap)
 
-	private:
+private:
 	UPROPERTY(Category = "ArcGISSamples|SampleAPIMapCreator", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAttributeComponent> AttributeComponent;
+
 	UPROPERTY(Category = "ArcGISSamples|SampleAPIMapCreator", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UViewStateLoggingComponent> ViewStateLogging;
+	TObjectPtr<UArcGISViewStateLoggingComponent> ViewStateLogging;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	UUserWidget* UIWidget;
 	UFunction* HideInstructions;
-	
+
 protected:
 	virtual void BeginPlay() override;
 };

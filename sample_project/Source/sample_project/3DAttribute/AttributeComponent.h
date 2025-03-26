@@ -1,9 +1,11 @@
-// Copyright 2022 Esri.
+// COPYRIGHT 1995-2025 ESRI
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
 //
 #pragma once
+
+#include <functional>
 
 #include "Components/ActorComponent.h"
 #include "CoreMinimal.h"
@@ -26,14 +28,14 @@ class ArcGISAttributeProcessor;
 } // namespace Esri
 
 UENUM()
-enum class VisualizationType : uint8
+enum class ArcGISVisualizationType : uint8
 {
 	None = 0,
 	ConstructionYear = 1,
 	BuildingName = 2
 };
 
-UCLASS(ClassGroup = (ArcGISSamples), meta = (BlueprintSpawnableComponent), Category = "ArcGISSamples|AttributeComponent")
+UCLASS(ClassGroup = (ArcGISSamples), meta = (BlueprintSpawnableComponent), Category = "ArcGISSamples|Sample3DAttributesComponent")
 class SAMPLE_PROJECT_API UAttributeComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -42,7 +44,7 @@ public:
 	UAttributeComponent();
 
 	UPROPERTY(EditAnywhere, Category = "ArcGISSamples|SampleAttributeComponent")
-	VisualizationType AttributeType;
+	ArcGISVisualizationType AttributeType;
 
 	// UObject
 #if WITH_EDITOR
@@ -61,5 +63,5 @@ private:
 	void Setup3DAttributesFloatAndIntegerType(UArcGIS3DObjectSceneLayer* Layer);
 	void Setup3DAttributesOtherType(UArcGIS3DObjectSceneLayer* Layer);
 	int32 IsBuildingOfInterest(const FAnsiStringView& buildingName);
-	void ForEachString(const Esri::GameEngine::Attributes::ArcGISAttribute& attribute, TFunction<void(const FAnsiStringView&, int32)> predicate);
+	void ForEachString(const Esri::GameEngine::Attributes::ArcGISAttribute& attribute, std::function<void(const FAnsiStringView&, int32)> predicate);
 };

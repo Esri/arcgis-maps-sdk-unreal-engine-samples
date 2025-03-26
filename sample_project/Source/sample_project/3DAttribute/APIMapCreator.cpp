@@ -1,4 +1,4 @@
-// Copyright 2023 Esri.
+// COPYRIGHT 1995-2025 ESRI
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
@@ -30,59 +30,49 @@
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 
 #include "ArcGISPawn.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/View/ArcGISViewOptions.h"
-#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "Blueprint/UserWidget.h"
 // @@End(Header)
 
 // Set default values
 // @@Start(CallTick)
-AAPIMapCreator::AAPIMapCreator()
+AAPIMapCreator::AAPIMapCreator() : Super()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
-	ViewStateLogging = CreateDefaultSubobject<UViewStateLoggingComponent>(TEXT("ArcGISViewStateLoggingComponent"));
-}
-// @@End(CallTick)
-
-void AAPIMapCreator::BeginPlay()
-{
-	if (UIWidgetClass != nullptr)
-	{
-		AActor* self = this;
-		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
-		if (UIWidget)
-		{
-			UIWidget->AddToViewport();
-			HideInstructions = UIWidget->FindFunction(FName("PlayAnim"));
-		}
-	}
+	ViewStateLogging = CreateDefaultSubobject<UArcGISViewStateLoggingComponent>(TEXT("ArcGISViewStateLoggingComponent"));
 }
 
 void AAPIMapCreator::HideDirections()
 {
 	AActor* self = this;
-	if (HideInstructions) {
+	if (HideInstructions)
+	{
 		UIWidget->ProcessEvent(HideInstructions, &self);
 	}
 }
 
 void AAPIMapCreator::SetVisualType(FString type)
 {
-	if(type == "Building")
+	if (!AttributeComponent)
 	{
-		AttributeComponent->AttributeType = VisualizationType::BuildingName;
+		return;
+	}
+	
+	if (type == "Building")
+	{
+		AttributeComponent->AttributeType = ArcGISVisualizationType::BuildingName;
 	}
 	else if (type == "Construction")
 	{
-		AttributeComponent->AttributeType = VisualizationType::ConstructionYear;
+		AttributeComponent->AttributeType = ArcGISVisualizationType::ConstructionYear;
 	}
 	else
 	{
-		AttributeComponent->AttributeType = VisualizationType::None;
+		AttributeComponent->AttributeType = ArcGISVisualizationType::None;
 	}
+
+	CreateArcGISMap();
 }
 
+// @@End(CallTick)
 
 // @@Start(SubListener)
 void AAPIMapCreator::OnArcGISMapComponentChanged(UArcGISMapComponent* InMapComponent)
@@ -140,6 +130,18 @@ void AAPIMapCreator::CreateArcGISMap()
 
 	// @@Start(AddLayer)
 	// Create layers
+	auto layer_1 = UArcGISImageLayer::CreateArcGISImageLayerWithProperties(
+		"https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/UrbanObservatory_NYC_TransitFrequency/MapServer",
+		"NYTransitFrequencyTiles", 1.0f, true, "");
+	map->GetLayers()->Add(layer_1);
+
+	auto layer_2 = UArcGISImageLayer::CreateArcGISImageLayerWithProperties(
+		"https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/New_York_Industrial/MapServer", "NYIndustrialTiles", 1.0f, true, "");
+	map->GetLayers()->Add(layer_2);
+
+	auto layer_3 = UArcGISImageLayer::CreateArcGISImageLayerWithProperties(
+		"https://tiles.arcgis.com/tiles/4yjifSiIG17X0gW4/arcgis/rest/services/NewYorkCity_PopDensity/MapServer", "NYPopDensityTiles", 1.0f, true, "");
+	map->GetLayers()->Add(layer_3);
 
 	auto buildingLayer = UArcGIS3DObjectSceneLayer::CreateArcGIS3DObjectSceneLayerWithProperties(
 		"https://tiles.arcgis.com/tiles/P3ePLMYs2RVChkJx/arcgis/rest/services/Buildings_NewYork_17/SceneServer", "NYScene", 1.0f, true, "");
@@ -153,6 +155,13 @@ void AAPIMapCreator::CreateArcGISMap()
 	{
 		AttributeComponent->Setup3DAttributes(buildingLayer);
 	}
+
+	// Remove a layer
+	auto index = map->GetLayers()->IndexOf(layer_3);
+	map->GetLayers()->Remove(index);
+	// Update properties
+	layer_1->SetOpacity(0.9f);
+	layer_2->SetOpacity(0.6f);
 
 	// @@Start(Extent)
 	// Create extent
@@ -189,5 +198,22 @@ void AAPIMapCreator::CreateArcGISMap()
 	MapComponent->SetMap(map);
 	// @@End(ViewOp)
 }
+
+void AAPIMapCreator::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UIWidgetClass != nullptr)
+	{
+		AActor* self = this;
+		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+		if (UIWidget)
+		{
+			UIWidget->AddToViewport();
+			HideInstructions = UIWidget->FindFunction(FName("PlayAnim"));
+		}
+	}
+}
+
 // @@End(CreateMap)
 // @@End(Scripting)
