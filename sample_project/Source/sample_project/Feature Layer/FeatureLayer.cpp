@@ -20,6 +20,7 @@
 #include "ArcGISMapsSDK/Components/ArcGISSurfacePlacementMode.h"
 #include "Blueprint/UserWidget.h"
 #include "FeatureItem.h"
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "sample_project/InputManager.h"
 
@@ -116,8 +117,8 @@ bool AFeatureLayer::HasErrors()
 
 void AFeatureLayer::GetMapComponent()
 {
-	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
-	mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
 }
 
 void AFeatureLayer::MoveCamera(AActor* Item)

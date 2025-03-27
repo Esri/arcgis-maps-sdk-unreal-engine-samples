@@ -95,8 +95,8 @@ void AArcGISRaycast::GetHit()
 		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
 												  EDrawDebugTrace::None, HitResult, true))
 		{
-			const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
-			const auto mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+			const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+			const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
 
 			if (!mapComponent)
 			{
