@@ -19,6 +19,8 @@
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "Blueprint/UserWidget.h"
 #include "Json.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPoint.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "sample_project/InputManager.h"
 
@@ -93,7 +95,8 @@ void AArcGISRaycast::GetHit()
 		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
 												  EDrawDebugTrace::None, HitResult, true))
 		{
-			auto mapComponent = UArcGISMapComponent::GetMapComponent(this);
+			const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+			const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
 
 			if (!mapComponent)
 			{
@@ -107,14 +110,11 @@ void AArcGISRaycast::GetHit()
 			{
 				HitLocation->SetActorLocation(HitResult.ImpactPoint);
 				featureID = result.FeatureId;
-				auto geoPosition = mapComponent->EngineToGeographic(HitResult.ImpactPoint);
-				auto point = Esri::GameEngine::Geometry::ArcGISGeometryEngine::Project(geoPosition,
-																					   Esri::GameEngine::Geometry::ArcGISSpatialReference::WGS84());
-				auto location = StaticCast<const Esri::GameEngine::Geometry::ArcGISPoint*>(&point);
-
-				if (location)
+				auto geoPosition = mapComponent->TransformEnginePositionToPoint(HitResult.ImpactPoint);
+				
+				if (geoPosition)
 				{
-					position = "- Lat: " + FString::SanitizeFloat(location->GetY()) + ", Long: " + FString::SanitizeFloat(location->GetX());
+					position = "- Lat: " + FString::SanitizeFloat(geoPosition->GetY()) + ", Long: " + FString::SanitizeFloat(geoPosition->GetX());
 				}
 
 				CreateLink(FString::FromInt(result.FeatureId));
