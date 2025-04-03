@@ -55,6 +55,20 @@ void AThirdPersonCharacter::BeginPlay()
 	}
 }
 
+void AThirdPersonCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(MappingContext);
+		}
+	}
+}
+
 void AThirdPersonCharacter::JumpActionEvent(const FInputActionValue& value)
 {
 	Jump();
