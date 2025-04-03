@@ -388,6 +388,8 @@ void AFeatureLayer::ParseData()
 			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 				item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
 			item->locationComponent->SetPosition(position);
+			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
+			item->locationComponent->SetRotation(rotation);
 			index++;
 			featureItems.Add(featureItem);
 		}
@@ -421,6 +423,8 @@ void AFeatureLayer::ParseData()
 				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 					item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
 				item->locationComponent->SetPosition(position);
+				UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
+				item->locationComponent->SetRotation(rotation);
 			}
 
 			featureItem->SetOwner(this);
