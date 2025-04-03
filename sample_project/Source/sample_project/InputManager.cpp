@@ -30,6 +30,20 @@ void AInputManager::BeginPlay()
 	}
 }
 
+void AInputManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(MappingContext);
+		}
+	}
+}
+
 void AInputManager::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
