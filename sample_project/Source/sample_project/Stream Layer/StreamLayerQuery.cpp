@@ -95,8 +95,7 @@ void AStreamLayerQuery::SpawnPlane(FPlaneFeature PlaneFeature)
 	planeActor->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 		PlaneFeature.Geometry.X, PlaneFeature.Geometry.Y, PlaneFeature.Geometry.Y,
 		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
-	planeActor->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(planeActor->LocationComponent->GetRotation()->GetPitch(),
-		planeActor->LocationComponent->GetRotation()->GetRoll(),PlaneFeature.Attributes.Heading));
+	planeActor->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(90,0,PlaneFeature.Attributes.Heading));
 	planeData.Add(planeActor->FeatureData.Attributes.Name, planeActor);
 }
 
