@@ -89,7 +89,8 @@ void AWeatherQuery::ProcessWebRequest()
 void AWeatherQuery::SendCityQuery(float X, float Y)
 {
 	FString Url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
-	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
+	const auto MapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
 	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
 	FString Query;
 

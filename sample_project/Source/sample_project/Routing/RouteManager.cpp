@@ -210,7 +210,8 @@ void ARouteManager::PostRoutingRequest()
 	}
 	StopCoordinates.RemoveFromEnd(";");
 
-	MapComponent = UArcGISMapComponent::GetMapComponent(this);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
+	MapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
 
 	// Read the API key from the map component
 	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";

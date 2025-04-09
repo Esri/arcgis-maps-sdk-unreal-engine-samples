@@ -1,11 +1,11 @@
-// Copyright 2022 Esri.
+// COPYRIGHT 1995-2025 ESRI
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
 //
 #include "AttributeComponent.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "Materials/Material.h"
 
@@ -18,11 +18,12 @@
 #include "ArcGISMapsSDK/API/Unreal/ArcGISArrayBuilder.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISImmutableArray.h"
 
-#include "APIMapCreator.h"
+#include "ArcGISSamples/Public/SampleAPIMapCreator.h"
 
 UAttributeComponent::UAttributeComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+
 	bTickInEditor = true;
 	bAutoActivate = true;
 }
@@ -44,7 +45,7 @@ void UAttributeComponent::PostEditChangeProperty(FPropertyChangedEvent& Property
 
 	if (PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(UAttributeComponent, AttributeType))
 	{
-		if (auto SampleScene = Cast<AAPIMapCreator>(GetOwner()))
+		if (auto SampleScene = Cast<ASampleAPIMapCreator>(GetOwner()))
 		{
 			SampleScene->CreateArcGISMap();
 		}
@@ -55,12 +56,12 @@ void UAttributeComponent::PostEditChangeProperty(FPropertyChangedEvent& Property
 // We create our map with this method
 void UAttributeComponent::Setup3DAttributes(UArcGIS3DObjectSceneLayer* Layer)
 {
-	// To switch the Attribute method, open the AttributeComponent attached to the SampleAPIMapCreator actor and switch the attribute type method
-	if (AttributeType == VisualizationType::BuildingName)
+	// To switch the Attribute method, open the Sample3DAttributesComponent attached to the SampleAPIMapCreator actor and switch the attribute type method
+	if (AttributeType == ArcGISVisualizationType::BuildingName)
 	{
 		Setup3DAttributesOtherType(Layer);
 	}
-	else if (AttributeType == VisualizationType::ConstructionYear)
+	else if (AttributeType == ArcGISVisualizationType::ConstructionYear)
 	{
 		Setup3DAttributesFloatAndIntegerType(Layer);
 	}
@@ -84,7 +85,7 @@ void UAttributeComponent::Setup3DAttributesFloatAndIntegerType(UArcGIS3DObjectSc
 	// In Unreal Engine, open this material in the Material Editor to view the shader graph
 	// In general, you can use this function in other scripts to change the material thats used to render the buildings
 	Layer->SetMaterialReference(
-		LoadObject<UMaterial>(this, TEXT("Material'/Game/SampleViewer/Samples/MaterialByAttribute/Materials/ConstructionYearRenderer.ConstructionYearRenderer'")));
+		LoadObject<UMaterial>(this, TEXT("/Script/Engine.Material'/Game/SampleViewer/Samples/MaterialByAttribute/Materials/ConstructionYearRenderer.ConstructionYearRenderer'")));
 }
 
 // This function is an example of how to use attributes WITH the attribute processor
@@ -137,12 +138,12 @@ void UAttributeComponent::Setup3DAttributesOtherType(UArcGIS3DObjectSceneLayer* 
 	// In Unreal Engine, open this material in the Material Editor to view the shader graph
 	// In general, you can use this function in other scripts to change the material thats used to render the buildings
 	Layer->SetMaterialReference(
-		LoadObject<UMaterial>(this, TEXT("Material'/Game/SampleViewer/Samples/MaterialByAttribute/Materials/BuildingNameRenderer.BuildingNameRenderer'")));
+		LoadObject<UMaterial>(this, TEXT("/Script/Engine.Material'/Game/SampleViewer/Samples/MaterialByAttribute/Materials/BuildingNameRenderer.BuildingNameRenderer'")));
 }
 
 // ForEachString takes care of converting the attribute buffer into a readable string value
 void UAttributeComponent::ForEachString(const Esri::GameEngine::Attributes::ArcGISAttribute& attribute,
-												 TFunction<void(const FAnsiStringView&, int32)> predicate)
+												 std::function<void(const FAnsiStringView&, int32)> predicate)
 {
 	const auto buffer = attribute.GetData();
 	const auto metadata = reinterpret_cast<const int*>(buffer.GetData());

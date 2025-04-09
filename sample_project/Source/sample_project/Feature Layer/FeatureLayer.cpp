@@ -20,6 +20,7 @@
 #include "ArcGISMapsSDK/Components/ArcGISSurfacePlacementMode.h"
 #include "Blueprint/UserWidget.h"
 #include "FeatureItem.h"
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "sample_project/InputManager.h"
 
@@ -116,7 +117,8 @@ bool AFeatureLayer::HasErrors()
 
 void AFeatureLayer::GetMapComponent()
 {
-	mapComponent = UArcGISMapComponent::GetMapComponent(this);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
 }
 
 void AFeatureLayer::MoveCamera(AActor* Item)
@@ -386,6 +388,8 @@ void AFeatureLayer::ParseData()
 			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 				item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
 			item->locationComponent->SetPosition(position);
+			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
+			item->locationComponent->SetRotation(rotation);
 			index++;
 			featureItems.Add(featureItem);
 		}
@@ -419,6 +423,8 @@ void AFeatureLayer::ParseData()
 				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 					item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
 				item->locationComponent->SetPosition(position);
+				UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
+				item->locationComponent->SetRotation(rotation);
 			}
 
 			featureItem->SetOwner(this);
