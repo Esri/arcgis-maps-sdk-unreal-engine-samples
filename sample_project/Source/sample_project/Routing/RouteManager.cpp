@@ -15,6 +15,7 @@
 
 #include "RouteManager.h"
 
+#include <ArcGISMapsSDK/Utils/ArcGISMapsSDKProjectSettings.h>
 #include "sample_project/InputManager.h"
 
 // Sets default values
@@ -221,6 +222,14 @@ void ARouteManager::PostRoutingRequest()
 
 	// Read the API key from the map component
 	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
+
+	if (APIToken.IsEmpty())
+	{
+		if (const UArcGISMapsSDKProjectSettings* Settings = GetDefault<UArcGISMapsSDKProjectSettings>())
+		{
+			APIToken = Settings->APIKey;
+		}
+	}
 
 	// Set the request body and sent it
 	RequestBody = TEXT("f=json&returnRoutes=true&token=") + APIToken + TEXT("&stops=") + StopCoordinates;
