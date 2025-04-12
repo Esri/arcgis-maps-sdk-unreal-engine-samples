@@ -139,26 +139,37 @@ void ARouteManager::AddStop()
 	FHitResult TraceHit;
 	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation, WorldLocation + traceLength * WorldDirection, ECC_Visibility,
 															  FCollisionQueryParams());
-	if (!bIsRouting && bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass())
+	if (!bIsRouting && bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && TraceHit.bBlockingHit)
 	{
-		if (TraceHit.bBlockingHit)
+		const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+		const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
+
+		if (!mapComponent)
 		{
-			FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-			SpawnParam.Owner = this;
-			Stops.AddHead(GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), TraceHit.ImpactPoint, FRotator(0.f), SpawnParam));
-			// Update the list of stops
-			if (Stops.Num() > StopCount)
-			{
-				auto OldStop = Stops.GetTail();
-				OldStop->GetValue()->Destroy();
-				Stops.RemoveNode(OldStop);
-			}
-			// Make a routing query if enough stops added
-			if (Stops.Num() == StopCount)
-			{
-				bIsRouting = true;
-				PostRoutingRequest();
-			}
+			UE_LOG(LogTemp, Error, TEXT("Could not find map component."));
+			return;
+		}
+
+		Stops.AddHead(mapComponent->TransformEnginePositionToPoint(TraceHit.ImpactPoint));
+
+		// Update the list of stops
+		if (Stops.Num() > StopCount)
+		{
+			Stops.RemoveNode(Stops.GetTail());
+		}
+		if (Stops.Num() >= 1)
+		{
+			StartMarker->SetActorLocation(mapComponent->TransformPointToEnginePosition(Stops.GetTail()->GetValue()));
+			StartMarker->SetActorHiddenInGame(false);
+		}
+		// Make a routing query if enough stops added
+		if (Stops.Num() == StopCount)
+		{
+			bIsRouting = true;
+			PostRoutingRequest();
+
+			EndMarker->SetActorLocation(mapComponent->TransformPointToEnginePosition(Stops.GetHead()->GetValue()));
+			EndMarker->SetActorHiddenInGame(false);
 		}
 	}
 }
@@ -178,11 +189,10 @@ void ARouteManager::ClearMap()
 		Breadcrumb->Destroy();
 	}
 	Breadcrumbs.Empty();
-	for (auto Stop : Stops)
-	{
-		Stop->Destroy();
-	}
 	Stops.Empty();
+
+	StartMarker->SetActorHiddenInGame(true);
+	EndMarker->SetActorHiddenInGame(true);
 }
 
 // Make a query for routing between the selected stops
@@ -200,9 +210,9 @@ void ARouteManager::PostRoutingRequest()
 	Request->SetHeader("Content-Type", "application/x-www-form-urlencoded");
 
 	// Make a string of the coordinates of the stops
-	for (auto Stop : Stops)
+	for (auto stop : Stops)
 	{
-		Point = Stop->ArcGISLocation->GetPosition();
+		Point = stop;
 
 		// If the geographic coordinates of the stop are not in terms of lat & lon, project them
 		if (Point->GetSpatialReference()->GetWKID() != 4326)
@@ -217,11 +227,17 @@ void ARouteManager::PostRoutingRequest()
 	}
 	StopCoordinates.RemoveFromEnd(";");
 
-	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
-	MapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
+
+	if (!mapComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Could not find map component."));
+		return;
+	}
 
 	// Read the API key from the map component
-	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
+	FString APIToken = mapComponent ? mapComponent->GetAPIKey() : "";
 
 	if (APIToken.IsEmpty())
 	{
@@ -239,11 +255,11 @@ void ARouteManager::PostRoutingRequest()
 
 void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
-	TSharedPtr<FJsonObject> JsonObj;
+	TSharedPtr<FJsonObject> jsonObj;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
 
 	// Process the response if the query was successful
-	if (FJsonSerializer::Deserialize(Reader, JsonObj) && Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300)
+	if (FJsonSerializer::Deserialize(Reader, jsonObj) && Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300)
 	{
 		ABreadcrumb* BC;
 		double Minutes;
@@ -268,19 +284,19 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 		UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetTravelInfo"));
 
 		// Parse the query response
-		if ((RoutesField = JsonObj->TryGetField(TEXT("routes"))))
+		if ((RoutesField = jsonObj->TryGetField(TEXT("routes"))))
 		{
-			JsonObj = RoutesField->AsObject();
-			if (JsonObj->TryGetArrayField(TEXT("features"), FeaturesField))
+			jsonObj = RoutesField->AsObject();
+			if (jsonObj->TryGetArrayField(TEXT("features"), FeaturesField))
 			{
 				for (auto feature : *FeaturesField)
 				{
-					JsonObj = feature->AsObject();
-					AttributesField = JsonObj->TryGetField(TEXT("attributes")); // checked later
-					if ((GeometryField = JsonObj->TryGetField(TEXT("geometry"))))
+					jsonObj = feature->AsObject();
+					AttributesField = jsonObj->TryGetField(TEXT("attributes")); // checked later
+					if ((GeometryField = jsonObj->TryGetField(TEXT("geometry"))))
 					{
-						JsonObj = GeometryField->AsObject();
-						if (JsonObj->TryGetArrayField(TEXT("paths"), PathsField))
+						jsonObj = GeometryField->AsObject();
+						if (jsonObj->TryGetArrayField(TEXT("paths"), PathsField))
 						{
 							for (auto path : *PathsField)
 							{
@@ -308,8 +324,8 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 					}
 					if (AttributesField)
 					{
-						JsonObj = AttributesField->AsObject();
-						if (JsonObj->TryGetNumberField(TEXT("Total_TravelTime"), Minutes))
+						jsonObj = AttributesField->AsObject();
+						if (jsonObj->TryGetNumberField(TEXT("Total_TravelTime"), Minutes))
 						{
 							// Update the travel time info in the UI
 							if (WidgetFunction)
@@ -324,11 +340,11 @@ void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponseP
 				bShouldUpdateBreadcrums = true;
 			}
 		}
-		else if ((ErrorField = JsonObj->TryGetField(TEXT("error"))))
+		else if ((ErrorField = jsonObj->TryGetField(TEXT("error"))))
 		{
-			JsonObj = ErrorField->AsObject();
+			jsonObj = ErrorField->AsObject();
 			// Show the error message in the UI
-			if (JsonObj->TryGetStringField(TEXT("message"), InfoMessage))
+			if (jsonObj->TryGetStringField(TEXT("message"), InfoMessage))
 			{
 				if (WidgetFunction)
 				{
