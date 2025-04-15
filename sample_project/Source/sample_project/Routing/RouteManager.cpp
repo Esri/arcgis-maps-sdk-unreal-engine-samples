@@ -200,6 +200,10 @@ void ARouteManager::ClearMap()
 
 	StartMarker->SetActorHiddenInGame(true);
 	EndMarker->SetActorHiddenInGame(true);
+
+	// Set the UI text to zero.
+	auto widgetFunction = UIWidget->FindFunction(FName("SetTravelInfo"));
+	UIWidget->ProcessEvent(widgetFunction, new FString("0"));
 }
 
 // Make a query for routing between the selected stops.
