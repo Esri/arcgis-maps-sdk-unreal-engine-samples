@@ -15,7 +15,7 @@
 
 #include "RouteManager.h"
 
-#include <ArcGISMapsSDK/Utils/ArcGISMapsSDKProjectSettings.h>
+#include "ArcGISMapsSDK/Utils/ArcGISMapsSDKProjectSettings.h"
 #include "sample_project/InputManager.h"
 
 // Sets default values
@@ -25,22 +25,22 @@ ARouteManager::ARouteManager()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
+// Called when the game starts or when spawned.
 void ARouteManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	inputManager->OnInputTrigger.AddDynamic(this, &ARouteManager::AddStop);
+	InputManager->OnInputTrigger.AddDynamic(this, &ARouteManager::AddStop);
 
-	// Make sure mouse cursor remains visible
-	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (PC)
+	// Make sure mouse cursor remains visible.
+	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (playerController)
 	{
-		PC->bShowMouseCursor = true;
-		PC->bEnableClickEvents = true;
+		playerController->bShowMouseCursor = true;
+		playerController->bEnableClickEvents = true;
 	}
 
-	// Create the UI and add it to the viewport
+	// Create the UI and add it to the viewport.
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
@@ -50,125 +50,131 @@ void ARouteManager::BeginPlay()
 			UIWidget->AddToViewport();
 		}
 	}
+
+	auto mapActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	if (mapActor)
+	{
+		MapComponent = mapActor->GetComponentByClass<UArcGISMapComponent>();
+	}
 }
 
 void ARouteManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	inputManager->OnInputTrigger.RemoveDynamic(this, &ARouteManager::AddStop);
+	InputManager->OnInputTrigger.RemoveDynamic(this, &ARouteManager::AddStop);
 }
 
-// Called every frame
 void ARouteManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// If new routing information has been received, visualize the route
-	if (bShouldUpdateBreadcrums)
+	// If new routing information has been received, visualize the route.
+	if (bShouldUpdateBreadcrumbs)
 	{
-		float HeightOffset = 200.0f;
-		FHitResult TraceHit;
-		FVector3d WorldLocation;
-		bool bTraceSuccess = false;
-		uint16 Counter = 0;
-		FVector3d Tangent;
-		USplineMeshComponent* SplineMesh;
-		FVector3d* BCLocations = new FVector3d[Breadcrumbs.Num()];
-
-		for (auto BC : Breadcrumbs)
-		{
-			RemoveTickPrerequisiteComponent(BC->ArcGISLocation);
-
-			// Do a line trace to determine the height of breadcrumbs
-			WorldLocation = FVector3d(BC->GetActorLocation().X, BC->GetActorLocation().Y, traceLength / 2.f);
-			bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation, WorldLocation + traceLength * FVector3d::DownVector,
-																 ECC_Visibility, FCollisionQueryParams());
-			WorldLocation.Z = bTraceSuccess ? TraceHit.ImpactPoint.Z + HeightOffset : 0.;
-
-			BC->SetActorLocation(WorldLocation);
-			BCLocations[Counter] = WorldLocation;
-			Counter++;
-		}
-
-		// Remove the old route cue
-		for (auto SPC : SplineMeshComponents)
-		{
-			SPC->UnregisterComponent();
-			SPC->DestroyComponent();
-		}
-		SplineMeshComponents.Empty();
-
-		// Add a spline mesh for each segment of the route
-		for (int i = 0; i < Counter; i++)
-		{
-			if (i > 0)
-			{
-				SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
-				SplineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
-				SplineMesh->RegisterComponent();
-				SplineMesh->SetMobility(EComponentMobility::Movable);
-
-				Tangent = BCLocations[i] - BCLocations[i - 1];
-				Tangent.Normalize();
-				Tangent = Tangent * 100.;
-
-				SplineMesh->SetStartAndEnd(BCLocations[i - 1], Tangent, BCLocations[i], Tangent);
-				SplineMesh->SetStartScale(RouteCueScale);
-				SplineMesh->SetEndScale(RouteCueScale);
-
-				SplineMesh->SetStaticMesh(RouteMesh);
-
-				SplineMeshComponents.AddHead(SplineMesh);
-			}
-		}
-		delete[] BCLocations;
-		bShouldUpdateBreadcrums = false;
+		UpdateBreadcrumbs();
+		bShouldUpdateBreadcrumbs = false;
 	}
 }
 
-// Identify the location clicked on and make a line trace from there to find the point for placing the stop
+void ARouteManager::UpdateBreadcrumbs()
+{
+	FHitResult traceHit;
+	FVector3d worldLocation;
+	bool bTraceSuccess = false;
+	uint16 counter = 0;
+	FVector3d tangent;
+	USplineMeshComponent* splineMesh;
+	FVector3d* bcLocations = new FVector3d[Breadcrumbs.Num()];
+
+	for (auto breadcrumb : Breadcrumbs)
+	{
+		RemoveTickPrerequisiteComponent(breadcrumb->ArcGISLocation);
+
+		// Do a line trace to determine the height of breadcrumbs.
+		worldLocation = FVector3d(breadcrumb->GetActorLocation().X, breadcrumb->GetActorLocation().Y, TraceLength / 2.f);
+		bTraceSuccess = GetWorld()->LineTraceSingleByChannel(traceHit, worldLocation, worldLocation + TraceLength * FVector3d::DownVector,
+															 ECC_Visibility, FCollisionQueryParams());
+		worldLocation.Z = bTraceSuccess ? traceHit.ImpactPoint.Z + HeightOffset : 0.;
+
+		breadcrumb->SetActorLocation(worldLocation);
+		bcLocations[counter] = worldLocation;
+		counter++;
+	}
+
+	// Remove the old route cue.
+	for (auto spc : SplineMeshComponents)
+	{
+		spc->UnregisterComponent();
+		spc->DestroyComponent();
+	}
+	SplineMeshComponents.Empty();
+
+	// Add a spline mesh for each segment of the route.
+	for (int i = 0; i < counter; i++)
+	{
+		if (i > 0)
+		{
+			splineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
+			splineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+			splineMesh->RegisterComponent();
+			splineMesh->SetMobility(EComponentMobility::Movable);
+
+			tangent = bcLocations[i] - bcLocations[i - 1];
+			tangent.Normalize();
+			tangent = tangent * 100.;
+
+			splineMesh->SetStartAndEnd(bcLocations[i - 1], tangent, bcLocations[i], tangent);
+			splineMesh->SetStartScale(RouteCueScale);
+			splineMesh->SetEndScale(RouteCueScale);
+
+			splineMesh->SetStaticMesh(RouteMesh);
+
+			SplineMeshComponents.AddHead(splineMesh);
+		}
+	}
+	delete[] bcLocations;
+}
+
+// Identify the location clicked on and make a line trace from there to find the point for placing the stop.
 void ARouteManager::AddStop()
 {
-	float DistanceAboveGround = 50000.0f;
-	FVector WorldLocation;
-	FVector WorldDirection;
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+	FVector worldLocation;
+	FVector worldDirection;
+	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	playerController->DeprojectMousePositionToWorld(worldLocation, worldDirection);
 
-	FHitResult TraceHit;
-	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(TraceHit, WorldLocation, WorldLocation + traceLength * WorldDirection, ECC_Visibility,
+	FHitResult traceHit;
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(traceHit, worldLocation, worldLocation + TraceLength * worldDirection, ECC_Visibility,
 															  FCollisionQueryParams());
-	if (!bIsRouting && bTraceSuccess && TraceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && TraceHit.bBlockingHit)
+	if (!bIsRouting && bTraceSuccess && traceHit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && traceHit.bBlockingHit)
 	{
-		const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
-		const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
-
-		if (!mapComponent)
+		if (!MapComponent)
 		{
 			UE_LOG(LogTemp, Error, TEXT("Could not find map component."));
 			return;
 		}
 
-		Stops.AddHead(mapComponent->TransformEnginePositionToPoint(TraceHit.ImpactPoint));
+		Stops.AddHead(MapComponent->TransformEnginePositionToPoint(traceHit.ImpactPoint));
 
-		// Update the list of stops
+		// Update the list of stops.
 		if (Stops.Num() > StopCount)
 		{
 			Stops.RemoveNode(Stops.GetTail());
 		}
 		if (Stops.Num() >= 1)
 		{
-			StartMarker->SetActorLocation(mapComponent->TransformPointToEnginePosition(Stops.GetTail()->GetValue()));
+			StartMarker->SetActorLocation(MapComponent->TransformPointToEnginePosition(Stops.GetTail()->GetValue()));
 			StartMarker->SetActorHiddenInGame(false);
 		}
-		// Make a routing query if enough stops added
+
+		// Make a routing query if enough stops added.
 		if (Stops.Num() == StopCount)
 		{
 			bIsRouting = true;
 			PostRoutingRequest();
 
-			EndMarker->SetActorLocation(mapComponent->TransformPointToEnginePosition(Stops.GetHead()->GetValue()));
+			EndMarker->SetActorLocation(MapComponent->TransformPointToEnginePosition(Stops.GetHead()->GetValue()));
 			EndMarker->SetActorHiddenInGame(false);
 		}
 	}
@@ -176,14 +182,15 @@ void ARouteManager::AddStop()
 
 void ARouteManager::ClearMap()
 {
-	// Remove the old route cue
-	for (auto SPC : SplineMeshComponents)
+	// Remove the old route cue.
+	for (auto spc : SplineMeshComponents)
 	{
-		SPC->UnregisterComponent();
-		SPC->DestroyComponent();
+		spc->UnregisterComponent();
+		spc->DestroyComponent();
 	}
 	SplineMeshComponents.Empty();
-	// Remove the old breadcrumbs
+
+	// Remove the old breadcrumbs.
 	for (auto Breadcrumb : Breadcrumbs)
 	{
 		Breadcrumb->Destroy();
@@ -195,160 +202,158 @@ void ARouteManager::ClearMap()
 	EndMarker->SetActorHiddenInGame(true);
 }
 
-// Make a query for routing between the selected stops
+// Make a query for routing between the selected stops.
 void ARouteManager::PostRoutingRequest()
 {
-	FString RequestBody;
-	FString StopCoordinates;
-	UArcGISPoint* Point;
+	FString requestBody;
+	FString stopCoordinates;
+	UArcGISPoint* point;
 
-	// Set up the query
-	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &ARouteManager::ProcessQueryResponse);
-	Request->SetURL("https://route-api.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World/solve");
-	Request->SetVerb("POST");
-	Request->SetHeader("Content-Type", "application/x-www-form-urlencoded");
+	// Set up the query.
+	FHttpRequestRef request = FHttpModule::Get().CreateRequest();
+	request->OnProcessRequestComplete().BindUObject(this, &ARouteManager::ProcessQueryResponse);
+	request->SetURL(RoutingServiceURL);
+	request->SetVerb("POST");
+	request->SetHeader("Content-Type", "application/x-www-form-urlencoded");
 
-	// Make a string of the coordinates of the stops
+	// Make a string of the coordinates of the stops.
 	for (auto stop : Stops)
 	{
-		Point = stop;
+		point = stop;
 
-		// If the geographic coordinates of the stop are not in terms of lat & lon, project them
-		if (Point->GetSpatialReference()->GetWKID() != 4326)
+		// If the geographic coordinates of the stop are not in terms of lat & lon, project them.
+		if (point->GetSpatialReference()->GetWKID() != 4326)
 		{
-			auto ProjectedGeometry = UArcGISGeometryEngine::Project(Point, UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
+			auto ProjectedGeometry = UArcGISGeometryEngine::Project(point, UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
 			if (ProjectedGeometry != nullptr)
 			{
-				Point = static_cast<UArcGISPoint*>(ProjectedGeometry);
+				point = static_cast<UArcGISPoint*>(ProjectedGeometry);
 			}
 		}
-		StopCoordinates.Append(FString::Printf(TEXT("%f,%f;"), Point->GetX(), Point->GetY()));
+		stopCoordinates.Append(FString::Printf(TEXT("%f,%f;"), point->GetX(), point->GetY()));
 	}
-	StopCoordinates.RemoveFromEnd(";");
+	stopCoordinates.RemoveFromEnd(";");
 
-	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
-	const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
-
-	if (!mapComponent)
+	if (!MapComponent)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Could not find map component."));
 		return;
 	}
 
-	// Read the API key from the map component
-	FString APIToken = mapComponent ? mapComponent->GetAPIKey() : "";
+	// Read the API key from the map component.
+	FString apiToken = MapComponent ? MapComponent->GetAPIKey() : "";
 
-	if (APIToken.IsEmpty())
+	if (apiToken.IsEmpty())
 	{
 		if (const UArcGISMapsSDKProjectSettings* Settings = GetDefault<UArcGISMapsSDKProjectSettings>())
 		{
-			APIToken = Settings->APIKey;
+			apiToken = Settings->APIKey;
 		}
 	}
 
-	// Set the request body and sent it
-	RequestBody = TEXT("f=json&returnRoutes=true&token=") + APIToken + TEXT("&stops=") + StopCoordinates;
-	Request->SetContentAsString(RequestBody);
-	Request->ProcessRequest();
+	// Set the request body and send it.
+	requestBody = TEXT("f=json&returnRoutes=true&token=") + apiToken + TEXT("&stops=") + stopCoordinates;
+	request->SetContentAsString(requestBody);
+	request->ProcessRequest();
 }
 
 void ARouteManager::ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
 	TSharedPtr<FJsonObject> jsonObj;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+	TSharedRef<TJsonReader<>> reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
 
-	// Process the response if the query was successful
-	if (FJsonSerializer::Deserialize(Reader, jsonObj) && Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300)
+	// Process the response if the query was successful.
+	if (FJsonSerializer::Deserialize(reader, jsonObj) && Response->GetResponseCode() > 199 && Response->GetResponseCode() < 300)
 	{
-		ABreadcrumb* BC;
-		double Minutes;
-		FString InfoMessage;
-		TSharedPtr<FJsonValue> RoutesField;
-		TSharedPtr<FJsonValue> ErrorField;
-		TSharedPtr<FJsonValue> GeometryField;
-		TSharedPtr<FJsonValue> AttributesField;
-		const TArray<TSharedPtr<FJsonValue>>* FeaturesField;
-		const TArray<TSharedPtr<FJsonValue>>* PathsField;
-		const TArray<TSharedPtr<FJsonValue>>* PointsField;
-		const TArray<TSharedPtr<FJsonValue>>* StopCoordinates;
+		ABreadcrumb* bc;
+		double minutes;
+		FString infoMessage;
+		TSharedPtr<FJsonValue> routesField;
+		TSharedPtr<FJsonValue> errorField;
+		TSharedPtr<FJsonValue> geometryField;
+		TSharedPtr<FJsonValue> attributesField;
+		const TArray<TSharedPtr<FJsonValue>>* featuresField;
+		const TArray<TSharedPtr<FJsonValue>>* pathsField;
+		const TArray<TSharedPtr<FJsonValue>>* pointsField;
+		const TArray<TSharedPtr<FJsonValue>>* stopCoordinates;
 
-		// Remove the old breadcrumbs
-		for (auto Breadcrumb : Breadcrumbs)
+		// Remove the old breadcrumbs.
+		for (auto breadcrumb : Breadcrumbs)
 		{
-			Breadcrumb->Destroy();
+			breadcrumb->Destroy();
 		}
 		Breadcrumbs.Empty();
 
-		// Find the function that sets the info text of the UI
-		UFunction* WidgetFunction = UIWidget->FindFunction(FName("SetTravelInfo"));
+		// Find the function that sets the info text of the UI.
+		UFunction* widgetFunction = UIWidget->FindFunction(FName("SetTravelInfo"));
 
-		// Parse the query response
-		if ((RoutesField = jsonObj->TryGetField(TEXT("routes"))))
+		// Parse the query response.
+		if ((routesField = jsonObj->TryGetField(TEXT("routes"))))
 		{
-			jsonObj = RoutesField->AsObject();
-			if (jsonObj->TryGetArrayField(TEXT("features"), FeaturesField))
+			jsonObj = routesField->AsObject();
+			if (jsonObj->TryGetArrayField(TEXT("features"), featuresField))
 			{
-				for (auto feature : *FeaturesField)
+				for (auto feature : *featuresField)
 				{
 					jsonObj = feature->AsObject();
-					AttributesField = jsonObj->TryGetField(TEXT("attributes")); // checked later
-					if ((GeometryField = jsonObj->TryGetField(TEXT("geometry"))))
+					attributesField = jsonObj->TryGetField(TEXT("attributes")); // checked later.
+					if ((geometryField = jsonObj->TryGetField(TEXT("geometry"))))
 					{
-						jsonObj = GeometryField->AsObject();
-						if (jsonObj->TryGetArrayField(TEXT("paths"), PathsField))
+						jsonObj = geometryField->AsObject();
+						if (jsonObj->TryGetArrayField(TEXT("paths"), pathsField))
 						{
-							for (auto path : *PathsField)
+							for (auto path : *pathsField)
 							{
-								PointsField = &path->AsArray();
-								for (auto point : *PointsField)
+								pointsField = &path->AsArray();
+								for (auto point : *pointsField)
 								{
-									StopCoordinates = &point->AsArray();
+									stopCoordinates = &point->AsArray();
 
-									// Create a breadcrumb for each path point and set its location from the query response
+									// Create a breadcrumb for each path point and set its location from the query response.
 									FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 									SpawnParam.Owner = this;
-									BC = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector3d(0.), FRotator3d(0.), SpawnParam);
+									bc = GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), FVector3d(0.), FRotator3d(0.), SpawnParam);
 
-									BC->ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(
-										(*StopCoordinates)[0]->AsNumber(), (*StopCoordinates)[1]->AsNumber(),
+									bc->ArcGISLocation->SetPosition(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(
+										(*stopCoordinates)[0]->AsNumber(), (*stopCoordinates)[1]->AsNumber(),
 										UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
 
 									// Make sure this actor doesn't tick before all Breadcrumb actors have ticked.
-									// Ensures that the transform of all Breadcrum actors have been updated before adding the route cue
-									AddTickPrerequisiteComponent(BC->ArcGISLocation);
-									Breadcrumbs.AddHead(BC);
+									// Ensures that the transform of all Breadcrum actors have been updated before adding the route cue.
+									AddTickPrerequisiteComponent(bc->ArcGISLocation);
+									Breadcrumbs.AddHead(bc);
 								}
 							}
 						}
 					}
-					if (AttributesField)
+					if (attributesField)
 					{
-						jsonObj = AttributesField->AsObject();
-						if (jsonObj->TryGetNumberField(TEXT("Total_TravelTime"), Minutes))
+						jsonObj = attributesField->AsObject();
+						if (jsonObj->TryGetNumberField(TEXT("Total_TravelTime"), minutes))
 						{
-							// Update the travel time info in the UI
-							if (WidgetFunction)
+							// Update the travel time info in the UI.
+							if (widgetFunction)
 							{
-								InfoMessage = FString::Printf(TEXT("%.2f"), Minutes);
-								UIWidget->ProcessEvent(WidgetFunction, &InfoMessage);
+								infoMessage = FString::Printf(TEXT("%.2f"), minutes);
+								UIWidget->ProcessEvent(widgetFunction, &infoMessage);
 							}
 						}
 					}
 				}
-				// Visualize the route in the next tick
-				bShouldUpdateBreadcrums = true;
+				// Visualize the route in the next tick.
+				bShouldUpdateBreadcrumbs = true;
 			}
 		}
-		else if ((ErrorField = jsonObj->TryGetField(TEXT("error"))))
+		else if ((errorField = jsonObj->TryGetField(TEXT("error"))))
 		{
-			jsonObj = ErrorField->AsObject();
-			// Show the error message in the UI
-			if (jsonObj->TryGetStringField(TEXT("message"), InfoMessage))
+			jsonObj = errorField->AsObject();
+
+			// Show the error message in the UI.
+			if (jsonObj->TryGetStringField(TEXT("message"), infoMessage))
 			{
-				if (WidgetFunction)
+				if (widgetFunction)
 				{
-					UIWidget->ProcessEvent(WidgetFunction, &InfoMessage);
+					UIWidget->ProcessEvent(widgetFunction, &infoMessage);
 				}
 			}
 		}
