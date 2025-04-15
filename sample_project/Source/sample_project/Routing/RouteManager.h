@@ -15,32 +15,32 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "Blueprint/UserWidget.h"
-#include "Engine/StaticMeshActor.h"
-#include "Components/SplineMeshComponent.h"
-#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
-#include "Runtime/Engine/Classes/GameFramework/PlayerController.h"
-#include "Json.h"
-#include "Http.h"
-#include "Breadcrumb.h"
-#include "RouteMarker.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "Blueprint/UserWidget.h"
+#include "Breadcrumb.h"
+#include "Components/SplineMeshComponent.h"
+#include "CoreMinimal.h"
+#include "Engine/StaticMeshActor.h"
+#include "GameFramework/Actor.h"
+#include "Http.h"
+#include "Json.h"
+#include "RouteMarker.h"
+#include "Runtime/Engine/Classes/GameFramework/PlayerController.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "RouteManager.generated.h"
 UCLASS()
 class SAMPLE_PROJECT_API ARouteManager : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	// Sets default values for this actor's properties
 	ARouteManager();
-	
+
 	UFUNCTION(BlueprintCallable)
 	void ClearMap();
 
@@ -50,27 +50,36 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-	
 	void PostRoutingRequest();
 	void ProcessQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
 	UFUNCTION()
 	void AddStop();
-	
+	UFUNCTION()
+	void UpdateBreadcrumbs();
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
-	class AInputManager* inputManager;
-	float traceLength = 10000000.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
+	AStaticMeshActor* StartMarker;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	AStaticMeshActor* EndMarker;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	class AInputManager* InputManager;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TSubclassOf<class UUserWidget> UIWidgetClass;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	UUserWidget* UIWidget;
-	UArcGISMapComponent* MapComponent;
-	TDoubleLinkedList < USplineMeshComponent*> SplineMeshComponents;
-	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
-	TDoubleLinkedList<ARouteMarker*> Stops;
+
 	TDoubleLinkedList<ABreadcrumb*> Breadcrumbs;
+	TDoubleLinkedList<UArcGISPoint*> Stops;
+	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
+	UArcGISMapComponent* MapComponent;
+	UFunction* HideInstructions;
+	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
+
 	bool bIsRouting = false;
-	bool bShouldUpdateBreadcrums = false;
+	bool bShouldUpdateBreadcrumbs = false;
+	float HeightOffset = 200.0f;
+	float TraceLength = 10000000.0f;
+	FString RoutingServiceURL = "https://route-api.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World/solve";
 	FVector2D RouteCueScale = FVector2D(5.);
 	int StopCount = 2;
-	UFunction* HideInstructions;
 };
