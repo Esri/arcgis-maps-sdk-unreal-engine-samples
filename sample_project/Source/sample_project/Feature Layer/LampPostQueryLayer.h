@@ -94,7 +94,7 @@ private:
 
 	//UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	///class AInputManager* inputManager;
-	
+
 	UFunction* clearProperties;
 	UFunction* createProperties;
 	TArray<TSharedPtr<FJsonValue>> Features;

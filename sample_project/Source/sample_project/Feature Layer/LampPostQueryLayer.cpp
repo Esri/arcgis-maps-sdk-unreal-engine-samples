@@ -82,7 +82,6 @@ void ALampPostQueryLayer::CreateLink()
 void ALampPostQueryLayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-	
 }
 
 //check for errors that could result in a crash or null return

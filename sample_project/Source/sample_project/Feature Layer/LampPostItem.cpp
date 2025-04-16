@@ -33,27 +33,27 @@ ALampPostItem::ALampPostItem()
 	glass = CreateDefaultSubobject<UStaticMeshComponent>("Glass");
 	glass->SetupAttachment(lamp);
 	glass->SetStaticMesh(glassMesh);
-	glass->SetWorldScale3D(FVector(1,1,1));
+	glass->SetWorldScale3D(FVector(1, 1, 1));
 
-	SetActorRotation(FRotator(0,0,0));
-	
+	SetActorRotation(FRotator(0, 0, 0));
+
 	pointLight = CreateDefaultSubobject<UPointLightComponent>("Point Light");
 	pointLight->SetupAttachment(Root);
-	pointLight->SetRelativeLocation(FVector(0,116.956487,585.674158));
+	pointLight->SetRelativeLocation(FVector(0, 116.956487, 585.674158));
 	pointLight->IntensityUnits = ELightUnits::Lumens;
 	pointLight->Intensity = 200;
 	pointLight->AttenuationRadius = 2000;
 	pointLight->SourceRadius = 500;
 	pointLight->SoftSourceRadius = 1000;
 	pointLight->SourceLength = 384;
-	
+
 #if ENGINE_MINOR_VERSION > 5
 	pointLight->AttenuationRadius = 10000;
 	pointLight->bAllowMegaLights = true;
 #endif
 
 	pointLight->SetHiddenInGame(true);
-	
+
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>("Location Component");
 	locationComponent->SetupAttachment(Root);
 }

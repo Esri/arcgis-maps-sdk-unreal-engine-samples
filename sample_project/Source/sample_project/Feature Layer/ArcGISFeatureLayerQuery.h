@@ -51,7 +51,7 @@ UCLASS()
 class SAMPLE_PROJECT_API AArcGISFeatureLayerQuery : public AActor
 {
 	GENERATED_BODY()
-	
+
 public:
 	AArcGISFeatureLayerQuery();
 };

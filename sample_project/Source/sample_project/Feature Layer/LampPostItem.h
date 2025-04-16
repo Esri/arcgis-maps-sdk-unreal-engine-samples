@@ -29,7 +29,7 @@ class SAMPLE_PROJECT_API ALampPostItem : public AActor
 
 public:
 	ALampPostItem();
-	
+
 	UPROPERTY(VisibleAnywhere)
 	UArcGISLocationComponent* locationComponent;
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
@@ -49,10 +49,14 @@ public:
 
 private:
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
-	UStaticMesh* lampPostMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Script/Engine.StaticMesh'/Game/SampleViewer/Samples/ThirdPersonCharacter/Meshes/City_lantern_FBX_City_lantern.City_lantern_FBX_City_lantern'"));
+	UStaticMesh* lampPostMesh = LoadObject<UStaticMesh>(
+		nullptr, TEXT(
+			"/Script/Engine.StaticMesh'/Game/SampleViewer/Samples/ThirdPersonCharacter/Meshes/City_lantern_FBX_City_lantern.City_lantern_FBX_City_lantern'"));
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
-	UStaticMesh* glassMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Script/Engine.StaticMesh'/Game/SampleViewer/Samples/ThirdPersonCharacter/Meshes/City_lantern_FBX_Glass.City_lantern_FBX_Glass'"));
-	
+	UStaticMesh* glassMesh = LoadObject<UStaticMesh>(
+		nullptr, TEXT(
+			"/Script/Engine.StaticMesh'/Game/SampleViewer/Samples/ThirdPersonCharacter/Meshes/City_lantern_FBX_Glass.City_lantern_FBX_Glass'"));
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	UPointLightComponent* pointLight;
 };
