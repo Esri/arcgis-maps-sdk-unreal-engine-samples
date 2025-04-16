@@ -40,7 +40,7 @@ protected:
 
 private:
 	UPROPERTY(EditAnywhere)
-	UMaterialInterface* ViewshedMaterial;
+	TObjectPtr<UMaterialInterface> ViewshedMaterial;
 
 	UFUNCTION()
 	void InitializeMap();
