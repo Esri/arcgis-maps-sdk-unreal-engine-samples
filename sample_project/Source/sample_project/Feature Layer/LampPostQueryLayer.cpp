@@ -21,6 +21,7 @@
 #include "ArcGISPawn.h"
 #include "Blueprint/UserWidget.h"
 #include "LampPostItem.h"
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -36,7 +37,7 @@ void ALampPostQueryLayer::AddAdditionalMaterial(const ALampPostItem* Item, UMate
 		return;
 	}
 
-	Item->pin->SetOverlayMaterial(Material);
+	Item->lamp->SetOverlayMaterial(Material);
 }
 
 void ALampPostQueryLayer::BeginPlay()
@@ -342,6 +343,8 @@ void ALampPostQueryLayer::ParseData()
 			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 				item->Longitude, item->Latitude, 0, UArcGISSpatialReference::WGS84());
 			item->locationComponent->SetPosition(position);
+			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 0);
+			item->locationComponent->SetRotation(rotation);
 			index++;
 			featureItems.Add(featureItem);
 		}
@@ -375,6 +378,8 @@ void ALampPostQueryLayer::ParseData()
 				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 					item->Longitude, item->Latitude, 0, UArcGISSpatialReference::WGS84());
 				item->locationComponent->SetPosition(position);
+				UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 0);
+				item->locationComponent->SetRotation(rotation);
 			}
 
 			featureItem->SetOwner(this);
@@ -464,7 +469,7 @@ void ALampPostQueryLayer::RefreshProperties(ALampPostItem* Item)
 
 void ALampPostQueryLayer::RemoveAdditionalMaterial(const ALampPostItem* Item)
 {
-	Item->pin->SetOverlayMaterial(nullptr);
+	Item->lamp->SetOverlayMaterial(nullptr);
 }
 
 void ALampPostQueryLayer::SelectFeature()
@@ -538,6 +543,8 @@ void ALampPostQueryLayer::SpawnFeatures(int Start, int Last)
 			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 				item->Longitude, item->Latitude, 0, UArcGISSpatialReference::WGS84());
 			item->locationComponent->SetPosition(position);
+			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 0);
+			item->locationComponent->SetRotation(rotation);
 		}
 
 		featureItem->SetOwner(this);

@@ -25,22 +25,30 @@ ALampPostItem::ALampPostItem()
 	Root->SetMobility(EComponentMobility::Movable);
 	RootComponent = Root;
 
-	pin = CreateDefaultSubobject<UStaticMeshComponent>("PinMesh");
-	pin->SetupAttachment(Root);
-	//pin->SetStaticMesh(lampPostMesh);
-	pin->SetWorldScale3D(FVector(1, 1, 1));
+	lamp = CreateDefaultSubobject<UStaticMeshComponent>("PinMesh");
+	lamp->SetupAttachment(Root);
+	lamp->SetStaticMesh(lampPostMesh);
+	lamp->SetWorldScale3D(FVector(1, 1, 1));
+
+	glass = CreateDefaultSubobject<UStaticMeshComponent>("Glass");
+	glass->SetupAttachment(lamp);
+	glass->SetStaticMesh(glassMesh);
+	glass->SetWorldScale3D(FVector(1,1,1));
+
+	SetActorRotation(FRotator(0,0,0));
 	
 	pointLight = CreateDefaultSubobject<UPointLightComponent>("Point Light");
 	pointLight->SetupAttachment(Root);
-	pointLight->SetRelativeLocation(FVector(-270.000000,0.000000,1020.000000));
+	pointLight->SetRelativeLocation(FVector(0,116.956487,585.674158));
 	pointLight->IntensityUnits = ELightUnits::Lumens;
 	pointLight->Intensity = 200;
-	pointLight->AttenuationRadius = 10000;
+	pointLight->AttenuationRadius = 2000;
 	pointLight->SourceRadius = 500;
 	pointLight->SoftSourceRadius = 1000;
 	pointLight->SourceLength = 384;
 	
 #if ENGINE_MINOR_VERSION > 5
+	pointLight->AttenuationRadius = 10000;
 	pointLight->bAllowMegaLights = true;
 #endif
 
