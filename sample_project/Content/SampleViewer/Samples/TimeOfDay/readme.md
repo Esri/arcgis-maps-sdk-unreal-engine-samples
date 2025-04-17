@@ -4,7 +4,7 @@ Control the Time of Day manually, simulate it at a given speed, or animate it fr
 
 ![Image of Time of Day Sample](TimeOfDay.png)
 
-## How to Setup (Weather Sample Level)
+## How to Setup (Time of Day Sample Level)
 
 1. Open the **TimeOfDay** level.
 2. Click on the **ArcGISMapActor** in the Outliner panel.
@@ -15,7 +15,7 @@ Control the Time of Day manually, simulate it at a given speed, or animate it fr
 
 1. Click Play in Unreal Editor.
 2. Input your API key under the **API Key Drop-down**.
-3. Click the **Sample Drop-Down** and select **Weather Query**.
+3. Click the **Sample Drop-Down** and select **Time of Day**.
 
 ## How it works
 
@@ -40,7 +40,7 @@ Note: You can use `UE_LOG` to print log messages in the **Output Log** window an
 
 ## About the data
 
-Data for Current Weather in the United States is fetched from a [Feature Layer](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/Boston_Street_Light_Locations/FeatureServer/0/query?f=geojson&where=1=1&outfields=*)hosted by Esri.
+Data for Boston Lamp Posts is fetched from a [Feature Layer](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/Boston_Street_Light_Locations/FeatureServer/0/query?f=geojson&where=1=1&outfields=*)hosted by Esri.
 Elevation data is loaded from the [Terrain 3D elevation layer](https://www.arcgis.com/home/item.html?id=7029fb60158543ad845c7e1527af11e4) hosted by Esri.
 
 ## Tags
