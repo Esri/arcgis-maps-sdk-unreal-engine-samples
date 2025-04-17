@@ -34,6 +34,7 @@ This repository is composed of two separate Unity projects. If you would like to
 * [Stream Layer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/StreamLayer) - See how to use web sockets to connect to an Esri real time service to update game objects locations in real time.
 * [Third Person Character Controller](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/ThirdPersonCharacter) - See how to run around a virtual city in Unreal Engine.
 * [Real Time Weather Query](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/RealTime_Weather) - Query the current weather in a city using the feature layer query work flow.
+* [Time of Day](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/TimeOfDay/readme.md) - Control the time of day for a scene manually or through simulation and animation settings.
 
 ## Features in XR Sample Project
 
