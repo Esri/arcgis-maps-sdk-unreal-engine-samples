@@ -44,10 +44,6 @@ public:
 	void ParseData();
 	UFUNCTION(BlueprintCallable)
 	void ProcessWebRequest();
-	void RefreshProperties(ALampPostItem* Item);
-	UFUNCTION()
-	void SelectFeature();
-	void SpawnFeatures(int Start, int Last);
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	AArcGISPawn* ArcGISPawn;
@@ -61,10 +57,6 @@ public:
 	bool bGetAllOutfields = true;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	bool bLinkReturnError;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bNewLink;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bGetAll;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	ALampPostItem* currentFeature;
@@ -87,14 +79,9 @@ public:
 	FLink WebLink;
 
 private:
-	static void AddAdditionalMaterial(const ALampPostItem* Item, UMaterialInstance* Material);
 	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
 	void GetMapComponent();
-	static void RemoveAdditionalMaterial(const ALampPostItem* Item);
-
-	//UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
-	///class AInputManager* inputManager;
-
+	
 	UFunction* clearProperties;
 	UFunction* createProperties;
 	TArray<TSharedPtr<FJsonValue>> Features;
@@ -102,7 +89,6 @@ private:
 	UMaterialInstance* highlightMaterial;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UArcGISMapComponent* mapComponent;
-	FTimerHandle startDelayHandle;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UUserWidget* UIWidget;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
