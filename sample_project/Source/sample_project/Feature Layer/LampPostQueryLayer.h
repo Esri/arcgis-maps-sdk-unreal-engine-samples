@@ -35,64 +35,14 @@ class SAMPLE_PROJECT_API ALampPostQueryLayer : public AArcGISFeatureLayerQuery
 
 public:
 	ALampPostQueryLayer();
-
-	UFUNCTION(BlueprintCallable)
-	void CreateLink();
-	UFUNCTION(BlueprintCallable)
-	bool HasErrors();
-	UFUNCTION(BlueprintCallable)
-	void ParseData();
-	UFUNCTION(BlueprintCallable)
-	void ProcessWebRequest();
+	
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	AArcGISPawn* ArcGISPawn;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	bool bButtonActive;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	bool bCoordinatesErrorReturn;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bGetAllFeatures;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bGetAllOutfields = true;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	bool bLinkReturnError;
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	ALampPostItem* currentFeature;
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<FProperties> FeatureData;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<AActor*> featureItems;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int LastValue;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> OutFieldsToGet;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> PropertiesToGet;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<FString> resultProperties;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int StartValue;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FLink WebLink;
 
 private:
-	void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
-	void GetMapComponent();
 	
-	UFunction* clearProperties;
-	UFunction* createProperties;
 	TArray<TSharedPtr<FJsonValue>> Features;
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
-	UMaterialInstance* highlightMaterial;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UArcGISMapComponent* mapComponent;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UUserWidget* UIWidget;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
-	TSubclassOf<UUserWidget> UIWidgetClass;
 
 protected:
 	virtual void BeginPlay() override;

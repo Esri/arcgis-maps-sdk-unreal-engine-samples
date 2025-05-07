@@ -16,6 +16,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FeatureItem.h"
 #include "Components/PointLightComponent.h"
 #include "GameFramework/Actor.h"
 #include "LampPostItem.generated.h"
@@ -23,29 +24,17 @@
 class UArcGISLocationComponent;
 
 UCLASS()
-class SAMPLE_PROJECT_API ALampPostItem : public AActor
+class SAMPLE_PROJECT_API ALampPostItem : public AFeatureItem
 {
 	GENERATED_BODY()
 
 public:
 	ALampPostItem();
-
-	UPROPERTY(VisibleAnywhere)
-	UArcGISLocationComponent* locationComponent;
+	
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
 	UStaticMeshComponent* lamp;
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
 	UStaticMeshComponent* glass;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<FString> Properties;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<FString> PropertiesNames;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	double Latitude;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	double Longitude;
-	UPROPERTY(VisibleAnywhere)
-	int Index;
 
 private:
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))

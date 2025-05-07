@@ -21,11 +21,11 @@ AFeatureItem::AFeatureItem()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	Root->SetMobility(EComponentMobility::Movable);
 	RootComponent = Root;
 
-	pin = CreateDefaultSubobject<UStaticMeshComponent>("PinMesh");
+	/*pin = CreateDefaultSubobject<UStaticMeshComponent>("PinMesh");
 	pin->SetStaticMesh(pinMesh);
 	pin->SetupAttachment(Root);
 	pin->SetWorldScale3D(FVector(5, 5, 5));
@@ -34,7 +34,7 @@ AFeatureItem::AFeatureItem()
 	collider->SetupAttachment(Root);
 	collider->SetRelativeLocation(FVector(0, 0, 1150));
 	collider->SetWorldScale3D(FVector(5, 5, 10));
-	collider->SetCollisionProfileName(FName("BlockAll"));
+	collider->SetCollisionProfileName(FName("BlockAll"));*/
 
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>("Location Component");
 	locationComponent->SetupAttachment(Root);

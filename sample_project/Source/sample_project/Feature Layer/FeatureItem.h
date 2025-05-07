@@ -43,6 +43,7 @@ public:
 	double Longitude;
 	UPROPERTY(VisibleAnywhere)
 	int Index;
+	USceneComponent* Root;
 
 private:
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
