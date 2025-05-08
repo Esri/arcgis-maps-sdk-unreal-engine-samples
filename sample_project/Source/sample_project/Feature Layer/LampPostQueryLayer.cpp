@@ -16,7 +16,6 @@
 
 #include "LampPostQueryLayer.h"
 #include "ArcGISPawn.h"
-#include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 ALampPostQueryLayer::ALampPostQueryLayer()

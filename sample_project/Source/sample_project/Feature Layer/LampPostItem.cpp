@@ -14,8 +14,6 @@
  */
 
 #include "LampPostItem.h"
-#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
-#include "Components/BoxComponent.h"
 
 ALampPostItem::ALampPostItem()
 {

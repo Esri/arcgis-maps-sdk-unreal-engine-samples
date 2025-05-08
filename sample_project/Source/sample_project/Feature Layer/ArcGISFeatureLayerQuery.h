@@ -20,6 +20,7 @@
 #include "Http.h"
 #include "ArcGISFeatureLayerQuery.generated.h"
 
+class AFeatureItemBase;
 class AFeatureItem;
 class UArcGISMapComponent;
 
@@ -61,23 +62,21 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void CreateLink();
-	virtual void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
 	virtual void GetMapComponent();
 	UFUNCTION(BlueprintCallable)
-	void ParseData(bool GetAllFeatures, int StartValue, int LastValue, const TSubclassOf<AFeatureItem> FeatureItem);
+	void ParseData(bool GetAllFeatures, int StartValue, int LastValue, const TSubclassOf<AFeatureItemBase> FeatureItem);
 	UFUNCTION(BlueprintCallable)
 	virtual void ProcessWebRequest();
-	void SpawnFeatures(int Start, int Last, const UClass* FeatureItem);
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UArcGISMapComponent* mapComponent;
+	virtual void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
+	void SpawnFeatures(int Start, int Last, const TSubclassOf<AFeatureItemBase> FeatureItem);
 	
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FProperties> FeatureData;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<AActor*> featureItems;
+	TArray<AActor*> FeatureItems;
 	TArray<TSharedPtr<FJsonValue>> Features;
-
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UArcGISMapComponent* MapComponent;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FLink WebLink;
 };

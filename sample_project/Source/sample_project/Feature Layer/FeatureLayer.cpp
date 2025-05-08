@@ -122,12 +122,12 @@ void AFeatureLayer::MoveCamera(AActor* Item)
 		return;
 	}
 
-	if (mapComponent == nullptr)
+	if (MapComponent == nullptr)
 	{
 		GetMapComponent();
 	}
 
-	if (!mapComponent)
+	if (!MapComponent)
 	{
 		return;
 	}
@@ -142,14 +142,14 @@ void AFeatureLayer::MoveCamera(AActor* Item)
 	if (const auto locationComponent = Cast<UArcGISLocationComponent>(ArcGISPawn->GetComponentByClass(UArcGISLocationComponent::StaticClass())))
 	{
 		const auto position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-			featureItem->Longitude, featureItem->Latitude, 250, mapComponent->GetOriginPosition()->GetSpatialReference());
+			featureItem->Longitude, featureItem->Latitude, 250, MapComponent->GetOriginPosition()->GetSpatialReference());
 		locationComponent->SetPosition(position);
 		locationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(0, 0, 0));
 	}
 
 	const auto originPosition = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(featureItem->Longitude, featureItem->Latitude, 0,
-	                                                                                   mapComponent->GetOriginPosition()->GetSpatialReference());
-	mapComponent->SetOriginPosition(originPosition);
+	                                                                                   MapComponent->GetOriginPosition()->GetSpatialReference());
+	MapComponent->SetOriginPosition(originPosition);
 }
 
 void AFeatureLayer::RefreshProperties(AFeatureItem* Item)
@@ -157,6 +157,13 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* Item)
 	Item->Properties.Empty();
 	Item->PropertiesNames.Empty();
 	resultProperties.Empty();
+
+	if (Features.IsEmpty())
+	{
+		GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, "Empty");
+		return;
+	}
+	
 	const auto properties = Features[Item->Index]->AsObject()->GetObjectField(TEXT("Properties"));
 
 	if (bGetAllOutfields)

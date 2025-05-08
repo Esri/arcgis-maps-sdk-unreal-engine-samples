@@ -82,7 +82,6 @@ private:
 	
 	UFunction* clearProperties;
 	UFunction* createProperties;
-	TArray<TSharedPtr<FJsonValue>> Features;
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
 	UMaterialInstance* highlightMaterial;
 	FTimerHandle startDelayHandle;

@@ -15,7 +15,7 @@
 
 #include "ArcGISFeatureLayerQuery.h"
 
-#include "FeatureItem.h"
+#include "FeatureItemBase.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPoint.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
@@ -42,107 +42,7 @@ void AArcGISFeatureLayerQuery::CreateLink()
 void AArcGISFeatureLayerQuery::GetMapComponent()
 {
 	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
-	mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
-}
-
-void AArcGISFeatureLayerQuery::ParseData(bool GetAllFeatures, int StartValue, int LastValue, const TSubclassOf<AFeatureItem> FeatureItem)
-{
-	if (FeatureData.IsEmpty())
-	{
-		GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, "Empty");
-		return;
-	}
-
-	if (mapComponent == nullptr)
-	{
-		GetMapComponent();
-	}
-
-	if (!mapComponent)
-	{
-		return;
-	}
-
-	if (GetAllFeatures)
-	{
-		auto index = 0;
-		for (auto featureData : FeatureData)
-		{
-			auto featureItem = GetWorld()->SpawnActor(FeatureItem);
-
-			if (!featureItem)
-			{
-				return;
-			}
-
-			const auto item = Cast<AFeatureItem>(featureItem);
-
-			if (!item)
-			{
-				return;
-			}
-
-			item->Index = index;
-			item->Properties = featureData.FeatureProperties;
-			item->Longitude = featureData.GeoProperties[0];
-			item->Latitude = featureData.GeoProperties[1];
-			featureItem->SetOwner(this);
-			item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
-			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-				item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
-			item->locationComponent->SetPosition(position);
-			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
-			item->locationComponent->SetRotation(rotation);
-			index++;
-			featureItems.Add(featureItem);
-		}
-	}
-	else
-	{
-		if (StartValue == LastValue)
-		{
-			auto featureItem = GetWorld()->SpawnActor(FeatureItem->StaticClass());
-
-			if (!featureItem)
-			{
-				return;
-			}
-
-			const auto item = Cast<AFeatureItem>(featureItem);
-
-			if (!item)
-			{
-				return;
-			}
-
-			item->Index = StartValue;
-			item->Properties = FeatureData[StartValue].FeatureProperties;
-			item->Longitude = FeatureData[StartValue].GeoProperties[0];
-			item->Latitude = FeatureData[StartValue].GeoProperties[1];
-			item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
-
-			if (mapComponent)
-			{
-				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-					item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
-				item->locationComponent->SetPosition(position);
-				UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
-				item->locationComponent->SetRotation(rotation);
-			}
-
-			featureItem->SetOwner(this);
-			featureItems.Add(featureItem);
-		}
-
-		if (LastValue >= FeatureData.Num())
-		{
-			SpawnFeatures(StartValue, FeatureData.Num(), FeatureItem->StaticClass());
-		}
-		else
-		{
-			SpawnFeatures(StartValue, LastValue, FeatureItem->StaticClass());
-		}
-	}
+	MapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
 }
 
 void AArcGISFeatureLayerQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully)
@@ -214,6 +114,106 @@ void AArcGISFeatureLayerQuery::OnResponseReceived(FHttpRequestPtr Request, FHttp
 	}
 }
 
+void AArcGISFeatureLayerQuery::ParseData(bool GetAllFeatures, int StartValue, int LastValue, const TSubclassOf<AFeatureItemBase> FeatureItem)
+{
+	if (FeatureData.IsEmpty())
+	{
+		GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, "Empty");
+		return;
+	}
+
+	if (MapComponent == nullptr)
+	{
+		GetMapComponent();
+	}
+
+	if (!MapComponent)
+	{
+		return;
+	}
+
+	if (GetAllFeatures)
+	{
+		auto index = 0;
+		for (auto featureData : FeatureData)
+		{
+			auto featureItem = GetWorld()->SpawnActor(FeatureItem);
+
+			if (!featureItem)
+			{
+				return;
+			}
+
+			const auto item = Cast<AFeatureItemBase>(featureItem);
+
+			if (!item)
+			{
+				return;
+			}
+
+			item->Index = index;
+			item->Properties = featureData.FeatureProperties;
+			item->Longitude = featureData.GeoProperties[0];
+			item->Latitude = featureData.GeoProperties[1];
+			featureItem->SetOwner(this);
+			item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+				item->Longitude, item->Latitude, 0, MapComponent->GetOriginPosition()->GetSpatialReference());
+			item->locationComponent->SetPosition(position);
+			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
+			item->locationComponent->SetRotation(rotation);
+			index++;
+			FeatureItems.Add(featureItem);
+		}
+	}
+	else
+	{
+		if (StartValue == LastValue)
+		{
+			auto featureItem = GetWorld()->SpawnActor(FeatureItem);
+
+			if (!featureItem)
+			{
+				return;
+			}
+
+			const auto item = Cast<AFeatureItemBase>(featureItem);
+
+			if (!item)
+			{
+				return;
+			}
+
+			item->Index = StartValue;
+			item->Properties = FeatureData[StartValue].FeatureProperties;
+			item->Longitude = FeatureData[StartValue].GeoProperties[0];
+			item->Latitude = FeatureData[StartValue].GeoProperties[1];
+			item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+
+			if (MapComponent)
+			{
+				UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
+					item->Longitude, item->Latitude, 0, MapComponent->GetOriginPosition()->GetSpatialReference());
+				item->locationComponent->SetPosition(position);
+				UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
+				item->locationComponent->SetRotation(rotation);
+			}
+
+			featureItem->SetOwner(this);
+			FeatureItems.Add(featureItem);
+		}
+
+		if (LastValue >= FeatureData.Num())
+		{
+			SpawnFeatures(StartValue, FeatureData.Num(), FeatureItem);
+		}
+		else
+		{
+			SpawnFeatures(StartValue, LastValue, FeatureItem);
+		}
+	}
+}
+
 void AArcGISFeatureLayerQuery::ProcessWebRequest()
 {
 	FeatureData.Empty();
@@ -224,18 +224,18 @@ void AArcGISFeatureLayerQuery::ProcessWebRequest()
 	Request->ProcessRequest();
 }
 
-void AArcGISFeatureLayerQuery::SpawnFeatures(int Start, int Last, const UClass* FeatureItem)
+void AArcGISFeatureLayerQuery::SpawnFeatures(int Start, int Last, const TSubclassOf<AFeatureItemBase> FeatureItem)
 {
 	for (int index = Start; index <= Last; ++index)
 	{
-		auto featureItem = GetWorld()->SpawnActor(FeatureItem->StaticClass());
+		auto featureItem = GetWorld()->SpawnActor(FeatureItem);
 
 		if (!featureItem)
 		{
 			return;
 		}
 
-		const auto item = Cast<AFeatureItem>(featureItem);
+		const auto item = Cast<AFeatureItemBase>(featureItem);
 
 		if (!item)
 		{
@@ -248,14 +248,16 @@ void AArcGISFeatureLayerQuery::SpawnFeatures(int Start, int Last, const UClass* 
 		item->Latitude = FeatureData[index].GeoProperties[1];
 		item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
 
-		if (mapComponent)
+		if (MapComponent)
 		{
 			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-				item->Longitude, item->Latitude, 0, mapComponent->GetOriginPosition()->GetSpatialReference());
+				item->Longitude, item->Latitude, 0, MapComponent->GetOriginPosition()->GetSpatialReference());
 			item->locationComponent->SetPosition(position);
+			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
+			item->locationComponent->SetRotation(rotation);
 		}
 
 		featureItem->SetOwner(this);
-		featureItems.Add(featureItem);
+		FeatureItems.Add(featureItem);
 	}
 }

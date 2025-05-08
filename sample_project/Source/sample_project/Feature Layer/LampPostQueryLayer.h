@@ -19,7 +19,6 @@
 #include "ArcGISFeatureLayerQuery.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Http.h"
 #include "Engine/DataTable.h"
 #include "LampPostQueryLayer.generated.h"
 

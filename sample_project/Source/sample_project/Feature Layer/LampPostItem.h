@@ -16,7 +16,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FeatureItem.h"
+#include "FeatureItemBase.h"
 #include "Components/PointLightComponent.h"
 #include "GameFramework/Actor.h"
 #include "LampPostItem.generated.h"
@@ -24,7 +24,7 @@
 class UArcGISLocationComponent;
 
 UCLASS()
-class SAMPLE_PROJECT_API ALampPostItem : public AFeatureItem
+class SAMPLE_PROJECT_API ALampPostItem : public AFeatureItemBase
 {
 	GENERATED_BODY()
 

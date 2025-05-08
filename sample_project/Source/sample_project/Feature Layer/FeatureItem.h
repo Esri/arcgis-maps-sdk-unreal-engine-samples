@@ -16,34 +16,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FeatureItemBase.h"
 #include "GameFramework/Actor.h"
 #include "FeatureItem.generated.h"
 
 class UArcGISLocationComponent;
 
 UCLASS()
-class SAMPLE_PROJECT_API AFeatureItem : public AActor
+class SAMPLE_PROJECT_API AFeatureItem : public AFeatureItemBase
 {
 	GENERATED_BODY()
 
 public:
 	AFeatureItem();
-
-	UPROPERTY(VisibleAnywhere)
-	UArcGISLocationComponent* locationComponent;
+	
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
 	UStaticMeshComponent* pin;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<FString> Properties;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<FString> PropertiesNames;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	double Latitude;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	double Longitude;
-	UPROPERTY(VisibleAnywhere)
-	int Index;
-	USceneComponent* Root;
 
 private:
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess))
