@@ -64,14 +64,16 @@ public:
 	virtual void CreateLink();
 	virtual void GetMapComponent();
 	UFUNCTION(BlueprintCallable)
-	void ParseData(bool GetAllFeatures, int StartValue, int LastValue, const TSubclassOf<AFeatureItemBase> FeatureItem);
+	void ParseData(bool GetAllFeatures, int StartValue, int LastValue);
 	UFUNCTION(BlueprintCallable)
 	virtual void ProcessWebRequest();
 	virtual void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
-	void SpawnFeatures(int Start, int Last, const TSubclassOf<AFeatureItemBase> FeatureItem);
+	void SpawnFeatures(int Start, int Last);
 	
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<FProperties> FeatureData;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	const TSubclassOf<AFeatureItemBase> FeatureItem;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<AActor*> FeatureItems;
 	TArray<TSharedPtr<FJsonValue>> Features;

@@ -114,7 +114,7 @@ void AArcGISFeatureLayerQuery::OnResponseReceived(FHttpRequestPtr Request, FHttp
 	}
 }
 
-void AArcGISFeatureLayerQuery::ParseData(bool GetAllFeatures, int StartValue, int LastValue, const TSubclassOf<AFeatureItemBase> FeatureItem)
+void AArcGISFeatureLayerQuery::ParseData(bool GetAllFeatures, int StartValue, int LastValue)
 {
 	if (FeatureData.IsEmpty())
 	{
@@ -205,11 +205,11 @@ void AArcGISFeatureLayerQuery::ParseData(bool GetAllFeatures, int StartValue, in
 
 		if (LastValue >= FeatureData.Num())
 		{
-			SpawnFeatures(StartValue, FeatureData.Num(), FeatureItem);
+			SpawnFeatures(StartValue, FeatureData.Num());
 		}
 		else
 		{
-			SpawnFeatures(StartValue, LastValue, FeatureItem);
+			SpawnFeatures(StartValue, LastValue);
 		}
 	}
 }
@@ -224,7 +224,7 @@ void AArcGISFeatureLayerQuery::ProcessWebRequest()
 	Request->ProcessRequest();
 }
 
-void AArcGISFeatureLayerQuery::SpawnFeatures(int Start, int Last, const TSubclassOf<AFeatureItemBase> FeatureItem)
+void AArcGISFeatureLayerQuery::SpawnFeatures(int Start, int Last)
 {
 	for (int index = Start; index <= Last; ++index)
 	{
