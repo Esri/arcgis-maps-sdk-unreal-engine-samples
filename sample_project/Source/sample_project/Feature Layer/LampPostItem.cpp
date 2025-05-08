@@ -14,18 +14,12 @@
  */
 
 #include "LampPostItem.h"
-#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
-#include "Components/BoxComponent.h"
 
 ALampPostItem::ALampPostItem()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	Root->SetMobility(EComponentMobility::Movable);
-	RootComponent = Root;
-
-	lamp = CreateDefaultSubobject<UStaticMeshComponent>("PinMesh");
+	lamp = CreateDefaultSubobject<UStaticMeshComponent>("PostMesh");
 	lamp->SetupAttachment(Root);
 	lamp->SetStaticMesh(lampPostMesh);
 	lamp->SetWorldScale3D(FVector(1, 1, 1));
@@ -53,7 +47,4 @@ ALampPostItem::ALampPostItem()
 #endif
 
 	pointLight->SetHiddenInGame(true);
-
-	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>("Location Component");
-	locationComponent->SetupAttachment(Root);
 }

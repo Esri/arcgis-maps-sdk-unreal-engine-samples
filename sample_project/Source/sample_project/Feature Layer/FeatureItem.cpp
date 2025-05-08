@@ -14,16 +14,11 @@
  */
 
 #include "FeatureItem.h"
-#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "Components/BoxComponent.h"
 
 AFeatureItem::AFeatureItem()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	Root->SetMobility(EComponentMobility::Movable);
-	RootComponent = Root;
 
 	pin = CreateDefaultSubobject<UStaticMeshComponent>("PinMesh");
 	pin->SetStaticMesh(pinMesh);
@@ -35,7 +30,4 @@ AFeatureItem::AFeatureItem()
 	collider->SetRelativeLocation(FVector(0, 0, 1150));
 	collider->SetWorldScale3D(FVector(5, 5, 10));
 	collider->SetCollisionProfileName(FName("BlockAll"));
-
-	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>("Location Component");
-	locationComponent->SetupAttachment(Root);
 }

@@ -50,14 +50,14 @@ void AArcGISRaycast::BeginPlay()
 	}
 }
 
-void AArcGISRaycast::CreateLink(FString objectID)
+void AArcGISRaycast::FetchID(FString ObjectID)
 {
 	webLink = "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/Buildings_Boston_USA/FeatureServer/0/"
 			  "query?f=geojson&where=1=1&objectids=" +
-			  objectID + "&outfields=AREA_SQ_FT,DISTRICT,Height,SUBDISTRIC,ZONE_";
+			  ObjectID + "&outfields=AREA_SQ_FT,DISTRICT,Height,SUBDISTRIC,ZONE_";
 
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &AArcGISRaycast::OnResponseRecieved);
+	Request->OnProcessRequestComplete().BindUObject(this, &AArcGISRaycast::OnResponseReceived);
 	Request->SetURL(webLink);
 	Request->SetVerb("Get");
 	Request->ProcessRequest();
@@ -95,56 +95,55 @@ void AArcGISRaycast::GetHit()
 		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
 												  EDrawDebugTrace::None, HitResult, true))
 		{
-			const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
-			const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
-
-			if (!mapComponent)
+			GetMapComponent();
+			
+			if (!MapComponent)
 			{
 				UE_LOG(LogTemp, Error, TEXT("Could not find map component."));
 				return;
 			}
 
-			auto result = mapComponent->GetArcGISRaycastHit(HitResult);
+			auto result = MapComponent->GetArcGISRaycastHit(HitResult);
 
 			if (result.Layer != nullptr && result.FeatureId != -1)
 			{
 				HitLocation->SetActorLocation(HitResult.ImpactPoint);
 				featureID = result.FeatureId;
-				auto geoPosition = mapComponent->TransformEnginePositionToPoint(HitResult.ImpactPoint);
+				auto geoPosition = MapComponent->TransformEnginePositionToPoint(HitResult.ImpactPoint);
 				
 				if (geoPosition)
 				{
 					position = "- Lat: " + FString::SanitizeFloat(geoPosition->GetY()) + ", Long: " + FString::SanitizeFloat(geoPosition->GetX());
 				}
 
-				CreateLink(FString::FromInt(result.FeatureId));
+				FetchID(FString::FromInt(result.FeatureId));
 			}
 		}
 	}
 }
 
-FString AArcGISRaycast::GetObjectIDs(FString response, FString outfield)
+FString AArcGISRaycast::GetObjectIDs(FString Response, FString Outfield)
 {
 	TSharedPtr<FJsonObject> ResponseObj;
-	auto Reader = TJsonReaderFactory<>::Create(response);
+	auto Reader = TJsonReaderFactory<>::Create(Response);
 	FString property = "";
 
 	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 	{
-		TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
+		TArray<TSharedPtr<FJsonValue>> FeatureIDs = ResponseObj->GetArrayField("features");
 
-		for (auto feature : Features)
+		for (auto feature : FeatureIDs)
 		{
-			property = feature->AsObject()->GetObjectField("properties")->GetStringField(outfield);
+			property = feature->AsObject()->GetObjectField("properties")->GetStringField(Outfield);
 		}
 	}
 
 	return property;
 }
 
-void AArcGISRaycast::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
+void AArcGISRaycast::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully)
 {
-	if (!bConnectedSucessfully)
+	if (!bConnectedSuccessfully)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Could not connect to feature server. Please try again."));
 		return;

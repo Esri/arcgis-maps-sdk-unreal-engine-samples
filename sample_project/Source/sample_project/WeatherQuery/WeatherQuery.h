@@ -19,6 +19,7 @@
 #include "Http.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
+#include "sample_project/Feature Layer/ArcGISFeatureLayerQuery.h"
 #include "sample_project/Geocoding/Geocoder.h"
 #include "WeatherQuery.generated.h"
 
@@ -53,16 +54,15 @@ public:
 };
 
 UCLASS()
-class SAMPLE_PROJECT_API AWeatherQuery : public AActor
+class SAMPLE_PROJECT_API AWeatherQuery : public AArcGISFeatureLayerQuery
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
 	AWeatherQuery();
-
-	UFUNCTION(BlueprintCallable)
-	void ProcessWebRequest();	
+	virtual void ProcessWebRequest() override;	
+	
 	UFUNCTION(BlueprintCallable)
 	void SendCityQuery(float X, float Y);
 	
@@ -80,7 +80,6 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	virtual void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully) override;
 	void ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
-	FString webLink = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0//query?where=COUNTRY+LIKE+%27%25United+States+of+America%27+AND+WEATHER+NOT+IN(%27%2CAutomated+observation+with+no+human+augmentation%3B+there+may+or+may+not+be+significant+weather+present+at+this+time.%27)&outFields=*&f=pgeojson&orderByFields=STATION_NAME";
 };

@@ -17,7 +17,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Http.h"
 #include "ArcGISFeatureLayerQuery.generated.h"
+
+class AFeatureItemBase;
+class AFeatureItem;
+class UArcGISMapComponent;
 
 USTRUCT(BlueprintType)
 struct SAMPLE_PROJECT_API FLink : public FTableRowBase
@@ -54,4 +59,26 @@ class SAMPLE_PROJECT_API AArcGISFeatureLayerQuery : public AActor
 
 public:
 	AArcGISFeatureLayerQuery();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void CreateLink();
+	virtual void GetMapComponent();
+	UFUNCTION(BlueprintCallable)
+	void ParseData(bool GetAllFeatures, int StartValue, int LastValue);
+	UFUNCTION(BlueprintCallable)
+	virtual void ProcessWebRequest();
+	virtual void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
+	void SpawnFeatures(int Start, int Last);
+	
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<FProperties> FeatureData;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	const TSubclassOf<AFeatureItemBase> FeatureItem;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TArray<AActor*> FeatureItems;
+	TArray<TSharedPtr<FJsonValue>> Features;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UArcGISMapComponent* MapComponent;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FLink WebLink;
 };
