@@ -31,5 +31,4 @@ public:
 	int Index;
 
 	USceneComponent* Root;
-
 };
