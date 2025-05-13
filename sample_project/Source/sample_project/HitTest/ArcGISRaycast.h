@@ -19,12 +19,13 @@
 #include "Engine/StaticMeshActor.h"
 #include "GameFramework/Actor.h"
 #include "Http.h"
+#include "sample_project/Feature Layer/ArcGISFeatureLayerQuery.h"
 #include "ArcGISRaycast.generated.h"
 
 class UArcGISMapComponent;
 
 UCLASS()
-class SAMPLE_PROJECT_API AArcGISRaycast : public AActor
+class SAMPLE_PROJECT_API AArcGISRaycast : public AArcGISFeatureLayerQuery
 {
 	GENERATED_BODY()
 
@@ -36,12 +37,12 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 private:
-	void CreateLink(FString objectID);
+	void FetchID(FString ObjectID);
 	void CreateProperties();
 	UFUNCTION()
 	void GetHit();
-	FString GetObjectIDs(FString response, FString outfield);
-	void OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully);
+	FString GetObjectIDs(FString Response, FString Outfield);
+	virtual void OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully) override;
 
 	UFunction* createProperties;
 	int featureID;

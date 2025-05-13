@@ -26,7 +26,7 @@ AWeatherQuery::AWeatherQuery()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AWeatherQuery::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
+void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
 	if (bConnectedSucessfully)
 	{
@@ -38,9 +38,9 @@ void AWeatherQuery::OnResponseRecieved(FHttpRequestPtr Request, FHttpResponsePtr
 		if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 		{
 			//get the array field features
-			TArray<TSharedPtr<FJsonValue>> Features = ResponseObj->GetArrayField("features");
+			TArray<TSharedPtr<FJsonValue>> WeatherFeatures = ResponseObj->GetArrayField("features");
 			//parse through the features in order to get individual properties associated with the features
-			for (auto WeatherStat : Features)
+			for (auto WeatherStat : WeatherFeatures)
 			{
 				if (!WeatherStat->IsNull())
 				{
@@ -80,8 +80,8 @@ void AWeatherQuery::ProcessWebRequest()
 {
 	Weather.Empty();
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
-	Request->OnProcessRequestComplete().BindUObject(this, &AWeatherQuery::OnResponseRecieved);
-	Request->SetURL(webLink);
+	Request->OnProcessRequestComplete().BindUObject(this, &AWeatherQuery::OnResponseReceived);
+	Request->SetURL(WebLink.Link);
 	Request->SetVerb("Get");
 	Request->ProcessRequest();
 }
@@ -89,8 +89,7 @@ void AWeatherQuery::ProcessWebRequest()
 void AWeatherQuery::SendCityQuery(float X, float Y)
 {
 	FString Url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
-	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
-	const auto MapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+	GetMapComponent();
 	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
 	FString Query;
 
@@ -127,6 +126,8 @@ void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpRespo
 void AWeatherQuery::BeginPlay()
 {
 	Super::BeginPlay();
+	WebLink.Link = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0//query?where=COUNTRY+LIKE+%27%25United+States+of+America%27+AND+WEATHER+NOT+IN(%27%2CAutomated+observation+with+no+human+augmentation%3B+there+may+or+may+not+be+significant+weather+present+at+this+time.%27)&outFields=*&f=pgeojson&orderByFields=STATION_NAME";
+	
 	ProcessWebRequest();
 
 	// Create the UI and add it to the viewport
