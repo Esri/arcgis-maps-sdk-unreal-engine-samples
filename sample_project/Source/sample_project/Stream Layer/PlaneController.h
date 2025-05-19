@@ -78,6 +78,7 @@ class SAMPLE_PROJECT_API APlaneController : public AActor
 
 public:
 	APlaneController();
+	UFUNCTION(BlueprintCallable)
 	void PredictPoint(double intervalMilliseconds);
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FPlaneFeature FeatureData;
@@ -88,6 +89,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UStaticMesh* PlaneModel = LoadObject<UStaticMesh>(
 		nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
+	UPROPERTY(BlueprintReadOnly)
 	UArcGISPoint* PredictedPoint;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UWidgetComponent* TextComponent;

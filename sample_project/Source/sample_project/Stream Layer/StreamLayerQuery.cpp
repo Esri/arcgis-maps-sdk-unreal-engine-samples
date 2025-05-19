@@ -121,19 +121,7 @@ void AStreamLayerQuery::BeginPlay()
 			
 		}
 	}
-}
-
-void AStreamLayerQuery::Tick(float DeltaSeconds)
-{
-	for (auto Plane : planeData)
-	{
-		if (Plane.Value)
-		{
-			Plane.Value->PredictPoint(DeltaSeconds * 1000);
-			Plane.Value->LocationComponent->SetPosition(Plane.Value->PredictedPoint);
-		}
-	}
-}
+} 
 
 void AStreamLayerQuery::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {

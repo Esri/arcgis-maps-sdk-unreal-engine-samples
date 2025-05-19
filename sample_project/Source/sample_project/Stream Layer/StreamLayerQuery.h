@@ -48,6 +48,5 @@ private:
 
 protected:
 	virtual void BeginPlay() override;
-	void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };
