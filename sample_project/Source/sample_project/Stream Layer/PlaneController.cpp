@@ -55,7 +55,14 @@ void APlaneController::PredictPoint(double intervalMilliseconds)
 	FeatureData.PredictedPoint.Z = currentPoint[2];
 	PredictedPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 		FeatureData.PredictedPoint.X, FeatureData.PredictedPoint.Y, FeatureData.PredictedPoint.Z,
-		UArcGISSpatialReference::CreateArcGISSpatialReference(4326));
+		spatialReference);
+}
+
+void APlaneController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	spatialReference = UArcGISSpatialReference::WGS84();
 }
 
 FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, float heading, float speed, FDateTime dateTimeStamp)

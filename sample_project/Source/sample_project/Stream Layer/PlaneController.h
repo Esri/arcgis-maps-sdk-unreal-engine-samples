@@ -93,4 +93,10 @@ public:
 	UArcGISPoint* PredictedPoint;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UWidgetComponent* TextComponent;
+	
+private:
+	UArcGISSpatialReference* spatialReference;
+
+protected:
+	virtual void BeginPlay() override;
 };
