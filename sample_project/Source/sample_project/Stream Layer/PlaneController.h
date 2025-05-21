@@ -95,7 +95,7 @@ public:
 	UWidgetComponent* TextComponent;
 	
 private:
-	UArcGISSpatialReference* spatialReference;
+	static UArcGISSpatialReference* spatialReference;
 
 protected:
 	virtual void BeginPlay() override;

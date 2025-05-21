@@ -53,6 +53,12 @@ void APlaneController::PredictPoint(double intervalMilliseconds)
 	FeatureData.PredictedPoint.X = drPoint[0];
 	FeatureData.PredictedPoint.Y = drPoint[1];
 	FeatureData.PredictedPoint.Z = currentPoint[2];
+
+	if (spatialReference == nullptr)
+	{
+		return;
+	}
+	
 	PredictedPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 		FeatureData.PredictedPoint.X, FeatureData.PredictedPoint.Y, FeatureData.PredictedPoint.Z,
 		spatialReference);
