@@ -52,23 +52,10 @@ void APlaneController::PredictPoint(double intervalMilliseconds)
 	auto drPoint = ADeadReckoning::DeadReckoningPoint(metersPerSec, timespanSec, currentPoint, headingDegrees);
 	FeatureData.PredictedPoint.X = drPoint[0];
 	FeatureData.PredictedPoint.Y = drPoint[1];
-	FeatureData.PredictedPoint.Z = currentPoint[2];
-
-	if (spatialReference == nullptr)
-	{
-		return;
-	}
-	
+	FeatureData.PredictedPoint.Z = currentPoint[2];	
 	PredictedPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
 		FeatureData.PredictedPoint.X, FeatureData.PredictedPoint.Y, FeatureData.PredictedPoint.Z,
-		spatialReference);
-}
-
-void APlaneController::BeginPlay()
-{
-	Super::BeginPlay();
-
-	spatialReference = UArcGISSpatialReference::WGS84();
+		UArcGISSpatialReference::WGS84());
 }
 
 FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, float heading, float speed, FDateTime dateTimeStamp)
