@@ -8,6 +8,7 @@
 #include "ArcGISMapsSDK/Components/ArcGISCameraComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -58,6 +59,13 @@ void AOverviewMapCamera::BeginPlay()
 	PlayerController->SetInputMode(FInputModeGameAndUI());
 	PlayerController->SetShowMouseCursor(true);
 	ArcGISPawn = Cast<AArcGISPawn>(UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISPawn::StaticClass()));
+}
+
+void AOverviewMapCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	UWidgetLayoutLibrary::RemoveAllWidgets(UIWidget);
 }
 
 void AOverviewMapCamera::Tick(float DeltaTime)
