@@ -76,21 +76,25 @@ class SAMPLE_PROJECT_API APlaneController : public AActor
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void BeginPlay() override;
+	
 public:
 	APlaneController();
+	void GetMapComponent();
 	UFUNCTION(BlueprintCallable)
 	void PredictPoint(double intervalMilliseconds);
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FPlaneFeature FeatureData;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	UArcGISLocationComponent* LocationComponent;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UStaticMeshComponent* Mesh;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	UStaticMesh* PlaneModel = LoadObject<UStaticMesh>(
 		nullptr, TEXT("/Game/SampleViewer/Samples/StreamLayer/PlaneModel/3D_Model/Boeing_747.Boeing_747"));
-	UPROPERTY(BlueprintReadOnly)
-	UArcGISPoint* PredictedPoint;
+	Esri::GameEngine::Geometry::ArcGISPoint PredictedPoint;
+	FVector predictedLocation;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UWidgetComponent* TextComponent;
+
+	UArcGISMapComponent* MapComponent;
 };

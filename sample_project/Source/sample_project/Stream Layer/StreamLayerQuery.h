@@ -40,12 +40,15 @@ private:
 	void Connect();
 	void TryParseAndUpdatePlane(FString data);
 	void SpawnPlane(FPlaneFeature);
+	virtual void Tick(float DeltaSeconds) override;
 	TMap<FString, APlaneController*> planeData;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta=(AllowPrivateAccess))
 	float PlaneCountThreshold = 100;
 	FString Url = "wss://geoeventsample1.esri.com:6143/arcgis/ws/services/FAAStream/StreamServer/subscribe";
 	TSharedPtr<IWebSocket> webSocket;
 
+	UArcGISMapComponent* MapComponent;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
