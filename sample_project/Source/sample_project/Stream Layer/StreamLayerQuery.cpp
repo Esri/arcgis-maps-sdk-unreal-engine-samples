@@ -15,7 +15,9 @@
 
 
 #include "StreamLayerQuery.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
+#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "WebSocketsModule.h"
@@ -92,10 +94,12 @@ void AStreamLayerQuery::SpawnPlane(FPlaneFeature PlaneFeature)
 #if WITH_EDITOR
 	planeActor->SetActorLabel(*PlaneFeature.Attributes.Name);
 #endif
-	planeActor->LocationComponent->SetPosition(UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-		PlaneFeature.Geometry.X, PlaneFeature.Geometry.Y, PlaneFeature.Geometry.Y,
-		UArcGISSpatialReference::CreateArcGISSpatialReference(4326)));
-	planeActor->LocationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(90,0,PlaneFeature.Attributes.Heading));
+
+	auto predictedPoint = Esri::GameEngine::Geometry::ArcGISPoint(PlaneFeature.PredictedPoint.X,
+		PlaneFeature.PredictedPoint.Y, PlaneFeature.PredictedPoint.Z,
+		Esri::GameEngine::Geometry::ArcGISSpatialReference(4326));
+	planeActor->SetActorLocation(MapComponent->ToEnginePosition(MapComponent->GetView()->APIObject->GeographicToWorld(predictedPoint)));
+	planeActor->SetActorRotation(FRotator(0, PlaneFeature.Attributes.Heading - 90, 0));
 	planeData.Add(planeActor->FeatureData.Attributes.Name, planeActor);
 }
 
@@ -104,6 +108,9 @@ void AStreamLayerQuery::BeginPlay()
 	Super::BeginPlay();
 	Connect();
 
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	MapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
+	
 	// Make sure mouse cursor remains visible
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (PC)
@@ -130,7 +137,7 @@ void AStreamLayerQuery::Tick(float DeltaSeconds)
 		if (Plane.Value)
 		{
 			Plane.Value->PredictPoint(DeltaSeconds * 1000);
-			Plane.Value->LocationComponent->SetPosition(Plane.Value->PredictedPoint);
+			Plane.Value->SetActorLocation(Plane.Value->predictedLocation);
 		}
 	}
 }
