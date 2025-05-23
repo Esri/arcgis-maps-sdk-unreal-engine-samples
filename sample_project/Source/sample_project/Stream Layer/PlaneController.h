@@ -82,7 +82,6 @@ protected:
 public:
 	APlaneController();
 	void GetMapComponent();
-	UFUNCTION(BlueprintCallable)
 	void PredictPoint(double intervalMilliseconds);
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FPlaneFeature FeatureData;

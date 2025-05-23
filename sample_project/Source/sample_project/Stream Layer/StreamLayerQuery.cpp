@@ -15,12 +15,12 @@
 
 
 #include "StreamLayerQuery.h"
-#include "Blueprint/UserWidget.h"
-#include "Kismet/GameplayStatics.h"
-#include "WebSocketsModule.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
 #include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "WebSocketsModule.h"
 
 AStreamLayerQuery::AStreamLayerQuery()
 {

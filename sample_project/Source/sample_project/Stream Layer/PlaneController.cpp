@@ -15,11 +15,11 @@
 
 
 #include "PlaneController.h"
-#include "DeadReckoning.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "DeadReckoning.h"
 #include "Kismet/GameplayStatics.h"
 
 APlaneController::APlaneController()
@@ -64,8 +64,8 @@ void APlaneController::PredictPoint(double intervalMilliseconds)
 	PredictedPoint = Esri::GameEngine::Geometry::ArcGISPoint(FeatureData.PredictedPoint.X,
 		FeatureData.PredictedPoint.Y, FeatureData.PredictedPoint.Z,
 		Esri::GameEngine::Geometry::ArcGISSpatialReference(4326));
-	auto newLocation = MapComponent->GetView()->APIObject->GeographicToWorld(PredictedPoint);
-	predictedLocation = MapComponent->ToEnginePosition(newLocation);
+	predictedLocation = MapComponent->ToEnginePosition(
+		MapComponent->GetView()->APIObject->GeographicToWorld(PredictedPoint));
 }
 
 FPlaneFeature FPlaneFeature::Create(FString name, double x, double y, double z, float heading, float speed, FDateTime dateTimeStamp)
