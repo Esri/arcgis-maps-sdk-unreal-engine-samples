@@ -31,6 +31,19 @@ void AMeasure::BeginPlay()
 {
 	Super::BeginPlay();
 
+	MapActor = Cast<AArcGISMapActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass()));
+
+	if (MapActor)
+	{
+		MapComponent = MapActor->GetMapComponent();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
+	}
+
+	SpatialRef = UArcGISSpatialReference::CreateArcGISSpatialReference(3857);
+
 	inputManager->OnInputTrigger.AddDynamic(this, &AMeasure::AddStop);
 
 	// Make sure mouse cursor remains visible
@@ -88,12 +101,14 @@ void AMeasure::AddStop()
 
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
 
-		auto thisPoint = lineMarker->ArcGISLocation->GetPosition();
+		FGeoPosition lineMarkerGeo = MapComponent->EngineToGeographic(lineMarker->GetActorLocation());
+		UArcGISPoint* thisPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lineMarkerGeo.X, lineMarkerGeo.Y,lineMarkerGeo.Z, SpatialRef);
 
 		if (!Stops.IsEmpty())
 		{
 			auto lastStop = Stops.Last();
-			auto lastPoint = lastStop->ArcGISLocation->GetPosition();
+			FGeoPosition lastStopGeo = MapComponent->EngineToGeographic(lastStop->GetActorLocation());
+			UArcGISPoint* lastPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lastStopGeo.X, lastStopGeo.Y, lastStopGeo.Z, SpatialRef);
 
 			//Calculate distance from last point to this point
 			SegmentDistance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,
