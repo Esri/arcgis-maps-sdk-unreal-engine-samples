@@ -23,7 +23,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Materials/MaterialExpressionConstant3Vector.h"
-
+#include "ArcGISMapsSDK/Utils/GeoCoord/GeoPosition.h"
 #include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometry.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnit.h"
@@ -88,6 +88,9 @@ private:
 	TArray<AActor*> FeaturePoints;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	class AInputManager* inputManager;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+	AArcGISMapActor* MapActor;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 	FVector2D RouteCueScale = FVector2D(5);
 	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
@@ -106,6 +109,7 @@ private:
 	double SegmentDistance;
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	float MarkerHeight = 7000.0f;
+	UArcGISSpatialReference* SpatialRef;
 
 	UFUNCTION()
 	void AddStop();
