@@ -29,6 +29,13 @@ ABreadcrumb::ABreadcrumb()
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MarkerMesh"));
 	MeshComponent->SetupAttachment(Root);
 	MeshComponent->SetWorldScale3D(MeshScale);
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
+	if (MeshAsset.Succeeded())
+	{
+		MeshComponent->SetStaticMesh(MeshAsset.Object);
+	}
+
 	ArcGISLocation = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("ArcGISLocation"));
 	ArcGISLocation->SetupAttachment(Root);
 }
