@@ -42,7 +42,7 @@ void AMeasure::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
 	}
 
-	SpatialRef = UArcGISSpatialReference::CreateArcGISSpatialReference(3857);
+	SpatialRef = MapComponent -> GetOriginPosition() -> GetSpatialReference();
 
 	inputManager->OnInputTrigger.AddDynamic(this, &AMeasure::AddStop);
 
@@ -101,14 +101,12 @@ void AMeasure::AddStop()
 
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
 
-		FGeoPosition lineMarkerGeo = MapComponent->EngineToGeographic(lineMarker->GetActorLocation());
-		UArcGISPoint* thisPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lineMarkerGeo.X, lineMarkerGeo.Y,lineMarkerGeo.Z, SpatialRef);
+		auto thisPoint = MapComponent->TransformEnginePositionToPoint(hit.ImpactPoint);
 
 		if (!Stops.IsEmpty())
 		{
 			auto lastStop = Stops.Last();
-			FGeoPosition lastStopGeo = MapComponent->EngineToGeographic(lastStop->GetActorLocation());
-			UArcGISPoint* lastPoint = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lastStopGeo.X, lastStopGeo.Y, lastStopGeo.Z, SpatialRef);
+			auto lastPoint = MapComponent->TransformEnginePositionToPoint(lastStop->GetActorLocation());
 
 			//Calculate distance from last point to this point
 			SegmentDistance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,
