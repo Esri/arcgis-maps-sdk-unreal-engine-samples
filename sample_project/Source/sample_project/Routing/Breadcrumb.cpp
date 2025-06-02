@@ -31,6 +31,7 @@ ABreadcrumb::ABreadcrumb()
 	MeshComponent->SetWorldScale3D(MeshScale);
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
+
 	if (MeshAsset.Succeeded())
 	{
 		MeshComponent->SetStaticMesh(MeshAsset.Object);
