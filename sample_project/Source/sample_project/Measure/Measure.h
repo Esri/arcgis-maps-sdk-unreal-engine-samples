@@ -23,7 +23,6 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Materials/MaterialExpressionConstant3Vector.h"
-#include "ArcGISMapsSDK/Utils/GeoCoord/GeoPosition.h"
 #include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometry.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnit.h"
