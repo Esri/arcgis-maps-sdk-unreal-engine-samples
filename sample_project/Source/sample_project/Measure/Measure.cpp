@@ -31,6 +31,19 @@ void AMeasure::BeginPlay()
 {
 	Super::BeginPlay();
 
+	MapActor = Cast<AArcGISMapActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass()));
+
+	if (MapActor)
+	{
+		MapComponent = MapActor->GetMapComponent();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
+	}
+
+	SpatialRef = MapComponent -> GetOriginPosition() -> GetSpatialReference();
+
 	inputManager->OnInputTrigger.AddDynamic(this, &AMeasure::AddStop);
 
 	// Make sure mouse cursor remains visible
@@ -88,12 +101,12 @@ void AMeasure::AddStop()
 
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
 
-		auto thisPoint = lineMarker->ArcGISLocation->GetPosition();
+		auto thisPoint = MapComponent->TransformEnginePositionToPoint(hit.ImpactPoint);
 
 		if (!Stops.IsEmpty())
 		{
 			auto lastStop = Stops.Last();
-			auto lastPoint = lastStop->ArcGISLocation->GetPosition();
+			auto lastPoint = MapComponent->TransformEnginePositionToPoint(lastStop->GetActorLocation());
 
 			//Calculate distance from last point to this point
 			SegmentDistance = UArcGISGeometryEngine::DistanceGeodetic(lastPoint, thisPoint, Unit,
