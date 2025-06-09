@@ -62,6 +62,9 @@ void AGeometryCreator::BeginPlay()
 			UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
 		}
 	}
+
+	CurrentLinearUnit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
+	CurrentAreaUnit = UArcGISAreaUnit::CreateArcGISAreaUnit(EArcGISAreaUnitId::SquareMiles);
 }
 
 void AGeometryCreator::EndPlay(const EEndPlayReason::Type EndPlayReason)

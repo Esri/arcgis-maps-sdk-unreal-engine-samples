@@ -120,10 +120,10 @@ private:
 	TObjectPtr<UArcGISAreaUnit> Unit;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
-	TObjectPtr<UArcGISAreaUnit> CurrentAreaUnit = UArcGISAreaUnit::CreateArcGISAreaUnit(EArcGISAreaUnitId::SquareMiles);;
+	TObjectPtr<UArcGISAreaUnit> CurrentAreaUnit;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
-	TObjectPtr<UArcGISLinearUnit> CurrentLinearUnit = UArcGISLinearUnit::CreateArcGISLinearUnit(EArcGISLinearUnitId::Miles);
+	TObjectPtr<UArcGISLinearUnit> CurrentLinearUnit;
 
 	UArcGISSpatialReference* spatialReference;
 
