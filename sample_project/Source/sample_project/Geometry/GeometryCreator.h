@@ -84,8 +84,8 @@ private:
 	FVector LastRootPosition;
 	bool bIsDragging = false;
 	bool bIsEnvelopeMode = false;
-	bool bIsPolygonMode = false;
-	bool bIsPolylineMode = true;
+	bool bIsPolygonMode = true;
+	bool bIsPolylineMode = false;
 
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 
@@ -100,7 +100,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	TArray<AActor*> FeaturePoints;
 	UPROPERTY(EditAnywhere)
-	TArray<AActor*> LastToStartInterpolated;
+	TArray<AActor*> lastToStartInterpolationPoints;
 	UPROPERTY(EditAnywhere)
 	TArray<ARouteMarker*> Stops;
 
@@ -130,9 +130,8 @@ private:
 	void ClearGeometry();
 	void CreateEnvelope(const FVector& Start, const FVector& End);
 	void CreatePolygon();
-	void Interpolate(AActor* Start, AActor* End);
+	void Interpolate(AActor* Start, AActor* End, TArray<AActor*>& Points);
 	void VisualizeEnvelope(const FBox2D& Envelope);
-	void RenderLine(const TArray<AActor*>& Points);
 	void SetElevation(AActor* Marker);
 
 	UFUNCTION()
@@ -142,7 +141,7 @@ private:
 	void EndGeometry();
 
 	UFUNCTION(BlueprintCallable)
-	void RenderLine();
+	void RenderLine(TArray<AActor*>& Points);
 
 	UFUNCTION(BlueprintCallable)
 	void ClearLine();

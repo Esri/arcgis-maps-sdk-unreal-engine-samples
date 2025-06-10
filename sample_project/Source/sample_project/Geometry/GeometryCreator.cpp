@@ -111,12 +111,28 @@ void AGeometryCreator::StartGeometry()
 		{
 			if (bIsPolygonMode)
 			{
-                // Clear interpolation points of last segments
-                for (AActor* Point : LastToStartInterpolated)
-                {
-					Point->Destroy();									
-                }
-                LastToStartInterpolated.Empty();
+                // Clear the last segment when adding a new polygon vertice				
+				int32 RemovedCount = lastToStartInterpolationPoints.Num();
+				for (int32 i = 0; i <= RemovedCount; i++)
+				{
+					if (!SplineMeshComponents.IsEmpty())
+					{
+						auto Last = SplineMeshComponents.GetHead();
+						if (Last && IsValid(Last->GetValue()))
+						{
+							Last->GetValue()->UnregisterComponent();
+							Last->GetValue()->DestroyComponent();
+						}
+						SplineMeshComponents.RemoveNode(Last);
+					}
+				}
+
+				for (AActor* Point : lastToStartInterpolationPoints)
+				{
+					Point->Destroy();
+				}
+				lastToStartInterpolationPoints.Empty();
+
 			}
 
 			if (Stops.Num() > 0)
@@ -136,67 +152,168 @@ void AGeometryCreator::StartGeometry()
 					Calculation += distance;
 					UpdateDisplay(Calculation);
 				}
-				if (!FeaturePoints.Contains(lastStop))
-				{
-					FeaturePoints.Add(lastStop);
-				}
 
-				Interpolate(lastStop, lineMarker);
-
-				if (!FeaturePoints.Contains(lineMarker))
-				{
-					FeaturePoints.Add(lineMarker);
-				}
+				FeaturePoints.Add(lastStop);
+				Interpolate(lastStop, lineMarker, FeaturePoints);
+				FeaturePoints.Add(lineMarker);
 			}
-
-			if (!Stops.Contains(lineMarker))
-			{
+				//Stops array stores user-added points
 				Stops.Add(lineMarker);
-			}
 
 			if (bIsPolygonMode)
 			{
-				//if (FeaturePoints.Num() > 3)
-				//{
-				//	Interpolate(lineMarker, featurePoints[0], //lastToStartInterpolationPoints);
-				//}
-				CreateandCalculatePolygon();
+				if (Stops.Num() >= 3)
+				{
+					//compute the last segment
+					Interpolate(lineMarker, Stops[0], lastToStartInterpolationPoints); 
+					CreateandCalculatePolygon();
+				}
 			}
-
-			if (FeaturePoints.Num() >= 2)
+			if (Stops.Num() >= 2)
 			{
-				RenderLine();
+				RenderLine(FeaturePoints);
 			}
 		}
 	}
 }
 
-void AGeometryCreator::RenderLine()
+void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
 {
+	TArray<AActor*> allPoints;
+
+	// Build clean list of valid points
+	for (AActor* Point : Points)
+	{
+		/*if (!IsValid(Point))
+			continue;
+
+		FVector Location = Point->GetActorLocation();
+		if (Location.IsNearlyZero())
+		{
+			Point->Destroy();
+			continue;
+		}*/
+		allPoints.Add(Point);
+	}
+
+	// For polygons, also add the last segement to allPoints 
+	if (bIsPolygonMode && Stops.Num() >= 3)
+	{
+		for (AActor* Point : lastToStartInterpolationPoints)
+		{
+			/* if (!IsValid(Point))
+				continue;
+
+			FVector Location = Point->GetActorLocation();
+			if (Location.IsNearlyZero())
+			{
+				Point->Destroy();
+				continue;
+			}*/
+			allPoints.Add(Point);
+
+		}
+
+		// Close polygon only after interpolated points are added
+		AActor* First = allPoints[0];
+		if (IsValid(First) && First->GetActorTransform().IsValid())
+		{
+			allPoints.Add(First);
+		}
+	}
+
+	// draw lines between allPoints
+	for (int i = 1; i < allPoints.Num(); i++)
+	{
+		TObjectPtr<USplineMeshComponent> SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
+		SplineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+		SplineMesh->RegisterComponent();
+		SplineMesh->SetMobility(EComponentMobility::Movable);
+
+		FVector start = allPoints[i - 1]->GetActorLocation();
+		FVector end = allPoints[i]->GetActorLocation();
+
+		if (Cast<ARouteMarker>(allPoints[i - 1]))
+			start.Z += MarkerHeight;
+		if (Cast<ARouteMarker>(allPoints[i]))
+			end.Z += MarkerHeight;
+
+		FVector tangent = (end - start).GetSafeNormal() * 100;
+
+		SplineMesh->SetStartAndEnd(start, tangent, end, tangent);
+		SplineMesh->SetStartScale(RouteCueScale);
+		SplineMesh->SetEndScale(RouteCueScale);
+		SplineMesh->SetStaticMesh(RouteMesh);
+
+		SplineMeshComponents.AddHead(SplineMesh);
+	}
+}
+
+
+/* void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
+{
+	TArray<AActor*> allPoints;
+
+	for (AActor* Point : FeaturePoints)
+	{
+		if (!IsValid(Point)) 
+			continue;
+		FVector Location = Point->GetActorLocation();
+		if (Location.IsNearlyZero()) 
+		{
+			Point->Destroy();
+			continue;
+		}
+        allPoints.Add(Point);
+	}
+
+	if (bIsPolygonMode)
+	{
+		// Close the polygon by repeating the first point
+		//allPoints.Add(allPoints[0]);
+		AActor* First = allPoints[0];
+		if (IsValid(First) && First->GetActorTransform().IsValid())
+		{
+			allPoints.Add(First);
+		}
+		for (AActor* Point : lastToStartInterpolationPoints)
+		{
+			if (!IsValid(Point))
+				continue;
+			FVector Location = Point->GetActorLocation();
+			if (Location.IsNearlyZero())
+			{
+				Point->Destroy();
+				continue;
+			}
+			allPoints.Add(Point);
+		}
+	}
+
 	TObjectPtr<USplineMeshComponent> SplineMesh;
 	FVector tangent;
 
-	for (int i = 1; i < FeaturePoints.Num(); i++)
+	for (int i = 1; i < allPoints.Num(); i++)
 	{
 		SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
 		SplineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
 		SplineMesh->RegisterComponent();
 		SplineMesh->SetMobility(EComponentMobility::Movable);
 
-		FVector end = FeaturePoints[i]->GetActorLocation();
+		FVector end = allPoints[i]->GetActorLocation();
 
 		// Since interpolations are already at correct elevation, only alter the route markers
 
-		if (Cast<ARouteMarker>(FeaturePoints[i]) != nullptr)
+		if (Cast<ARouteMarker>(allPoints[i]) != nullptr)
 		{
 			end.Z = end.Z + MarkerHeight;
 		}
 
-		FVector start = FeaturePoints[i - 1]->GetActorLocation();
+		FVector start = allPoints[i - 1]->GetActorLocation();
 
 		// Since interpolations are already at correct elevation, only alter the route markers
 
-		if (Cast<ARouteMarker>(FeaturePoints[i - 1]) != nullptr)
+		if (Cast<ARouteMarker>(allPoints[i - 1]) != nullptr)
 		{
 			start.Z += MarkerHeight;
 		}
@@ -211,7 +328,7 @@ void AGeometryCreator::RenderLine()
 		SplineMesh->SetStaticMesh(RouteMesh);
 		SplineMeshComponents.AddHead(SplineMesh);
 	}
-}
+}*/
 
 void AGeometryCreator::ClearLine()
 {
@@ -224,6 +341,11 @@ void AGeometryCreator::ClearLine()
 		}
 
 		for (auto stop : FeaturePoints)
+		{
+			stop->Destroy();
+		}
+
+		for (auto stop : lastToStartInterpolationPoints)
 		{
 			stop->Destroy();
 		}
@@ -242,16 +364,14 @@ void AGeometryCreator::ClearLine()
 
 void AGeometryCreator::CreateandCalculatePolygon()
 {
-    UArcGISPolygonBuilder* polygonBuilder = NewObject<UArcGISPolygonBuilder>();
+	UArcGISPolygonBuilder* polygonBuilder = UArcGISPolygonBuilder::CreateArcGISPolygonBuilderFromSpatialReference(spatialReference);
 	// Add points from Stops
 	for (AActor* Stop : Stops)
 	{
 		UArcGISLocationComponent* LocationComp = Stop->FindComponentByClass<UArcGISLocationComponent>();
-		if (LocationComp)
-		{
-			auto location = LocationComp->GetPosition();
-			polygonBuilder->AddPoint(location);
-		}
+		auto stopGeo = ArcGISMap->EngineToGeographic(Stop->GetActorLocation());
+		UArcGISPoint* location = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(stopGeo.X, stopGeo.Y, stopGeo.Z, spatialReference);
+		polygonBuilder->AddPoint(location);
 	}
 
 	auto polygon = Cast<UArcGISGeometry>(polygonBuilder->ToGeometry());
@@ -294,8 +414,8 @@ void AGeometryCreator::UpdateDisplay(float Value)
 	}
 }
 
-//Interpolate points between last point/start and this point(end)
-void AGeometryCreator::Interpolate(AActor* start, AActor* end)
+//Interpolate points between two given points, then returns an array of points excluding the two 
+void AGeometryCreator::Interpolate(AActor* start, AActor* end, TArray<AActor*>& Points)
 {
 	FVector A = start->GetActorLocation();
 	FVector B = end->GetActorLocation();
@@ -308,7 +428,7 @@ void AGeometryCreator::Interpolate(AActor* start, AActor* end)
 		FVector nextInterpolationPos = FMath::Lerp(A, B, i / static_cast<float>(Count));
 		AActor* nextInterpolation =
 			GetWorld()->SpawnActor<ABreadcrumb>(ABreadcrumb::StaticClass(), nextInterpolationPos, FRotator::ZeroRotator, SpawnParam);
-		FeaturePoints.Add(nextInterpolation);
+		Points.Add(nextInterpolation);
 	}
 }
 
@@ -349,57 +469,6 @@ void AGeometryCreator::VisualizeEnvelope(const FBox2D& Envelope)
 
 	FeaturePoints.Add(FeaturePoints[0]);
 	RenderLine(FeaturePoints);
-}
-
-void AGeometryCreator::CreatePolygon()
-{
-	// Area calculation placeholder: Unreal doesn’t support GIS geodetic areas directly
-	UpdateDisplay();
-}
-
-
-
-void AGeometryCreator::RenderLine(const TArray<AActor*>& Points)
-{
-	ULineBatchComponent* LineBatcher = GetWorld()->PersistentLineBatcher;
-	if (!LineBatcher)
-		return;
-
-	for (int32 i = 0; i < Points.Num() - 1; ++i)
-	{
-		FVector A = Points[i]->GetActorLocation();
-		FVector B = Points[i + 1]->GetActorLocation();
-		LineBatcher->DrawLine(A, B, FLinearColor::Blue, 0, 5.0f, 0.0f);
-	}
-}
-
-void AGeometryCreator::ClearGeometry()
-{
-	for (AActor* A : Stops)
-		if (A)
-			A->Destroy();
-	for (AActor* A : FeaturePoints)
-		if (A)
-			A->Destroy();
-	for (AActor* A : LastToStartInterpolated)
-		if (A)
-			A->Destroy();
-	Stops.Empty();
-	FeaturePoints.Empty();
-	LastToStartInterpolated.Empty();
-	Calculation = 0;
-	UpdateDisplay();
-}
-
-void AGeometryCreator::SetElevation(AActor* Marker)
-{
-	FVector Pos = Marker->GetActorLocation();
-	FVector Start = Pos + FVector(0, 0, 5000);
-	FHitResult Hit;
-	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, Pos, ECC_Visibility))
-	{
-		Marker->SetActorLocation(Hit.ImpactPoint + FVector(0, 0, MarkerHeight));
-	}
 }
 */
 
