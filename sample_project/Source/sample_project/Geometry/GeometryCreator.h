@@ -79,13 +79,14 @@ private:
 	UArcGISMapComponent* ArcGISMap;
 
 	UPROPERTY()
-//	UArcGISCameraControllerComponent* CameraController;
-
 	FVector LastRootPosition;
 	bool bIsDragging = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	bool bIsEnvelopeMode = false;
-	bool bIsPolygonMode = true;
-	bool bIsPolylineMode = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	bool bIsPolygonMode = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	bool bIsPolylineMode = true;
 
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 

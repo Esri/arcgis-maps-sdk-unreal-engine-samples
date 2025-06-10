@@ -132,7 +132,6 @@ void AGeometryCreator::StartGeometry()
 					Point->Destroy();
 				}
 				lastToStartInterpolationPoints.Empty();
-
 			}
 
 			if (Stops.Num() > 0)
