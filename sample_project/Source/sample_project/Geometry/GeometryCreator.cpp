@@ -29,7 +29,8 @@ void AGeometryCreator::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
 	}
-	spatialReference = UArcGISSpatialReference::CreateArcGISSpatialReference(3857);
+
+	SpatialReference = ArcGISMap->GetOriginPosition()->GetSpatialReference();
 
 	if (!inputManager)
 	{
@@ -38,7 +39,6 @@ void AGeometryCreator::BeginPlay()
 
 	inputManager->OnInputTrigger.AddDynamic(this, &AGeometryCreator::StartGeometry);
 
-	// Make sure mouse cursor remains visible
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 	if (playerController)
@@ -78,6 +78,12 @@ void AGeometryCreator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AGeometryCreator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Continuously update visual cue in update
+	if (bIsEnvelopeMode && bIsDragging)
+	{
+		UpdateDraggingVisualization();
+	}
 }
 
 void AGeometryCreator::StartGeometry()
@@ -100,12 +106,12 @@ void AGeometryCreator::StartGeometry()
 		auto lineMarkerGeo = ArcGISMap->EngineToGeographic(hit.ImpactPoint);
 		
         UArcGISPoint* hitPoint =
-			UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lineMarkerGeo.X, lineMarkerGeo.Y, lineMarkerGeo.Z, spatialReference);
+			UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lineMarkerGeo.X, lineMarkerGeo.Y, lineMarkerGeo.Z, SpatialReference);
 
 		if (bIsEnvelopeMode)
 		{
-			//StartPoint = hitPoint;
-			//bIsDragging = true;
+			StartPoint = hitPoint;
+			bIsDragging = true;
 		}
 		else
 		{
@@ -139,7 +145,7 @@ void AGeometryCreator::StartGeometry()
 				auto lastStop = Stops.Last();
                 auto lastStopGeo = ArcGISMap->EngineToGeographic(lastStop->GetActorLocation());
 				UArcGISPoint* lastPoint =
-					UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lastStopGeo.X, lastStopGeo.Y, lastStopGeo.Z, spatialReference);
+					UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lastStopGeo.X, lastStopGeo.Y, lastStopGeo.Z, SpatialReference);
 				
 				if (bIsPolylineMode)
 				{
@@ -165,7 +171,7 @@ void AGeometryCreator::StartGeometry()
 				{
 					//compute the last segment
 					Interpolate(lineMarker, Stops[0], lastToStartInterpolationPoints); 
-					CreateandCalculatePolygon();
+					CreateAndCalculatePolygon();
 				}
 			}
 			if (Stops.Num() >= 2)
@@ -176,41 +182,50 @@ void AGeometryCreator::StartGeometry()
 	}
 }
 
+void AGeometryCreator::EndGeometry()
+{
+	if (bIsEnvelopeMode)
+	{
+		FVector2D MousePosition;
+		if (UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetMousePosition(MousePosition.X, MousePosition.Y))
+		{
+			FHitResult HitResult;
+			APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			FVector WorldOrigin, WorldDirection;
+
+			if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, MousePosition, WorldOrigin, WorldDirection))
+			{
+				FVector TraceStart = WorldOrigin;
+				FVector TraceEnd = WorldOrigin + (WorldDirection * 100000.0f); 
+
+				FCollisionQueryParams TraceParams(FName(TEXT("MouseTrace")), true, this);
+				TraceParams.bTraceComplex = true;
+
+				if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams))
+				{
+					FVector AdjustedPoint = HitResult.Location + FVector(0, 0, MarkerHeight);
+
+					UArcGISPoint* EndPoint = ArcGISMap->EngineToGeographic(AdjustedPoint);
+
+					CreateAndCalculateEnvelope(StartPoint, EndPoint);
+				}
+
+				bIsDragging = false;
+			}
+		}
+	}
+}
+
 void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
 {
-	TArray<AActor*> allPoints;
-
-	// Build clean list of valid points
-	for (AActor* Point : Points)
-	{
-		/*if (!IsValid(Point))
-			continue;
-
-		FVector Location = Point->GetActorLocation();
-		if (Location.IsNearlyZero())
-		{
-			Point->Destroy();
-			continue;
-		}*/
-		allPoints.Add(Point);
-	}
+	TArray<AActor*> allPoints = Points;
 
 	// For polygons, also add the last segement to allPoints 
 	if (bIsPolygonMode && Stops.Num() >= 3)
 	{
 		for (AActor* Point : lastToStartInterpolationPoints)
 		{
-			/* if (!IsValid(Point))
-				continue;
-
-			FVector Location = Point->GetActorLocation();
-			if (Location.IsNearlyZero())
-			{
-				Point->Destroy();
-				continue;
-			}*/
 			allPoints.Add(Point);
-
 		}
 
 		// Close polygon only after interpolated points are added
@@ -221,7 +236,6 @@ void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
 		}
 	}
 
-	// draw lines between allPoints
 	for (int i = 1; i < allPoints.Num(); i++)
 	{
 		TObjectPtr<USplineMeshComponent> SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
@@ -247,87 +261,6 @@ void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
 		SplineMeshComponents.AddHead(SplineMesh);
 	}
 }
-
-
-/* void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
-{
-	TArray<AActor*> allPoints;
-
-	for (AActor* Point : FeaturePoints)
-	{
-		if (!IsValid(Point)) 
-			continue;
-		FVector Location = Point->GetActorLocation();
-		if (Location.IsNearlyZero()) 
-		{
-			Point->Destroy();
-			continue;
-		}
-        allPoints.Add(Point);
-	}
-
-	if (bIsPolygonMode)
-	{
-		// Close the polygon by repeating the first point
-		//allPoints.Add(allPoints[0]);
-		AActor* First = allPoints[0];
-		if (IsValid(First) && First->GetActorTransform().IsValid())
-		{
-			allPoints.Add(First);
-		}
-		for (AActor* Point : lastToStartInterpolationPoints)
-		{
-			if (!IsValid(Point))
-				continue;
-			FVector Location = Point->GetActorLocation();
-			if (Location.IsNearlyZero())
-			{
-				Point->Destroy();
-				continue;
-			}
-			allPoints.Add(Point);
-		}
-	}
-
-	TObjectPtr<USplineMeshComponent> SplineMesh;
-	FVector tangent;
-
-	for (int i = 1; i < allPoints.Num(); i++)
-	{
-		SplineMesh = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
-		SplineMesh->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
-		SplineMesh->RegisterComponent();
-		SplineMesh->SetMobility(EComponentMobility::Movable);
-
-		FVector end = allPoints[i]->GetActorLocation();
-
-		// Since interpolations are already at correct elevation, only alter the route markers
-
-		if (Cast<ARouteMarker>(allPoints[i]) != nullptr)
-		{
-			end.Z = end.Z + MarkerHeight;
-		}
-
-		FVector start = allPoints[i - 1]->GetActorLocation();
-
-		// Since interpolations are already at correct elevation, only alter the route markers
-
-		if (Cast<ARouteMarker>(allPoints[i - 1]) != nullptr)
-		{
-			start.Z += MarkerHeight;
-		}
-
-		tangent = end - start;
-		tangent.Normalize();
-		tangent = tangent * 100;
-
-		SplineMesh->SetStartAndEnd(start, tangent, end, tangent);
-		SplineMesh->SetStartScale(RouteCueScale);
-		SplineMesh->SetEndScale(RouteCueScale);
-		SplineMesh->SetStaticMesh(RouteMesh);
-		SplineMeshComponents.AddHead(SplineMesh);
-	}
-}*/
 
 void AGeometryCreator::ClearLine()
 {
@@ -361,15 +294,15 @@ void AGeometryCreator::ClearLine()
 	}
 }
 
-void AGeometryCreator::CreateandCalculatePolygon()
+void AGeometryCreator::CreateAndCalculatePolygon()
 {
-	UArcGISPolygonBuilder* polygonBuilder = UArcGISPolygonBuilder::CreateArcGISPolygonBuilderFromSpatialReference(spatialReference);
-	// Add points from Stops
+	UArcGISPolygonBuilder* polygonBuilder = UArcGISPolygonBuilder::CreateArcGISPolygonBuilderFromSpatialReference(SpatialReference);
+
 	for (AActor* Stop : Stops)
 	{
 		UArcGISLocationComponent* LocationComp = Stop->FindComponentByClass<UArcGISLocationComponent>();
 		auto stopGeo = ArcGISMap->EngineToGeographic(Stop->GetActorLocation());
-		UArcGISPoint* location = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(stopGeo.X, stopGeo.Y, stopGeo.Z, spatialReference);
+		UArcGISPoint* location = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(stopGeo.X, stopGeo.Y, stopGeo.Z, SpatialReference);
 		polygonBuilder->AddPoint(location);
 	}
 
@@ -378,6 +311,80 @@ void AGeometryCreator::CreateandCalculatePolygon()
 	Calculation = UArcGISGeometryEngine::AreaGeodetic(polygon, CurrentAreaUnit, EArcGISGeodeticCurveType::Geodesic);
 
 	UpdateDisplay(Calculation);
+}
+
+void AGeometryCreator::CreateAndCalculateEnvelope(UArcGISPoint* Start, UArcGISPoint* End)
+{
+	double MinX = FMath::Min(Start->GetX(), End->GetX());
+	double MinY = FMath::Min(Start->GetY(), End->GetY());
+	double MaxX = FMath::Max(Start->GetX(), End->GetX());
+	double MaxY = FMath::Max(Start->GetY(), End->GetY());
+
+	UArcGISEnvelopeBuilder* EnvelopeBuilder = UArcGISEnvelopeBuilder::CreateArcGISEnvelopeBuilderFromSpatialReference(SpatialReference);
+	EnvelopeBuilder->SetXY(MinX, MinY, MaxX, MaxY);
+
+	UArcGISGeometry* Envelope = EnvelopeBuilder->ToGeometry();
+
+	VisualizeEnvelope(MinX, MinY, MaxX, MaxY, SpatialReference);
+
+	double Area = UArcGISGeometryEngine::AreaGeodetic(Envelope, CurrentAreaUnit, EArcGISGeodeticCurveType::Geodesic);
+
+	Calculation = Area;
+
+	UpdateDisplay(Calculation);
+}
+
+void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, double MaxY, UArcGISSpatialReference* SpatialRef)
+{
+	ClearLine(); 
+
+	TArray<UArcGISPoint*> Corners;
+	Corners.Add(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(MinX, MinY, SpatialRef)); // Bottom Left
+	Corners.Add(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(MaxX, MinY, SpatialRef)); // Bottom Right
+	Corners.Add(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(MaxX, MaxY, SpatialRef)); // Top Right
+	Corners.Add(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(MinX, MaxY, SpatialRef)); // Top Left
+
+	TArray<AActor*> markers;
+	FeaturePoints.Empty();
+
+	// Convert to engine space and spawn markers
+	for (UArcGISPoint* Corner : Corners)
+	{
+		FVector WorldPos = ArcGISMap->GeographicToEngine(Corner);
+		WorldPos.Z += MarkerHeight;
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		auto marker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), WorldPos, FRotator::ZeroRotator, SpawnParams);
+
+		if (marker)
+		{
+			marker->AttachToComponent(ArcGISMap, FAttachmentTransformRules::KeepWorldTransform);
+			//SetSurfacePlacement(Marker, MarkerHeight);
+			//SetElevation(Marker); 
+			markers.Add(marker);
+			Stops.Add(marker);
+		}
+	}
+
+	// Connect corners and interpolate
+	for (int32 i = 0; i < markers.Num(); ++i)
+	{
+		AActor* currentMarker = markers[i];
+		AActor* nextMarker = markers[(i + 1) % markers.Num()];
+
+		FeaturePoints.Add(currentMarker);
+		Interpolate(currentMarker, nextMarker, FeaturePoints); 
+	}
+
+	FeaturePoints.Add(markers[0]);
+	
+	RenderLine(FeaturePoints); 
+}
+
+void AGeometryCreator::UpdateDraggingVisualization()
+{
+
 }
 
 float AGeometryCreator::GetArea()
@@ -431,45 +438,8 @@ void AGeometryCreator::Interpolate(AActor* start, AActor* end, TArray<AActor*>& 
 	}
 }
 
-void AGeometryCreator::EndGeometry()
-{
-	/* if (bIsEnvelopeMode)
-	{
-		FVector End = GetRaycastHitLocation();
-		if (!End.IsZero() && Stops.Num() > 0)
-		{
-			CreateEnvelope(Stops.Last()->GetActorLocation(), End);
-			bIsDragging = false;
-		}
-	}*/
-}
-/*
-void AGeometryCreator::CreateEnvelope(const FVector& Start, const FVector& End)
-{
-	FBox2D Envelope(FVector2D(FMath::Min(Start.X, End.X), FMath::Min(Start.Y, End.Y)),
-					FVector2D(FMath::Max(Start.X, End.X), FMath::Max(Start.Y, End.Y)));
-	VisualizeEnvelope(Envelope);
-}
 
-void AGeometryCreator::VisualizeEnvelope(const FBox2D& Envelope)
-{
-	ClearGeometry();
-	FVector Corners[4] = {FVector(Envelope.Min.X, Envelope.Min.Y, MarkerHeight), FVector(Envelope.Max.X, Envelope.Min.Y, MarkerHeight),
-						  FVector(Envelope.Max.X, Envelope.Max.Y, MarkerHeight), FVector(Envelope.Min.X, Envelope.Max.Y, MarkerHeight)};
 
-	for (int32 i = 0; i < 4; ++i)
-	{
-		AActor* Marker = GetWorld()->SpawnActor<AActor>(LineMarkerPrefab, Corners[i], FRotator::ZeroRotator);
-		SetElevation(Marker);
-		Stops.Add(Marker);
-		FeaturePoints.Add(Marker);
-		InterpolatePoints(Marker, GetWorld()->SpawnActor<AActor>(LineMarkerPrefab, Corners[(i + 1) % 4], FRotator::ZeroRotator), FeaturePoints);
-	}
-
-	FeaturePoints.Add(FeaturePoints[0]);
-	RenderLine(FeaturePoints);
-}
-*/
 
 
 

@@ -8,6 +8,9 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "GameFramework/Actor.h"
+#include "ArcGISMapsSDK/Components/ArcGISCameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+
 #include "InputManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputTrigger);
@@ -20,8 +23,21 @@ class SAMPLE_PROJECT_API AInputManager : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AInputManager();
+
 	UPROPERTY(BlueprintAssignable)
 	FOnInputTrigger OnInputTrigger;
+
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UInputAction* ShiftModifier;
+	
+	UFUNCTION()
+	void OnShiftPressed();
+
+	UFUNCTION()
+	void OnShiftReleased();
+
+	UFUNCTION()
+	UArcGISCameraComponent* FindCameraComponent();*/
 
 protected:
 	// Called when the game starts or when spawned

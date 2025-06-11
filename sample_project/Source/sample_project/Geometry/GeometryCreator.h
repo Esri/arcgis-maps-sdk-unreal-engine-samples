@@ -10,6 +10,8 @@
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Utils/GeoCoord/GeoPosition.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPolygonBuilder.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISEnvelopeBuilder.h"
+#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISEnvelope.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAreaUnit.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISLinearUnit.h"
 #include "Components/LineBatchComponent.h"
@@ -28,6 +30,7 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnitId.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPoint.h"
+#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISPoint.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerController.h"
 #include "sample_project/Routing/Breadcrumb.h"
@@ -57,7 +60,7 @@ public:
 	float GeodeticArea;
 
 	UFUNCTION(BlueprintCallable)
-	void CreateandCalculatePolygon();
+	void CreateAndCalculatePolygon();
 
 	UFUNCTION(BlueprintCallable)
 	void SetArea(float distance);
@@ -126,14 +129,12 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISLinearUnit> CurrentLinearUnit;
 
-	UArcGISSpatialReference* spatialReference;
+	UArcGISSpatialReference* SpatialReference;
 
-	void ClearGeometry();
-	void CreateEnvelope(const FVector& Start, const FVector& End);
-	void CreatePolygon();
+	void CreateAndCalculateEnvelope(UArcGISPoint* Start, UArcGISPoint* End);
 	void Interpolate(AActor* Start, AActor* End, TArray<AActor*>& Points);
-	void VisualizeEnvelope(const FBox2D& Envelope);
-	void SetElevation(AActor* Marker);
+	void VisualizeEnvelope(double MinX, double MinY, double MaxX, double MaxY, UArcGISSpatialReference* SpatialRef);
+	void UpdateDraggingVisualization();
 
 	UFUNCTION()
 	void StartGeometry();
