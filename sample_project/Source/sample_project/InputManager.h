@@ -27,7 +27,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnInputTrigger OnInputTrigger;
 
-	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UInputAction* ShiftModifier;
 	
 	UFUNCTION()
@@ -37,7 +37,7 @@ public:
 	void OnShiftReleased();
 
 	UFUNCTION()
-	UArcGISCameraComponent* FindCameraComponent();*/
+	UArcGISCameraComponent* FindCameraComponent();
 
 protected:
 	// Called when the game starts or when spawned

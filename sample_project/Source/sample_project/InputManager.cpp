@@ -49,8 +49,8 @@ void AInputManager::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AInputManager::TriggerInput);
-		//EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Started, this, &AInputManager::OnShiftPressed);
-		//EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Canceled, this, &AInputManager::OnShiftReleased);
+		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Started, this, &AInputManager::OnShiftPressed);
+		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Canceled, this, &AInputManager::OnShiftReleased);
 	}
 }
 
@@ -58,7 +58,7 @@ void AInputManager::TriggerInput()
 {
 	OnInputTrigger.Broadcast();
 }
-/*
+
 void AInputManager::OnShiftPressed()
 {
 	if (UArcGISCameraComponent* Camera = FindCameraComponent())
@@ -88,4 +88,4 @@ UArcGISCameraComponent* AInputManager::FindCameraComponent()
 		}
 	}
 	return nullptr;
-}*/
+}

@@ -57,19 +57,23 @@ public:
 	TObjectPtr<UComboBoxString> UnitDropdown;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float GeodeticArea;
+	double Calculation = 0.0;
 
 	UFUNCTION(BlueprintCallable)
 	void CreateAndCalculatePolygon();
 
 	UFUNCTION(BlueprintCallable)
-	void SetArea(float distance);
+	void SetCalculation(float distance);
 	UFUNCTION(BlueprintCallable)
-	float GetArea();
+	float GetCalculation();
 	UFUNCTION(BlueprintCallable)
-	void SetUnit(UArcGISAreaUnit* unit);
+	void SetLinearUnit(UArcGISLinearUnit* LU);
 	UFUNCTION(BlueprintCallable)
-	UArcGISAreaUnit* GetUnit();
+	void SetAreaUnit(UArcGISAreaUnit* AU);
+	UFUNCTION(BlueprintCallable)
+	UArcGISLinearUnit* GetLinearUnit();
+	UFUNCTION(BlueprintCallable)
+	UArcGISAreaUnit* GetAreaUnit();
 
 protected:
 	virtual void BeginPlay() override;
@@ -93,7 +97,6 @@ private:
 
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 
-	double Calculation = 0.0;
 	float InterpolationInterval = 10000; 
 	FString UnitText;
 	FVector2D RouteCueScale = FVector2D(5);
@@ -119,9 +122,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
-	TObjectPtr<UArcGISAreaUnit> Unit;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISAreaUnit> CurrentAreaUnit;

@@ -30,7 +30,7 @@ void AGeometryCreator::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
 	}
 
-	SpatialReference = ArcGISMap->GetOriginPosition()->GetSpatialReference();
+	SpatialReference = UArcGISSpatialReference::CreateArcGISSpatialReference(3857);
 
 	if (!inputManager)
 	{
@@ -387,24 +387,34 @@ void AGeometryCreator::UpdateDraggingVisualization()
 
 }
 
-float AGeometryCreator::GetArea()
+float AGeometryCreator::GetCalculation()
 {
-	return GeodeticArea;
+	return Calculation;
 }
 
-void AGeometryCreator::SetArea(float area)
+void AGeometryCreator::SetCalculation(float calculation)
 {
-	GeodeticArea = area;
+	Calculation = calculation;
 }
 
-UArcGISAreaUnit* AGeometryCreator::GetUnit()
+UArcGISLinearUnit* AGeometryCreator::GetLinearUnit()
 {
-	return Unit;
+	return CurrentLinearUnit;
 }
 
-void AGeometryCreator::SetUnit(UArcGISAreaUnit* unit)
+UArcGISAreaUnit* AGeometryCreator::GetAreaUnit()
 {
-	Unit = unit;
+	return CurrentAreaUnit;
+}
+
+void AGeometryCreator::SetLinearUnit(UArcGISLinearUnit* LU)
+{
+	CurrentLinearUnit = LU;
+}
+
+void AGeometryCreator::SetAreaUnit(UArcGISAreaUnit* AU)
+{
+	CurrentAreaUnit = AU;
 }
 
 void AGeometryCreator::UpdateDisplay(float Value)
