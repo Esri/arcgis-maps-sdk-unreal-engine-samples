@@ -14,6 +14,7 @@
 #include "InputManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputTrigger);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputEnd);
 
 UCLASS()
 class SAMPLE_PROJECT_API AInputManager : public AActor
@@ -26,12 +27,21 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInputTrigger OnInputTrigger;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnInputEnd OnInputEnd;
 	
 	UFUNCTION()
 	void OnShiftPressed();
 
 	UFUNCTION()
 	void OnShiftReleased();
+
+	UFUNCTION()
+	void TriggerInputStart(); 
+
+	UFUNCTION()
+	void TriggerInputEnd();
 
 protected:
 	// Called when the game starts or when spawned
@@ -40,7 +50,7 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 
 private:
-	void TriggerInput();
+	//void TriggerInput();
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UInputMappingContext* MappingContext;

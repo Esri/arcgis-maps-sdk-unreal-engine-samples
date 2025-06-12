@@ -57,15 +57,28 @@ void AInputManager::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Started, this, &AInputManager::TriggerInput);
+		//EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Started, this, &AInputManager::TriggerInput);
+		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Started, this, &AInputManager::TriggerInputStart);
+		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Completed, this, &AInputManager::TriggerInputEnd);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Started, this, &AInputManager::OnShiftPressed);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Completed, this, &AInputManager::OnShiftReleased);
 	}
 }
 
-void AInputManager::TriggerInput()
+/* void AInputManager::TriggerInput()
 {
 	OnInputTrigger.Broadcast();
+}
+*/
+
+void AInputManager::TriggerInputStart()
+{
+	OnInputTrigger.Broadcast();
+}
+
+void AInputManager::TriggerInputEnd()
+{
+	OnInputEnd.Broadcast();
 }
 
 void AInputManager::OnShiftPressed()

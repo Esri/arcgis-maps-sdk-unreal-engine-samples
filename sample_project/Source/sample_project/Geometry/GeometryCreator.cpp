@@ -38,6 +38,9 @@ void AGeometryCreator::BeginPlay()
 	}
 
 	inputManager->OnInputTrigger.AddDynamic(this, &AGeometryCreator::StartGeometry);
+	//inputManager->OnInputEnd.AddDynamic(this, &AGeometryCreator::EndGeometry);
+	//inputManager->OnInputStart.AddDynamic(this, &AGeometryCreator::StartGeometry);
+	inputManager->OnInputEnd.AddDynamic(this, &AGeometryCreator::EndGeometry);
 
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
@@ -72,7 +75,8 @@ void AGeometryCreator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 
 	inputManager->OnInputTrigger.RemoveDynamic(this, &AGeometryCreator::StartGeometry);
-
+	//inputManager->OnInputStart.RemoveDynamic(this, &AGeometryCreator::StartGeometry);
+	inputManager->OnInputEnd.RemoveDynamic(this, &AGeometryCreator::EndGeometry);
 }
 
 void AGeometryCreator::Tick(float DeltaTime)
@@ -186,33 +190,23 @@ void AGeometryCreator::EndGeometry()
 {
 	if (bIsEnvelopeMode)
 	{
-		FVector2D MousePosition;
-		if (UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetMousePosition(MousePosition.X, MousePosition.Y))
+		FVector direction;
+		FHitResult hit;
+		FVector position;
+
+		auto PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		PlayerController->DeprojectMousePositionToWorld(position, direction);
+
+		bool bTraceSuccess =
+			GetWorld()->LineTraceSingleByChannel(hit, position, position + TraceLen * direction, ECC_Visibility, FCollisionQueryParams());
+
+		if (bTraceSuccess && hit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && hit.bBlockingHit)
 		{
-			FHitResult HitResult;
-			APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-			FVector WorldOrigin, WorldDirection;
-
-			if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, MousePosition, WorldOrigin, WorldDirection))
-			{
-				FVector TraceStart = WorldOrigin;
-				FVector TraceEnd = WorldOrigin + (WorldDirection * 100000.0f); 
-
-				FCollisionQueryParams TraceParams(FName(TEXT("MouseTrace")), true, this);
-				TraceParams.bTraceComplex = true;
-
-				if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams))
-				{
-					FVector AdjustedPoint = HitResult.Location + FVector(0, 0, MarkerHeight);
-
-					UArcGISPoint* EndPoint = ArcGISMap->EngineToGeographic(AdjustedPoint);
-
-					CreateAndCalculateEnvelope(StartPoint, EndPoint);
-				}
-
-				bIsDragging = false;
-			}
+			FVector AdjustedPoint = hit.Location + FVector(0, 0, MarkerHeight);
+			UArcGISPoint* EndPoint = ArcGISMap->EngineToGeographic(AdjustedPoint);
+			CreateAndCalculateEnvelope(StartPoint, EndPoint);
 		}
+		bIsDragging = false;		
 	}
 }
 
@@ -327,9 +321,7 @@ void AGeometryCreator::CreateAndCalculateEnvelope(UArcGISPoint* Start, UArcGISPo
 
 	VisualizeEnvelope(MinX, MinY, MaxX, MaxY, SpatialReference);
 
-	double Area = UArcGISGeometryEngine::AreaGeodetic(Envelope, CurrentAreaUnit, EArcGISGeodeticCurveType::Geodesic);
-
-	Calculation = Area;
+	Calculation = UArcGISGeometryEngine::AreaGeodetic(Envelope, CurrentAreaUnit, EArcGISGeodeticCurveType::Geodesic);
 
 	UpdateDisplay(Calculation);
 }
@@ -353,9 +345,9 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 		FVector WorldPos = ArcGISMap->GeographicToEngine(Corner);
 		WorldPos.Z += MarkerHeight;
 
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		auto marker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), WorldPos, FRotator::ZeroRotator, SpawnParams);
+		SpawnParam.Owner = this;
+
+		auto marker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), WorldPos, FRotator(0), SpawnParam);
 
 		if (marker)
 		{
