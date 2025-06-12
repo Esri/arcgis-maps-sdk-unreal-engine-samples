@@ -26,18 +26,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInputTrigger OnInputTrigger;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UInputAction* ShiftModifier;
 	
 	UFUNCTION()
 	void OnShiftPressed();
 
 	UFUNCTION()
 	void OnShiftReleased();
-
-	UFUNCTION()
-	UArcGISCameraComponent* FindCameraComponent();
 
 protected:
 	// Called when the game starts or when spawned
@@ -47,9 +41,13 @@ protected:
 
 private:
 	void TriggerInput();
-	
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UInputMappingContext* MappingContext = LoadObject<UInputMappingContext>(nullptr, TEXT("/Script/EnhancedInput.InputMappingContext'/Game/SampleViewer/SharedResources/Input/IAC_SamplesInput.IAC_SamplesInput'"));
+	UInputMappingContext* MappingContext;
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UInputAction* mousePress = LoadObject<UInputAction>(nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_LeftMouseClick.IA_LeftMouseClick'"));
+	UInputAction* MousePress;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UInputAction* ShiftModifier;
 };
