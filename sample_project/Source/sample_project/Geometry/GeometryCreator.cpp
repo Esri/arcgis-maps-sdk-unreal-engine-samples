@@ -75,7 +75,6 @@ void AGeometryCreator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 
 	inputManager->OnInputTrigger.RemoveDynamic(this, &AGeometryCreator::StartGeometry);
-	//inputManager->OnInputStart.RemoveDynamic(this, &AGeometryCreator::StartGeometry);
 	inputManager->OnInputEnd.RemoveDynamic(this, &AGeometryCreator::EndGeometry);
 }
 
@@ -108,7 +107,7 @@ void AGeometryCreator::StartGeometry()
 		
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
 		auto lineMarkerGeo = ArcGISMap->EngineToGeographic(hit.ImpactPoint);
-		
+
         UArcGISPoint* hitPoint =
 			UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lineMarkerGeo.X, lineMarkerGeo.Y, lineMarkerGeo.Z, SpatialReference);
 
@@ -116,6 +115,7 @@ void AGeometryCreator::StartGeometry()
 		{
 			StartPoint = hitPoint;
 			bIsDragging = true;
+			Stops.Add(lineMarker);
 		}
 		else
 		{
@@ -165,6 +165,7 @@ void AGeometryCreator::StartGeometry()
 				FeaturePoints.Add(lastStop);
 				Interpolate(lastStop, lineMarker, FeaturePoints);
 				FeaturePoints.Add(lineMarker);
+			
 			}
 				//Stops array stores user-added points
 				Stops.Add(lineMarker);
@@ -258,6 +259,25 @@ void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
 
 void AGeometryCreator::ClearLine()
 {
+	for (auto point : FeaturePoints)
+	{
+		point->Destroy();
+	}
+
+	for (auto point : lastToStartInterpolationPoints)
+	{
+		point->Destroy();
+	}
+
+	for (auto stop : Stops)
+	{
+		stop->Destroy();
+	}
+
+	FeaturePoints.Empty();
+	Stops.Empty();
+	Calculation = 0;
+
 	if (!SplineMeshComponents.IsEmpty())
 	{
 		for (auto point : SplineMeshComponents)
@@ -265,26 +285,7 @@ void AGeometryCreator::ClearLine()
 			point->UnregisterComponent();
 			point->DestroyComponent();
 		}
-
-		for (auto stop : FeaturePoints)
-		{
-			stop->Destroy();
-		}
-
-		for (auto stop : lastToStartInterpolationPoints)
-		{
-			stop->Destroy();
-		}
-
-		for (auto stop : Stops)
-		{
-			stop->Destroy();
-		}
-
-		SplineMeshComponents.Empty();
-		FeaturePoints.Empty();
-		Stops.Empty();
-		Calculation = 0;
+		SplineMeshComponents.Empty();	
 	}
 }
 
@@ -351,9 +352,7 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 
 		if (marker)
 		{
-			marker->AttachToComponent(ArcGISMap, FAttachmentTransformRules::KeepWorldTransform);
-			//SetSurfacePlacement(Marker, MarkerHeight);
-			//SetElevation(Marker); 
+			marker->AttachToComponent(ArcGISMap, FAttachmentTransformRules::KeepWorldTransform); 
 			markers.Add(marker);
 			Stops.Add(marker);
 		}
@@ -376,7 +375,30 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 
 void AGeometryCreator::UpdateDraggingVisualization()
 {
+	FVector WorldOrigin;
+	FVector WorldDirection;
+	FVector MousePosition;
 
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PlayerController || !PlayerController->DeprojectMousePositionToWorld(WorldOrigin, WorldDirection))
+	{
+		return;
+	}
+
+	FHitResult Hit;
+	FVector TraceEnd = WorldOrigin + (TraceLen * WorldDirection);
+
+	if (GetWorld()->LineTraceSingleByChannel(Hit, WorldOrigin, TraceEnd, ECC_Visibility))
+	{
+		if (Hit.bBlockingHit && Hit.GetActor()->IsA<AArcGISMapActor>())
+		{
+			FVector AdjustedHitPoint = Hit.ImpactPoint + FVector(0, 0, MarkerHeight);
+
+			UArcGISPoint* CurrentPoint = ArcGISMap->EngineToGeographic(AdjustedHitPoint);
+
+			CreateAndCalculateEnvelope(StartPoint, CurrentPoint);
+		}
+	}
 }
 
 float AGeometryCreator::GetCalculation()

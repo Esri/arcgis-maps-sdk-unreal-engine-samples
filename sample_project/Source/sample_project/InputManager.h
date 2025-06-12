@@ -50,7 +50,6 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 
 private:
-	//void TriggerInput();
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UInputMappingContext* MappingContext;
