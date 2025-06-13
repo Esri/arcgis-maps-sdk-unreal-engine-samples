@@ -7,7 +7,7 @@
 
 constexpr double Interval = 10000;
 constexpr int TraceLen = 1000000;
-constexpr int MarkerHeight = 300;
+//constexpr int MarkerHeight = 300;
 
 AGeometryCreator::AGeometryCreator()
 {
@@ -38,8 +38,6 @@ void AGeometryCreator::BeginPlay()
 	}
 
 	inputManager->OnInputTrigger.AddDynamic(this, &AGeometryCreator::StartGeometry);
-	//inputManager->OnInputEnd.AddDynamic(this, &AGeometryCreator::EndGeometry);
-	//inputManager->OnInputStart.AddDynamic(this, &AGeometryCreator::StartGeometry);
 	inputManager->OnInputEnd.AddDynamic(this, &AGeometryCreator::EndGeometry);
 
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -106,6 +104,12 @@ void AGeometryCreator::StartGeometry()
 		SpawnParam.Owner = this;
 		
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
+
+		UArcGISLocationComponent* LocationComponent = NewObject<UArcGISLocationComponent>(lineMarker);
+		LocationComponent->RegisterComponent();
+		LocationComponent->AttachToComponent(lineMarker->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		LocationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
+
 		auto lineMarkerGeo = ArcGISMap->EngineToGeographic(hit.ImpactPoint);
 
         UArcGISPoint* hitPoint =
@@ -161,7 +165,7 @@ void AGeometryCreator::StartGeometry()
 					Calculation += distance;
 					UpdateDisplay(Calculation);
 				}
-
+				//FeaturePoints array stores user-added points and interpolated points
 				FeaturePoints.Add(lastStop);
 				Interpolate(lastStop, lineMarker, FeaturePoints);
 				FeaturePoints.Add(lineMarker);
@@ -172,6 +176,7 @@ void AGeometryCreator::StartGeometry()
 
 			if (bIsPolygonMode)
 			{
+				//create polygon when vertice count is 3 or more
 				if (Stops.Num() >= 3)
 				{
 					//compute the last segment
@@ -179,6 +184,7 @@ void AGeometryCreator::StartGeometry()
 					CreateAndCalculatePolygon();
 				}
 			}
+			//render line when vertice count is 2 or more
 			if (Stops.Num() >= 2)
 			{
 				RenderLine(FeaturePoints);
@@ -203,7 +209,8 @@ void AGeometryCreator::EndGeometry()
 
 		if (bTraceSuccess && hit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && hit.bBlockingHit)
 		{
-			FVector AdjustedPoint = hit.Location + FVector(0, 0, MarkerHeight);
+			//FVector AdjustedPoint = hit.Location + FVector(0, 0, MarkerHeight);
+			FVector AdjustedPoint = hit.Location;
 			UArcGISPoint* EndPoint = ArcGISMap->EngineToGeographic(AdjustedPoint);
 			CreateAndCalculateEnvelope(StartPoint, EndPoint);
 		}
@@ -213,9 +220,9 @@ void AGeometryCreator::EndGeometry()
 
 void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
 {
+	//allPoints contains FeaturePoints plus the last segment for polygons
 	TArray<AActor*> allPoints = Points;
 
-	// For polygons, also add the last segement to allPoints 
 	if (bIsPolygonMode && Stops.Num() >= 3)
 	{
 		for (AActor* Point : lastToStartInterpolationPoints)
@@ -241,10 +248,10 @@ void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
 		FVector start = allPoints[i - 1]->GetActorLocation();
 		FVector end = allPoints[i]->GetActorLocation();
 
-		if (Cast<ARouteMarker>(allPoints[i - 1]))
+		/* if (Cast<ARouteMarker>(allPoints[i - 1]))
 			start.Z += MarkerHeight;
 		if (Cast<ARouteMarker>(allPoints[i]))
-			end.Z += MarkerHeight;
+			end.Z += MarkerHeight;*/
 
 		FVector tangent = (end - start).GetSafeNormal() * 100;
 
@@ -338,13 +345,11 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 	Corners.Add(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(MinX, MaxY, SpatialRef)); // Top Left
 
 	TArray<AActor*> markers;
-	FeaturePoints.Empty();
 
-	// Convert to engine space and spawn markers
 	for (UArcGISPoint* Corner : Corners)
 	{
 		FVector WorldPos = ArcGISMap->GeographicToEngine(Corner);
-		WorldPos.Z += MarkerHeight;
+		//WorldPos.Z += MarkerHeight;
 
 		SpawnParam.Owner = this;
 
@@ -373,6 +378,7 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 	RenderLine(FeaturePoints); 
 }
 
+//update the visualization while dragging
 void AGeometryCreator::UpdateDraggingVisualization()
 {
 	FVector WorldOrigin;
@@ -392,8 +398,8 @@ void AGeometryCreator::UpdateDraggingVisualization()
 	{
 		if (Hit.bBlockingHit && Hit.GetActor()->IsA<AArcGISMapActor>())
 		{
-			FVector AdjustedHitPoint = Hit.ImpactPoint + FVector(0, 0, MarkerHeight);
-
+			//FVector AdjustedHitPoint = Hit.ImpactPoint + FVector(0, 0, MarkerHeight);
+			FVector AdjustedHitPoint = Hit.ImpactPoint;
 			UArcGISPoint* CurrentPoint = ArcGISMap->EngineToGeographic(AdjustedHitPoint);
 
 			CreateAndCalculateEnvelope(StartPoint, CurrentPoint);
