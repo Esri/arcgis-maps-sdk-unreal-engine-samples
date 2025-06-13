@@ -7,13 +7,12 @@
 
 constexpr double Interval = 10000;
 constexpr int TraceLen = 1000000;
-//constexpr int MarkerHeight = 300;
+constexpr int MarkerHeight = 300;
 
 AGeometryCreator::AGeometryCreator()
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
-
 
 void AGeometryCreator::BeginPlay()
 {
@@ -348,18 +347,25 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 
 	for (UArcGISPoint* Corner : Corners)
 	{
-		FVector WorldPos = ArcGISMap->GeographicToEngine(Corner);
-		//WorldPos.Z += MarkerHeight;
+		FVector FlatWorldPos = ArcGISMap->GeographicToEngine(Corner);
 
-		SpawnParam.Owner = this;
+		// Raycast to get terrain surface elevation
+		FVector RayStart = FlatWorldPos + FVector(0, 0, 5000);
+		FVector RayEnd = FlatWorldPos - FVector(0, 0, 5000);
 
-		auto marker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), WorldPos, FRotator(0), SpawnParam);
-
-		if (marker)
+		FHitResult Hit;
+		if (GetWorld()->LineTraceSingleByChannel(Hit, RayStart, RayEnd, ECC_Visibility))
 		{
-			marker->AttachToComponent(ArcGISMap, FAttachmentTransformRules::KeepWorldTransform); 
-			markers.Add(marker);
-			Stops.Add(marker);
+			FVector AdjustedWorldPos = Hit.ImpactPoint + FVector(0, 0, MarkerHeight);
+
+			SpawnParam.Owner = this;
+			auto marker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), AdjustedWorldPos, FRotator(0), SpawnParam);
+
+			if (marker)
+			{
+				markers.Add(marker);
+				Stops.Add(marker);
+			}
 		}
 	}
 
