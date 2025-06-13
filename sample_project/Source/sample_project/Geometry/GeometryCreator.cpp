@@ -103,12 +103,6 @@ void AGeometryCreator::StartGeometry()
 		SpawnParam.Owner = this;
 		
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
-
-		UArcGISLocationComponent* LocationComponent = NewObject<UArcGISLocationComponent>(lineMarker);
-		LocationComponent->RegisterComponent();
-		LocationComponent->AttachToComponent(lineMarker->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-		LocationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
-
 		auto lineMarkerGeo = ArcGISMap->EngineToGeographic(hit.ImpactPoint);
 
         UArcGISPoint* hitPoint =
@@ -208,7 +202,6 @@ void AGeometryCreator::EndGeometry()
 
 		if (bTraceSuccess && hit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && hit.bBlockingHit)
 		{
-			//FVector AdjustedPoint = hit.Location + FVector(0, 0, MarkerHeight);
 			FVector AdjustedPoint = hit.Location;
 			UArcGISPoint* EndPoint = ArcGISMap->EngineToGeographic(AdjustedPoint);
 			CreateAndCalculateEnvelope(StartPoint, EndPoint);
@@ -246,11 +239,6 @@ void AGeometryCreator::RenderLine(TArray<AActor*>& Points)
 
 		FVector start = allPoints[i - 1]->GetActorLocation();
 		FVector end = allPoints[i]->GetActorLocation();
-
-		/* if (Cast<ARouteMarker>(allPoints[i - 1]))
-			start.Z += MarkerHeight;
-		if (Cast<ARouteMarker>(allPoints[i]))
-			end.Z += MarkerHeight;*/
 
 		FVector tangent = (end - start).GetSafeNormal() * 100;
 
@@ -301,7 +289,6 @@ void AGeometryCreator::CreateAndCalculatePolygon()
 
 	for (AActor* Stop : Stops)
 	{
-		UArcGISLocationComponent* LocationComp = Stop->FindComponentByClass<UArcGISLocationComponent>();
 		auto stopGeo = ArcGISMap->EngineToGeographic(Stop->GetActorLocation());
 		UArcGISPoint* location = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(stopGeo.X, stopGeo.Y, stopGeo.Z, SpatialReference);
 		polygonBuilder->AddPoint(location);
@@ -404,7 +391,6 @@ void AGeometryCreator::UpdateDraggingVisualization()
 	{
 		if (Hit.bBlockingHit && Hit.GetActor()->IsA<AArcGISMapActor>())
 		{
-			//FVector AdjustedHitPoint = Hit.ImpactPoint + FVector(0, 0, MarkerHeight);
 			FVector AdjustedHitPoint = Hit.ImpactPoint;
 			UArcGISPoint* CurrentPoint = ArcGISMap->EngineToGeographic(AdjustedHitPoint);
 
