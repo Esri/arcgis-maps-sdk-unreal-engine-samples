@@ -18,18 +18,18 @@ void AGeometryCreator::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AArcGISMapActor* MapActor = Cast<AArcGISMapActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass()));
+	MapActor = Cast<AArcGISMapActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass()));
 	
 	if (MapActor)
 	{
-		ArcGISMap = MapActor->GetMapComponent();
+		MapComponent = MapActor->GetMapComponent();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
 	}
 
-	SpatialReference = UArcGISSpatialReference::CreateArcGISSpatialReference(3857);
+	SpatialReference = MapComponent->GetOriginPosition()->GetSpatialReference();
 
 	if (!inputManager)
 	{
@@ -103,10 +103,7 @@ void AGeometryCreator::StartGeometry()
 		SpawnParam.Owner = this;
 		
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
-		auto lineMarkerGeo = ArcGISMap->EngineToGeographic(hit.ImpactPoint);
-
-        UArcGISPoint* hitPoint =
-			UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lineMarkerGeo.X, lineMarkerGeo.Y, lineMarkerGeo.Z, SpatialReference);
+		auto hitPoint = MapComponent->TransformEnginePositionToPoint(hit.ImpactPoint);
 
 		if (bIsEnvelopeMode)
 		{
@@ -144,9 +141,7 @@ void AGeometryCreator::StartGeometry()
 			if (Stops.Num() > 0)
 			{
 				auto lastStop = Stops.Last();
-                auto lastStopGeo = ArcGISMap->EngineToGeographic(lastStop->GetActorLocation());
-				UArcGISPoint* lastPoint =
-					UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(lastStopGeo.X, lastStopGeo.Y, lastStopGeo.Z, SpatialReference);
+				auto lastPoint = MapComponent->TransformEnginePositionToPoint(lastStop->GetActorLocation());
 				
 				if (bIsPolylineMode)
 				{
@@ -202,8 +197,7 @@ void AGeometryCreator::EndGeometry()
 
 		if (bTraceSuccess && hit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && hit.bBlockingHit)
 		{
-			FVector AdjustedPoint = hit.Location;
-			UArcGISPoint* EndPoint = ArcGISMap->EngineToGeographic(AdjustedPoint);
+			UArcGISPoint* EndPoint = MapComponent->TransformEnginePositionToPoint(hit.ImpactPoint);
 			CreateAndCalculateEnvelope(StartPoint, EndPoint);
 		}
 		bIsDragging = false;		
@@ -289,8 +283,8 @@ void AGeometryCreator::CreateAndCalculatePolygon()
 
 	for (AActor* Stop : Stops)
 	{
-		auto stopGeo = ArcGISMap->EngineToGeographic(Stop->GetActorLocation());
-		UArcGISPoint* location = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(stopGeo.X, stopGeo.Y, stopGeo.Z, SpatialReference);
+
+		UArcGISPoint* location = MapComponent->TransformEnginePositionToPoint(Stop->GetActorLocation());
 		polygonBuilder->AddPoint(location);
 	}
 
@@ -334,8 +328,7 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 
 	for (UArcGISPoint* Corner : Corners)
 	{
-		FVector FlatWorldPos = ArcGISMap->GeographicToEngine(Corner);
-
+		FVector FlatWorldPos = MapComponent->TransformPointToEnginePosition(Corner);
 		// Raycast to get terrain surface elevation
 		FVector RayStart = FlatWorldPos + FVector(0, 0, 5000);
 		FVector RayEnd = FlatWorldPos - FVector(0, 0, 5000);
@@ -391,8 +384,7 @@ void AGeometryCreator::UpdateDraggingVisualization()
 	{
 		if (Hit.bBlockingHit && Hit.GetActor()->IsA<AArcGISMapActor>())
 		{
-			FVector AdjustedHitPoint = Hit.ImpactPoint;
-			UArcGISPoint* CurrentPoint = ArcGISMap->EngineToGeographic(AdjustedHitPoint);
+			UArcGISPoint* CurrentPoint = MapComponent->TransformEnginePositionToPoint(Hit.ImpactPoint);
 
 			CreateAndCalculateEnvelope(StartPoint, CurrentPoint);
 		}

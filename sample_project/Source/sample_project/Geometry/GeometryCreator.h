@@ -6,7 +6,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/TextBlock.h"
-
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Utils/GeoCoord/GeoPosition.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPolygonBuilder.h"
@@ -23,7 +22,6 @@
 #include "Components/SplineMeshComponent.h"
 #include "Engine/StaticMeshActor.h"
 #include "Materials/MaterialExpressionConstant3Vector.h"
-
 #include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometry.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnit.h"
@@ -55,15 +53,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UUserWidget> UIWidget;
 	TObjectPtr<UComboBoxString> UnitDropdown;
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	double Calculation = 0.0;
-
+	float Calculation = 0.0;
 	UFUNCTION(BlueprintCallable)
-	void CreateAndCalculatePolygon();
-
-	UFUNCTION(BlueprintCallable)
-	void SetCalculation(float distance);
+	void SetCalculation(float InCalculation);
 	UFUNCTION(BlueprintCallable)
 	float GetCalculation();
 	UFUNCTION(BlueprintCallable)
@@ -81,27 +74,25 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	// ArcGIS components
-	UPROPERTY()
-	UArcGISMapComponent* ArcGISMap;
-
+	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
+	bool bIsDragging = false;
+	float InterpolationInterval = 10000;
+	FString UnitText;
+	FVector2D RouteCueScale = FVector2D(5);
+	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
+	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+	AArcGISMapActor* MapActor;
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+	TObjectPtr<UArcGISMapComponent> MapComponent;
 	UPROPERTY()
 	FVector LastRootPosition;
-	bool bIsDragging = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	bool bIsEnvelopeMode = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	bool bIsPolygonMode = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	bool bIsPolylineMode = true;
-
-	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
-
-	float InterpolationInterval = 10000; 
-	FString UnitText;
-	FVector2D RouteCueScale = FVector2D(5);
-	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
-	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	class AInputManager* inputManager;
 	UPROPERTY(EditAnywhere)
@@ -110,27 +101,22 @@ private:
 	TArray<AActor*> lastToStartInterpolationPoints;
 	UPROPERTY(EditAnywhere)
 	TArray<ARouteMarker*> Stops;
-
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AActor> LineMarkerPrefab;
-
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AActor> InterpolationMarkerPrefab;
-
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UArcGISPoint> StartPoint;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISAreaUnit> CurrentAreaUnit;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISLinearUnit> CurrentLinearUnit;
-
+	UPROPERTY()
 	UArcGISSpatialReference* SpatialReference;
 
+	void CreateAndCalculatePolygon();
 	void CreateAndCalculateEnvelope(UArcGISPoint* Start, UArcGISPoint* End);
 	void Interpolate(AActor* Start, AActor* End, TArray<AActor*>& Points);
 	void VisualizeEnvelope(double MinX, double MinY, double MaxX, double MaxY, UArcGISSpatialReference* SpatialRef);
