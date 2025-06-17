@@ -1,5 +1,4 @@
-// /* Copyright 2023 Esri* * Licensed under the Apache License Version 2.0 (the "License"); * you may not use this file except in compliance with the License. * You may obtain a copy of the License at * *     http://www.apache.org/licenses/LICENSE-2.0 * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS, * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. * See the License for the specific language governing permissions and * limitations under the License. */
-
+// /* Copyright 2025 Esri* * Licensed under the Apache License Version 2.0 (the "License"); * you may not use this file except in compliance with the License. * You may obtain a copy of the License at * *     http://www.apache.org/licenses/LICENSE-2.0 * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS, * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. * See the License for the specific language governing permissions and * limitations under the License. */
 
 #include "GeometryCreator.h"
 
@@ -19,7 +18,7 @@ void AGeometryCreator::BeginPlay()
 	Super::BeginPlay();
 
 	MapActor = Cast<AArcGISMapActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass()));
-	
+
 	if (MapActor)
 	{
 		MapComponent = MapActor->GetMapComponent();
@@ -46,7 +45,7 @@ void AGeometryCreator::BeginPlay()
 		playerController->bShowMouseCursor = true;
 		playerController->bEnableClickEvents = true;
 	}
-	
+
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
@@ -101,7 +100,7 @@ void AGeometryCreator::StartGeometry()
 	if (bTraceSuccess && hit.GetActor()->GetClass() == AArcGISMapActor::StaticClass() && hit.bBlockingHit)
 	{
 		SpawnParam.Owner = this;
-		
+
 		auto lineMarker = GetWorld()->SpawnActor<ARouteMarker>(ARouteMarker::StaticClass(), hit.ImpactPoint, FRotator(0), SpawnParam);
 		auto hitPoint = MapComponent->TransformEnginePositionToPoint(hit.ImpactPoint);
 
@@ -115,7 +114,7 @@ void AGeometryCreator::StartGeometry()
 		{
 			if (bIsPolygonMode)
 			{
-                // Clear the last segment when adding a new polygon vertice				
+				// Clear the last segment when adding a new polygon vertice
 				int32 RemovedCount = lastToStartInterpolationPoints.Num();
 				for (int32 i = 0; i <= RemovedCount; i++)
 				{
@@ -142,7 +141,7 @@ void AGeometryCreator::StartGeometry()
 			{
 				auto lastStop = Stops.Last();
 				auto lastPoint = MapComponent->TransformEnginePositionToPoint(lastStop->GetActorLocation());
-				
+
 				if (bIsPolylineMode)
 				{
 					double distance =
@@ -157,10 +156,9 @@ void AGeometryCreator::StartGeometry()
 				FeaturePoints.Add(lastStop);
 				Interpolate(lastStop, lineMarker, FeaturePoints);
 				FeaturePoints.Add(lineMarker);
-			
 			}
-				//Stops array stores user-added points
-				Stops.Add(lineMarker);
+			//Stops array stores user-added points
+			Stops.Add(lineMarker);
 
 			if (bIsPolygonMode)
 			{
@@ -168,7 +166,7 @@ void AGeometryCreator::StartGeometry()
 				if (Stops.Num() >= 3)
 				{
 					//compute the last segment
-					Interpolate(lineMarker, Stops[0], lastToStartInterpolationPoints); 
+					Interpolate(lineMarker, Stops[0], lastToStartInterpolationPoints);
 					CreateAndCalculatePolygon();
 				}
 			}
@@ -200,7 +198,7 @@ void AGeometryCreator::EndGeometry()
 			UArcGISPoint* EndPoint = MapComponent->TransformEnginePositionToPoint(hit.ImpactPoint);
 			CreateAndCalculateEnvelope(StartPoint, EndPoint);
 		}
-		bIsDragging = false;		
+		bIsDragging = false;
 	}
 }
 
@@ -273,7 +271,7 @@ void AGeometryCreator::ClearLine()
 			point->UnregisterComponent();
 			point->DestroyComponent();
 		}
-		SplineMeshComponents.Empty();	
+		SplineMeshComponents.Empty();
 	}
 }
 
@@ -283,7 +281,6 @@ void AGeometryCreator::CreateAndCalculatePolygon()
 
 	for (AActor* Stop : Stops)
 	{
-
 		UArcGISPoint* location = MapComponent->TransformEnginePositionToPoint(Stop->GetActorLocation());
 		polygonBuilder->AddPoint(location);
 	}
@@ -316,7 +313,7 @@ void AGeometryCreator::CreateAndCalculateEnvelope(UArcGISPoint* Start, UArcGISPo
 
 void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, double MaxY, UArcGISSpatialReference* SpatialRef)
 {
-	ClearLine(); 
+	ClearLine();
 
 	TArray<UArcGISPoint*> Corners;
 	Corners.Add(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(MinX, MinY, SpatialRef)); // Bottom Left
@@ -356,12 +353,12 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 		AActor* nextMarker = markers[(i + 1) % markers.Num()];
 
 		FeaturePoints.Add(currentMarker);
-		Interpolate(currentMarker, nextMarker, FeaturePoints); 
+		Interpolate(currentMarker, nextMarker, FeaturePoints);
 	}
 
 	FeaturePoints.Add(markers[0]);
-	
-	RenderLine(FeaturePoints); 
+
+	RenderLine(FeaturePoints);
 }
 
 //update the visualization while dragging
@@ -434,7 +431,7 @@ void AGeometryCreator::UpdateDisplay(float Value)
 	}
 }
 
-//Interpolate points between two given points, then returns an array of points excluding the two 
+//Interpolate points between two given points, then returns an array of points excluding the two
 void AGeometryCreator::Interpolate(AActor* start, AActor* end, TArray<AActor*>& Points)
 {
 	FVector A = start->GetActorLocation();
@@ -451,9 +448,3 @@ void AGeometryCreator::Interpolate(AActor* start, AActor* end, TArray<AActor*>& 
 		Points.Add(nextInterpolation);
 	}
 }
-
-
-
-
-
-

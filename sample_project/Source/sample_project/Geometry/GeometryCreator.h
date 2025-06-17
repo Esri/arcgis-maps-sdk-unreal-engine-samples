@@ -1,39 +1,32 @@
-// /* Copyright 2023 Esri* * Licensed under the Apache License Version 2.0 (the "License"); * you may not use this file except in compliance with the License. * You may obtain a copy of the License at * *     http://www.apache.org/licenses/LICENSE-2.0 * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS, * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. * See the License for the specific language governing permissions and * limitations under the License. */
+// /* Copyright 2025 Esri* * Licensed under the Apache License Version 2.0 (the "License"); * you may not use this file except in compliance with the License. * You may obtain a copy of the License at * *     http://www.apache.org/licenses/LICENSE-2.0 * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS, * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. * See the License for the specific language governing permissions and * limitations under the License. */
 
 #pragma once
 
-#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "Components/TextBlock.h"
-#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
-#include "ArcGISMapsSDK/Utils/GeoCoord/GeoPosition.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPolygonBuilder.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISEnvelopeBuilder.h"
-#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISEnvelope.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAreaUnit.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISLinearUnit.h"
-#include "Components/LineBatchComponent.h"
-#include "DrawDebugHelpers.h"
-#include "Engine/World.h"
-#include "Kismet/GameplayStatics.h"
-#include "Blueprint/UserWidget.h"
-#include "Components/ComboBoxString.h"
-#include "Components/SplineMeshComponent.h"
-#include "Engine/StaticMeshActor.h"
-#include "Materials/MaterialExpressionConstant3Vector.h"
-#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometry.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnit.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAngularUnitId.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISAreaUnit.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISEnvelopeBuilder.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeodeticDistanceResult.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeometryEngine.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISLinearUnit.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPoint.h"
-#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISPoint.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPolygonBuilder.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
+#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
+#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/ComboBoxString.h"
+#include "Components/SplineMeshComponent.h"
+#include "Components/TextBlock.h"
+#include "CoreMinimal.h"
+#include "Engine/StaticMeshActor.h"
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerController.h"
 #include "sample_project/Routing/Breadcrumb.h"
 #include "sample_project/Routing/RouteMarker.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISGeodeticDistanceResult.h"
+
 #include "GeometryCreator.generated.h"
 
 class UArcGISMapComponent;
@@ -52,19 +45,27 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UUserWidget> UIWidget;
+
 	TObjectPtr<UComboBoxString> UnitDropdown;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float Calculation = 0.0;
+
 	UFUNCTION(BlueprintCallable)
 	void SetCalculation(float InCalculation);
+
 	UFUNCTION(BlueprintCallable)
 	float GetCalculation();
+
 	UFUNCTION(BlueprintCallable)
 	void SetLinearUnit(UArcGISLinearUnit* LU);
+
 	UFUNCTION(BlueprintCallable)
 	void SetAreaUnit(UArcGISAreaUnit* AU);
+
 	UFUNCTION(BlueprintCallable)
 	UArcGISLinearUnit* GetLinearUnit();
+
 	UFUNCTION(BlueprintCallable)
 	UArcGISAreaUnit* GetAreaUnit();
 
