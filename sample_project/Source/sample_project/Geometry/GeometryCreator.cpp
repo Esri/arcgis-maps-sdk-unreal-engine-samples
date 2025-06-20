@@ -11,6 +11,8 @@ constexpr int MarkerHeight = 300;
 AGeometryCreator::AGeometryCreator()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
 }
 
 void AGeometryCreator::BeginPlay()
@@ -30,13 +32,13 @@ void AGeometryCreator::BeginPlay()
 
 	SpatialReference = MapComponent->GetOriginPosition()->GetSpatialReference();
 
-	if (!inputManager)
+	if (!InputManager)
 	{
-		inputManager = Cast<AInputManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AInputManager::StaticClass()));
+		InputManager = Cast<AInputManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AInputManager::StaticClass()));
 	}
 
-	inputManager->OnInputTrigger.AddDynamic(this, &AGeometryCreator::StartGeometry);
-	inputManager->OnInputEnd.AddDynamic(this, &AGeometryCreator::EndGeometry);
+	InputManager->OnInputTrigger.AddDynamic(this, &AGeometryCreator::StartGeometry);
+	InputManager->OnInputEnd.AddDynamic(this, &AGeometryCreator::EndGeometry);
 
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
@@ -70,8 +72,8 @@ void AGeometryCreator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	inputManager->OnInputTrigger.RemoveDynamic(this, &AGeometryCreator::StartGeometry);
-	inputManager->OnInputEnd.RemoveDynamic(this, &AGeometryCreator::EndGeometry);
+	InputManager->OnInputTrigger.RemoveDynamic(this, &AGeometryCreator::StartGeometry);
+	InputManager->OnInputEnd.RemoveDynamic(this, &AGeometryCreator::EndGeometry);
 }
 
 void AGeometryCreator::Tick(float DeltaTime)
@@ -132,7 +134,8 @@ void AGeometryCreator::StartGeometry()
 
 				for (AActor* Point : lastToStartInterpolationPoints)
 				{
-					Point->Destroy();
+					if (Point)
+						Point->Destroy();
 				}
 				lastToStartInterpolationPoints.Empty();
 			}
@@ -247,17 +250,20 @@ void AGeometryCreator::ClearLine()
 {
 	for (auto point : FeaturePoints)
 	{
-		point->Destroy();
+		if (point)
+			point->Destroy();
 	}
 
 	for (auto point : lastToStartInterpolationPoints)
 	{
-		point->Destroy();
+		if (point)
+			point->Destroy();
 	}
 
 	for (auto stop : Stops)
 	{
-		stop->Destroy();
+		if(stop)
+			stop->Destroy();
 	}
 
 	FeaturePoints.Empty();
@@ -322,6 +328,9 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 	Corners.Add(UArcGISPoint::CreateArcGISPointWithXYSpatialReference(MinX, MaxY, SpatialRef)); // Top Left
 
 	TArray<AActor*> markers;
+
+	if (Corners.Num() < 4)
+		return;
 
 	for (UArcGISPoint* Corner : Corners)
 	{

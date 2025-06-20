@@ -29,11 +29,11 @@
 
 #include "GeometryCreator.generated.h"
 
-class UArcGISMapComponent;
 class UArcGISCameraControllerComponent;
-class UStaticMeshComponent;
 class UArcGISLocationComponent;
+class UArcGISMapComponent;
 class ULineBatchComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class AGeometryCreator : public AActor
@@ -43,13 +43,12 @@ class AGeometryCreator : public AActor
 public:
 	AGeometryCreator();
 
+	UPROPERTY(BlueprintReadWrite)
+	float Calculation = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UUserWidget> UIWidget;
-
+	UPROPERTY()
 	TObjectPtr<UComboBoxString> UnitDropdown;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float Calculation = 0.0;
 
 	UFUNCTION(BlueprintCallable)
 	void SetCalculation(float InCalculation);
@@ -75,47 +74,48 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	bool bIsDragging = false;
 	float InterpolationInterval = 10000;
+	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	FString UnitText;
 	FVector2D RouteCueScale = FVector2D(5);
-	UStaticMesh* RouteMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Geometries/Cube.Cube"));
+	UStaticMesh* RouteMesh;
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
-	AArcGISMapActor* MapActor;
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
-	TObjectPtr<UArcGISMapComponent> MapComponent;
-	UPROPERTY()
-	FVector LastRootPosition;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
 	bool bIsEnvelopeMode = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
 	bool bIsPolygonMode = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
 	bool bIsPolylineMode = true;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
-	class AInputManager* inputManager;
-	UPROPERTY(EditAnywhere)
-	TArray<AActor*> FeaturePoints;
-	UPROPERTY(EditAnywhere)
-	TArray<AActor*> lastToStartInterpolationPoints;
-	UPROPERTY(EditAnywhere)
-	TArray<ARouteMarker*> Stops;
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AActor> LineMarkerPrefab;
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AActor> InterpolationMarkerPrefab;
-	UPROPERTY(EditAnywhere)
-	TObjectPtr<UArcGISPoint> StartPoint;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
-	TSubclassOf<UUserWidget> UIWidgetClass;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISAreaUnit> CurrentAreaUnit;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess))
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISLinearUnit> CurrentLinearUnit;
 	UPROPERTY()
+	TArray<AActor*> FeaturePoints;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
+	class AInputManager* InputManager;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> InterpolationMarkerPrefab;
+	UPROPERTY()
+	FVector LastRootPosition;
+	UPROPERTY()
+	TArray<AActor*> lastToStartInterpolationPoints;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> LineMarkerPrefab;
+	UPROPERTY(meta = (AllowPrivateAccess))
+	AArcGISMapActor* MapActor;
+	UPROPERTY(meta = (AllowPrivateAccess))
+	TObjectPtr<UArcGISMapComponent> MapComponent;
+	UPROPERTY()
 	UArcGISSpatialReference* SpatialReference;
+	UPROPERTY()
+	TObjectPtr<UArcGISPoint> StartPoint;
+	UPROPERTY()
+	TArray<ARouteMarker*> Stops;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
+	TSubclassOf<UUserWidget> UIWidgetClass;
 
 	void CreateAndCalculatePolygon();
 	void CreateAndCalculateEnvelope(UArcGISPoint* Start, UArcGISPoint* End);
