@@ -329,9 +329,6 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 
 	TArray<AActor*> markers;
 
-	if (Corners.Num() < 4)
-		return;
-
 	for (UArcGISPoint* Corner : Corners)
 	{
 		FVector FlatWorldPos = MapComponent->TransformPointToEnginePosition(Corner);
@@ -353,6 +350,11 @@ void AGeometryCreator::VisualizeEnvelope(double MinX, double MinY, double MaxX, 
 				Stops.Add(marker);
 			}
 		}
+	}
+
+	if (markers.Num() < 4)
+	{
+		return;
 	}
 
 	// Connect corners and interpolate
