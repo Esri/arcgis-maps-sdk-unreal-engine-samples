@@ -15,6 +15,15 @@ AInputManager::AInputManager()
 void AInputManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	MappingContext = LoadObject<UInputMappingContext>(
+		nullptr, TEXT("/Script/EnhancedInput.InputMappingContext'/Game/SampleViewer/SharedResources/Input/IAC_SamplesInput.IAC_SamplesInput'"));
+
+	MousePress = LoadObject<UInputAction>(
+		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_LeftMouseClick.IA_LeftMouseClick'"));
+
+	ShiftModifier = LoadObject<UInputAction>(
+		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Shift.IA_Shift'"));
 	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
@@ -48,11 +57,37 @@ void AInputManager::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 {
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(mousePress, ETriggerEvent::Started, this, &AInputManager::TriggerInput);
+		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Started, this, &AInputManager::TriggerInputStart);
+		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Completed, this, &AInputManager::TriggerInputEnd);
+		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Started, this, &AInputManager::OnShiftPressed);
+		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Completed, this, &AInputManager::OnShiftReleased);
 	}
 }
 
-void AInputManager::TriggerInput()
+void AInputManager::TriggerInputStart()
 {
 	OnInputTrigger.Broadcast();
+}
+
+void AInputManager::TriggerInputEnd()
+{
+	OnInputEnd.Broadcast();
+}
+
+void AInputManager::OnShiftPressed()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC && PC->GetPawn())
+	{
+		PC->GetPawn()->DisableInput(PC);
+	}
+}
+
+void AInputManager::OnShiftReleased()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC && PC->GetPawn())
+	{
+		PC->GetPawn()->EnableInput(PC);
+	}
 }

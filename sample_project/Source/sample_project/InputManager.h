@@ -8,9 +8,13 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "GameFramework/Actor.h"
+#include "ArcGISMapsSDK/Components/ArcGISCameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+
 #include "InputManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputTrigger);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputEnd);
 
 UCLASS()
 class SAMPLE_PROJECT_API AInputManager : public AActor
@@ -20,8 +24,12 @@ class SAMPLE_PROJECT_API AInputManager : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AInputManager();
+
 	UPROPERTY(BlueprintAssignable)
 	FOnInputTrigger OnInputTrigger;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnInputEnd OnInputEnd;
 
 protected:
 	// Called when the game starts or when spawned
@@ -30,10 +38,17 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
 
 private:
-	void TriggerInput();
-	
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UInputMappingContext* MappingContext = LoadObject<UInputMappingContext>(nullptr, TEXT("/Script/EnhancedInput.InputMappingContext'/Game/SampleViewer/SharedResources/Input/IAC_SamplesInput.IAC_SamplesInput'"));
+	UInputMappingContext* MappingContext;
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UInputAction* mousePress = LoadObject<UInputAction>(nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_LeftMouseClick.IA_LeftMouseClick'"));
+	UInputAction* MousePress;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UInputAction* ShiftModifier;
+
+	void OnShiftPressed();
+	void OnShiftReleased();
+	void TriggerInputStart();
+	void TriggerInputEnd();
 };
