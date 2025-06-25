@@ -79,6 +79,7 @@ private:
 	FActorSpawnParameters SpawnParam = FActorSpawnParameters();
 	FString UnitText;
 	FVector2D RouteCueScale = FVector2D(5);
+	UStaticMesh* RouteMesh;
 	TDoubleLinkedList<USplineMeshComponent*> SplineMeshComponents;
 
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
@@ -107,8 +108,6 @@ private:
 	AArcGISMapActor* MapActor;
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISMapComponent> MapComponent;
-	UPROPERTY(EditAnywhere)
-	UStaticMesh* RouteMesh;
 	UPROPERTY()
 	UArcGISSpatialReference* SpatialReference;
 	UPROPERTY()
