@@ -2,7 +2,7 @@
 
 Draw polylines, polygons and envelopes on the map and get their lengths or areas.
 
-![Geometry](geometry.PNG)
+![Geometry](geometry.png)
 
 ## How to use the sample
 
