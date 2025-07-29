@@ -377,7 +377,6 @@ void AGeometryCreator::UpdateDraggingVisualization()
 {
 	FVector WorldOrigin;
 	FVector WorldDirection;
-	FVector MousePosition;
 
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PlayerController || !PlayerController->DeprojectMousePositionToWorld(WorldOrigin, WorldDirection))
