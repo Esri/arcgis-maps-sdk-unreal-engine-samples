@@ -78,7 +78,9 @@ void AXRTableTopInteractor::BeginPlay()
 void AXRTableTopInteractor::SetTabletopComponent()
 {
 	// Find the tabletop component attached to the map actor
-	auto mapComponent = UArcGISMapComponent::GetMapComponent(this);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
+	const auto mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+
 	if (mapComponent)
 	{
 		TabletopComponent = mapComponent->GetOwner()->FindComponentByClass<UXRTabletopComponent>();
