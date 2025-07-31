@@ -14,6 +14,7 @@
  */
 
 #include "XRTabletopComponent.h"
+#include "ArcGISMapsSDK/Utils/GeometryUtils.h"
 
 UXRTabletopComponent::UXRTabletopComponent()
 {
@@ -28,7 +29,7 @@ void UXRTabletopComponent::OnRegister()
 
 	if (MapComponent.IsValid())
 	{
-		CenterPosition = UArcGISPoint::CreateArcGISPointWithXY(MapComponent->GetExtent().ExtentCenter.X, MapComponent->GetExtent().ExtentCenter.Y);
+		CenterPosition = Esri::ArcGISMapsSDK::Utils::FromInstanceData(MapComponent->GetExtent().ExtentCenter);
 		ExtentDimensions = MapComponent->GetExtent().ShapeDimensions;
 		Shape = MapComponent->GetExtent().ExtentShape;
 
@@ -108,8 +109,6 @@ void UXRTabletopComponent::PreUpdateTabletop()
 
 	if (bNeedsExtentChange || bExtentChanged)
 	{
-		FArcGISExtentInstanceData newExtent{CenterPosition->GetX(), CenterPosition->GetY(), CenterPosition->GetZ(), 4326, 0, Shape, ExtentDimensions};
-
 		double radiusDistance = 0.0;
 		if (Shape == EMapExtentShapes::Circle)
 		{
@@ -126,8 +125,7 @@ void UXRTabletopComponent::PreUpdateTabletop()
 
 		if (bExtentChanged)
 		{
-			UArcGISPoint* ExtentCenter = UArcGISPoint::CreateArcGISPointWithXY(newExtent.ExtentCenter.X, newExtent.ExtentCenter.Y);
-			MapComponent->SetOriginPosition(ExtentCenter);
+			MapComponent->SetOriginPosition(CenterPosition);
 
 			WrapperActor->SetActorRelativeScale3D(FVector3d(WrapperScaleFactor / radiusDistance));
 
@@ -135,8 +133,9 @@ void UXRTabletopComponent::PreUpdateTabletop()
 		}
 		else
 		{
-			MapComponent->SetExtent(newExtent);
-
+			
+			MapComponent->SetExtent({ Esri::ArcGISMapsSDK::Utils::ToInstanceData(CenterPosition), Shape, ExtentDimensions});
+			
 			if (Shape != EMapExtentShapes::Rectangle)
 			{
 				ExtentDimensions.Y = ExtentDimensions.X;
