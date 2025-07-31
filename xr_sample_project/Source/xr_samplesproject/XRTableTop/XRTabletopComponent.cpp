@@ -14,6 +14,8 @@
  */
 
 #include "XRTabletopComponent.h"
+
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/Utils/GeometryUtils.h"
 
 UXRTabletopComponent::UXRTabletopComponent()
@@ -133,8 +135,8 @@ void UXRTabletopComponent::PreUpdateTabletop()
 		}
 		else
 		{
-			
-			MapComponent->SetExtent({ Esri::ArcGISMapsSDK::Utils::ToInstanceData(CenterPosition), Shape, ExtentDimensions});
+			FArcGISExtentInstanceData newExtent = {Esri::ArcGISMapsSDK::Utils::ToInstanceData(CenterPosition), Shape, ExtentDimensions};
+			MapComponent->SetExtent(newExtent);
 			
 			if (Shape != EMapExtentShapes::Rectangle)
 			{
@@ -371,7 +373,9 @@ bool UXRTabletopComponent::SetupReferences()
 {
 	if (!MapComponent.IsValid())
 	{
-		MapComponent = GetOwner()->FindComponentByClass<UArcGISMapComponent>();
+		const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+		MapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
+	
 		if (!MapComponent.IsValid())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Tabletop component must be attached to an ArcGISMapActor."));

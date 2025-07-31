@@ -124,8 +124,8 @@ void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
 		return;
 	}
 	FString Url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
-	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
-	const auto mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
 	FString APIToken = mapComponent ? mapComponent->GetAPIKey() : "";
 	FString Query;
 	UArcGISPoint* Point(InPoint);

@@ -15,6 +15,7 @@
 
 #include "XRTableTopInteractor.h"
 #include "XRTabletopComponent.h"
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 
 AXRTableTopInteractor::AXRTableTopInteractor()
 {
@@ -78,8 +79,8 @@ void AXRTableTopInteractor::BeginPlay()
 void AXRTableTopInteractor::SetTabletopComponent()
 {
 	// Find the tabletop component attached to the map actor
-	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
-	const auto mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
 
 	if (mapComponent)
 	{
