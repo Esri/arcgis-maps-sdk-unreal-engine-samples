@@ -46,8 +46,9 @@ void AGeocoder::SendAddressQuery(FString Address)
 		return;
 	}
 	FString Url = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
-	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
-	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
+	const auto mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+	FString APIToken = mapComponent ? mapComponent->GetAPIKey() : "";
 	FString Query;
 
 	// Set up the query 
@@ -123,8 +124,9 @@ void AGeocoder::SendLocationQuery(UArcGISPoint* InPoint)
 		return;
 	}
 	FString Url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
-	UArcGISMapComponent* MapComponent = UArcGISMapComponent::GetMapComponent(this);
-	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+	const auto mapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
+	FString APIToken = mapComponent ? mapComponent->GetAPIKey() : "";
 	FString Query;
 	UArcGISPoint* Point(InPoint);
 

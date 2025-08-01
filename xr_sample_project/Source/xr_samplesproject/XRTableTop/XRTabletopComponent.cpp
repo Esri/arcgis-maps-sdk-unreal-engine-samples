@@ -15,6 +15,9 @@
 
 #include "XRTabletopComponent.h"
 
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/Utils/GeometryUtils.h"
+
 UXRTabletopComponent::UXRTabletopComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -28,7 +31,7 @@ void UXRTabletopComponent::OnRegister()
 
 	if (MapComponent.IsValid())
 	{
-		CenterPosition = FGeoPosition(MapComponent->GetExtent().ExtentCenter);
+		CenterPosition = Esri::ArcGISMapsSDK::Utils::FromInstanceData(MapComponent->GetExtent().ExtentCenter);
 		ExtentDimensions = MapComponent->GetExtent().ShapeDimensions;
 		Shape = MapComponent->GetExtent().ExtentShape;
 
@@ -108,8 +111,6 @@ void UXRTabletopComponent::PreUpdateTabletop()
 
 	if (bNeedsExtentChange || bExtentChanged)
 	{
-		FArcGISExtentInstanceData newExtent{CenterPosition, Shape, ExtentDimensions};
-
 		double radiusDistance = 0.0;
 		if (Shape == EMapExtentShapes::Circle)
 		{
@@ -126,7 +127,7 @@ void UXRTabletopComponent::PreUpdateTabletop()
 
 		if (bExtentChanged)
 		{
-			MapComponent->SetOriginPosition(newExtent.ExtentCenter);
+			MapComponent->SetOriginPosition(CenterPosition);
 
 			WrapperActor->SetActorRelativeScale3D(FVector3d(WrapperScaleFactor / radiusDistance));
 
@@ -134,8 +135,9 @@ void UXRTabletopComponent::PreUpdateTabletop()
 		}
 		else
 		{
+			FArcGISExtentInstanceData newExtent = {Esri::ArcGISMapsSDK::Utils::ToInstanceData(CenterPosition), Shape, ExtentDimensions};
 			MapComponent->SetExtent(newExtent);
-
+			
 			if (Shape != EMapExtentShapes::Rectangle)
 			{
 				ExtentDimensions.Y = ExtentDimensions.X;
@@ -173,7 +175,7 @@ void UXRTabletopComponent::PostUpdateTabletop(FVector3d InAreaMin, FVector3d InA
 	auto point = MapComponent->GetView()->WorldToGeographic(center);
 
 	MapComponent->SetOriginPosition(point);
-	CenterPosition = FGeoPosition(point);
+	CenterPosition = point;
 
 	ExtentDimensions = FVector2D(width, height) / (Shape == EMapExtentShapes::Circle ? 2 : 1);
 
@@ -198,7 +200,7 @@ void UXRTabletopComponent::MoveExtentCenter(FVector3d WorldPos)
 		return;
 	}
 
-	CenterPosition = FGeoPosition(MapComponent->GetView()->WorldToGeographic(WorldPos));
+	CenterPosition = MapComponent->GetView()->WorldToGeographic(WorldPos);
 	bNeedsExtentChange = true;
 
 	PreUpdateTabletop();
@@ -293,12 +295,12 @@ void UXRTabletopComponent::SetDimensions(FVector2D InValue)
 	}
 }
 
-FGeoPosition UXRTabletopComponent::GetExtentCenter()
+UArcGISPoint* UXRTabletopComponent::GetExtentCenter()
 {
 	return CenterPosition;
 }
 
-void UXRTabletopComponent::SetExtentCenter(FGeoPosition InValue)
+void UXRTabletopComponent::SetExtentCenter(UArcGISPoint* InValue)
 {
 	if (CenterPosition != InValue)
 	{
@@ -371,7 +373,9 @@ bool UXRTabletopComponent::SetupReferences()
 {
 	if (!MapComponent.IsValid())
 	{
-		MapComponent = GetOwner()->FindComponentByClass<UArcGISMapComponent>();
+		const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
+		MapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
+	
 		if (!MapComponent.IsValid())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Tabletop component must be attached to an ArcGISMapActor."));

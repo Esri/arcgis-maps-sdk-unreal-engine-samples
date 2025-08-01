@@ -53,9 +53,9 @@ public:
 	void SetDimensions(FVector2D InValue);
 
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-	FGeoPosition GetExtentCenter();
+	UArcGISPoint* GetExtentCenter();
 	UFUNCTION(BlueprintCallable, BlueprintInternalUseOnly)
-	void SetExtentCenter(FGeoPosition InValue);
+	void SetExtentCenter(UArcGISPoint* InValue);
 
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	EMapExtentShapes GetShape();
@@ -95,7 +95,7 @@ private:
 	void UpdateOffset();
 
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetExtentCenter, BlueprintSetter = SetExtentCenter, Category = "XRTabletop|Extent")
-	FGeoPosition CenterPosition;
+	UArcGISPoint* CenterPosition;
 
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetShape, BlueprintSetter = SetShape, Category = "XRTabletop|Extent")
 	EMapExtentShapes Shape = EMapExtentShapes::Circle;
