@@ -47,8 +47,12 @@ private:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UInputAction* ShiftModifier;
 
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UInputAction* ToggleNavigation;
+
 	void OnShiftPressed();
 	void OnShiftReleased();
 	void TriggerInputStart();
 	void TriggerInputEnd();
+	void OnToggleNavigationMode();
 };
