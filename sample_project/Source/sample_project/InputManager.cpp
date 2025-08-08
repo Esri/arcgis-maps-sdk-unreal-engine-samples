@@ -24,10 +24,9 @@ void AInputManager::BeginPlay()
 	ShiftModifier = LoadObject<UInputAction>(
 		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Shift.IA_Shift'"));
 
-	ToggleNavigation =
-		LoadObject<UInputAction>(nullptr, TEXT("/Game/SampleViewer/SharedResources/Input/IA_Space'"));
+	SpacePress = LoadObject<UInputAction>(
+		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Space.IA_Space'"));
 
-	
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
 		PlayerController->bShowMouseCursor = true;
@@ -64,8 +63,7 @@ void AInputManager::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Completed, this, &AInputManager::TriggerInputEnd);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Started, this, &AInputManager::OnShiftPressed);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Completed, this, &AInputManager::OnShiftReleased);
-		EnhancedInputComponent->BindAction(ToggleNavigation, ETriggerEvent::Triggered, this, &AInputManager::OnToggleNavigationMode);
-
+		EnhancedInputComponent->BindAction(SpacePress, ETriggerEvent::Started, this, &AInputManager::TriggerSwitchMode);
 	}
 }
 
@@ -97,20 +95,7 @@ void AInputManager::OnShiftReleased()
 	}
 }
 
-void AInputManager::OnToggleNavigationMode()
+void AInputManager::TriggerSwitchMode()
 {
-	bIsFreeNavigation = !bIsFreeNavigation;
-
-	if (bIsFreeNavigation)
-	{
-		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-		if (PC && PC->GetPawn())
-		{
-			PC->SetViewTarget(PC->GetPawn()); 
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("Switched to Cinematic Route Mode"));
-	}
+	OnSwitchMode.Broadcast(); 
 }

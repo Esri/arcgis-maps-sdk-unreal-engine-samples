@@ -15,6 +15,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputTrigger);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSwitchMode);
 
 UCLASS()
 class SAMPLE_PROJECT_API AInputManager : public AActor
@@ -30,6 +31,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInputEnd OnInputEnd;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnSwitchMode OnSwitchMode;
 
 protected:
 	// Called when the game starts or when spawned
@@ -48,11 +52,11 @@ private:
 	UInputAction* ShiftModifier;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UInputAction* ToggleNavigation;
+	UInputAction* SpacePress;
 
 	void OnShiftPressed();
 	void OnShiftReleased();
 	void TriggerInputStart();
 	void TriggerInputEnd();
-	void OnToggleNavigationMode();
+	void TriggerSwitchMode();
 };
