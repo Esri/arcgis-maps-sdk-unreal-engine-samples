@@ -39,6 +39,12 @@ void AInputManager::BeginPlay()
 			Subsystem->AddMappingContext(MappingContext, 0);
 		}
 	}
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC)
+	{
+		EnableInput(PC);
+	}
 }
 
 void AInputManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
