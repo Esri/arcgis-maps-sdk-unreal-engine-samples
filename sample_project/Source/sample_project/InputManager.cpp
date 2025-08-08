@@ -24,8 +24,11 @@ void AInputManager::BeginPlay()
 	ShiftModifier = LoadObject<UInputAction>(
 		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Shift.IA_Shift'"));
 
-	SpacePress = LoadObject<UInputAction>(
-		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Space.IA_Space'"));
+	TabPress = LoadObject<UInputAction>(
+		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Tab.IA_Tab'"));
+
+	SPress =
+		LoadObject<UInputAction>(nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_S.IA_S'"));
 
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
@@ -38,12 +41,6 @@ void AInputManager::BeginPlay()
 		{
 			Subsystem->AddMappingContext(MappingContext, 0);
 		}
-	}
-
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (PC)
-	{
-		EnableInput(PC);
 	}
 }
 
@@ -69,7 +66,8 @@ void AInputManager::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Completed, this, &AInputManager::TriggerInputEnd);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Started, this, &AInputManager::OnShiftPressed);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Completed, this, &AInputManager::OnShiftReleased);
-		EnhancedInputComponent->BindAction(SpacePress, ETriggerEvent::Started, this, &AInputManager::TriggerSwitchMode);
+		EnhancedInputComponent->BindAction(TabPress, ETriggerEvent::Started, this, &AInputManager::TriggerSwitchMode);
+		EnhancedInputComponent->BindAction(SPress, ETriggerEvent::Started, this, &AInputManager::TakeSnapshot);
 	}
 }
 
@@ -104,4 +102,9 @@ void AInputManager::OnShiftReleased()
 void AInputManager::TriggerSwitchMode()
 {
 	OnSwitchMode.Broadcast(); 
+}
+
+void AInputManager::TakeSnapshot()
+{
+	OnTakeSnapshot.Broadcast();
 }
