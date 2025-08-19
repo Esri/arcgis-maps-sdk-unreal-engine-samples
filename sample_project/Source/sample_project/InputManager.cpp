@@ -27,7 +27,7 @@ void AInputManager::BeginPlay()
 	TabPress = LoadObject<UInputAction>(
 		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Tab.IA_Tab'"));
 
-	SPress =
+	TPress =
 		LoadObject<UInputAction>(nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_T.IA_T'"));
 
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
@@ -66,8 +66,8 @@ void AInputManager::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Completed, this, &AInputManager::TriggerInputEnd);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Started, this, &AInputManager::OnShiftPressed);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Completed, this, &AInputManager::OnShiftReleased);
-		EnhancedInputComponent->BindAction(TabPress, ETriggerEvent::Started, this, &AInputManager::TriggerSwitchMode);
-		EnhancedInputComponent->BindAction(SPress, ETriggerEvent::Started, this, &AInputManager::TakeSnapshot);
+		EnhancedInputComponent->BindAction(TabPress, ETriggerEvent::Started, this, &AInputManager::OnTabPressed);
+		EnhancedInputComponent->BindAction(TPress, ETriggerEvent::Started, this, &AInputManager::OnTPressed);
 	}
 }
 
@@ -99,12 +99,12 @@ void AInputManager::OnShiftReleased()
 	}
 }
 
-void AInputManager::TriggerSwitchMode()
+void AInputManager::OnTabPressed()
 {
-	OnSwitchMode.Broadcast(); 
+	TabPressedEvent.Broadcast();
 }
 
-void AInputManager::TakeSnapshot()
+void AInputManager::OnTPressed()
 {
-	OnTakeSnapshot.Broadcast();
+	TPressedEvent.Broadcast();
 }

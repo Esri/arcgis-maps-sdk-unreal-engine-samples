@@ -15,8 +15,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputTrigger);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputEnd);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSwitchMode);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTakeSnapshot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTabPressed);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTPressed);
 
 UCLASS()
 class SAMPLE_PROJECT_API AInputManager : public AActor
@@ -34,10 +34,10 @@ public:
 	FOnInputEnd OnInputEnd;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnSwitchMode OnSwitchMode;
+	FOnTabPressed TabPressedEvent;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnSwitchMode OnTakeSnapshot;
+	FOnTPressed TPressedEvent;
 
 protected:
 	// Called when the game starts or when spawned
@@ -59,12 +59,12 @@ private:
 	UInputAction* TabPress;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
-	UInputAction* SPress;
+	UInputAction* TPress;
 
 	void OnShiftPressed();
 	void OnShiftReleased();
 	void TriggerInputStart();
 	void TriggerInputEnd();
-	void TriggerSwitchMode();
-	void TakeSnapshot();
+	void OnTabPressed();
+	void OnTPressed();
 };
