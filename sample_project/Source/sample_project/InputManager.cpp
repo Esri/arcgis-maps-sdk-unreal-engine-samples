@@ -8,7 +8,6 @@ AInputManager::AInputManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -24,7 +23,13 @@ void AInputManager::BeginPlay()
 
 	ShiftModifier = LoadObject<UInputAction>(
 		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Shift.IA_Shift'"));
-	
+
+	TabPress = LoadObject<UInputAction>(
+		nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_Tab.IA_Tab'"));
+
+	TPress =
+		LoadObject<UInputAction>(nullptr, TEXT("/Script/EnhancedInput.InputAction'/Game/SampleViewer/SharedResources/Input/IA_T.IA_T'"));
+
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController()))
 	{
 		PlayerController->bShowMouseCursor = true;
@@ -61,6 +66,8 @@ void AInputManager::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInputComponent->BindAction(MousePress, ETriggerEvent::Completed, this, &AInputManager::TriggerInputEnd);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Started, this, &AInputManager::OnShiftPressed);
 		EnhancedInputComponent->BindAction(ShiftModifier, ETriggerEvent::Completed, this, &AInputManager::OnShiftReleased);
+		EnhancedInputComponent->BindAction(TabPress, ETriggerEvent::Started, this, &AInputManager::OnTabPressed);
+		EnhancedInputComponent->BindAction(TPress, ETriggerEvent::Started, this, &AInputManager::OnTPressed);
 	}
 }
 
@@ -90,4 +97,14 @@ void AInputManager::OnShiftReleased()
 	{
 		PC->GetPawn()->EnableInput(PC);
 	}
+}
+
+void AInputManager::OnTabPressed()
+{
+	TabPressedEvent.Broadcast();
+}
+
+void AInputManager::OnTPressed()
+{
+	TPressedEvent.Broadcast();
 }

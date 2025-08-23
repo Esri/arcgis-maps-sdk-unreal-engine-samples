@@ -15,6 +15,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputTrigger);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTabPressed);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTPressed);
 
 UCLASS()
 class SAMPLE_PROJECT_API AInputManager : public AActor
@@ -30,6 +32,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInputEnd OnInputEnd;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTabPressed TabPressedEvent;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTPressed TPressedEvent;
 
 protected:
 	// Called when the game starts or when spawned
@@ -47,8 +55,16 @@ private:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
 	UInputAction* ShiftModifier;
 
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UInputAction* TabPress;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, meta = (AllowPrivateAccess))
+	UInputAction* TPress;
+
 	void OnShiftPressed();
 	void OnShiftReleased();
 	void TriggerInputStart();
 	void TriggerInputEnd();
+	void OnTabPressed();
+	void OnTPressed();
 };
