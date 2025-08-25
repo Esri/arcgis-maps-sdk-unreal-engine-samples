@@ -2,7 +2,7 @@
 
 Showcase a smooth, automated camera fly-through along a path of stop points. The path can be predefined or built at runtime from the current camera position, including mode switching (flythrough vs. free navigation), basic obstacle avoidance, and smooth position/rotation interpolation. The path can be saved to the disk for reuse. 
 
-![Geometry](geometry.png)
+![Flythrough](flythrough.png)
 
 ## How to use the sample
 
