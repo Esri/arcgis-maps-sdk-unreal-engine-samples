@@ -25,6 +25,7 @@ This repository is composed of two separate Unity projects. If you would like to
 
 * [Building Filter](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/BuildingFilter) - Explore a building scene layer by toggling the visibility of different attributes.
 * [Feature Layer](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/FeatureLayer) - Query objects from a feature layer and show them on the map in Unreal Engine.
+* [Flythrough](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Flythrough) - Showcase a smooth, automated camera fly-through along a path of stop points.
 * [Geocoding](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/Geocoding) - Search for an address or click on the surface to get the address of that location.
 * [HitTest](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/HitTest) - Visualize individual Buildings ID's from a 3D Object Scene Layer.
 * [Line of sight](https://github.com/Esri/arcgis-maps-sdk-unreal-engine-samples/tree/main/sample_project/Content/SampleViewer/Samples/LineOfSight) - See how to check the line of sight between two objects.
