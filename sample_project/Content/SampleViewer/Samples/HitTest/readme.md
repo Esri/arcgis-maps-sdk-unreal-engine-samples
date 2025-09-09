@@ -1,4 +1,4 @@
-# Visualize 3DObject ID's
+# Visualize 3DObject IDs
 
 Get the ID for individual buildings in a Level.
 
@@ -10,14 +10,14 @@ Get the ID for individual buildings in a Level.
 2. Click play.
 3. Using the UI, enter an APIKey in the input field to the top left. 
 4. Open the **Samples** drop down, and click **HitTest** to open the Level.
-5. Click a building. The building's ID's will show up on a 3D UI Component.
+5. Click a building. The building's IDs will show up on a 3D UI Component.
 
 ## How to use the sample (HitTest Level)
 
 1. Open the **HitTest** Level.
 2. Click on the **ArcGISMap** Actor and set your API key in the **Details** panel. 
 3. Click play.
-4. Click a building. The building's ID's will show up on a 3D UI Component.
+4. Click a building. The building's IDs will show up on a 3D UI Component.
 
 ## How it works
 
