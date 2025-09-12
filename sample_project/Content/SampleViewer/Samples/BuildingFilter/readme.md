@@ -1,6 +1,6 @@
-# Building Filter
+# Filter building scene layers
 
-Allows users to toggle the visibility of different levels, construction phases, disciplines, and categories within a building scene layer. This sample demonstrates how to explore building scene layers and filter based on various criteria.
+Allows users to toggle the visibility of different levels, construction phases, disciplines, and categories within a building scene layer. This sample shows how to explore building scene layers and apply filters using different criteria.
 
 ![image](https://github.com/user-attachments/assets/f35d80c0-4d71-4af6-b462-44ef3a5d2d66)
 

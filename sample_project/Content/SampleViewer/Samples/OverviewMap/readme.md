@@ -1,15 +1,15 @@
-# Visualize your position in an Overview Map
+# Visualize your position in an overview map
 
 ![Image of Overview Map](OverviewMap.png)
 
-## How to Setup (Overview Map Level)
+## How to setup (Overview Map Level)
 
 1. Open the **OverviewMap_bp** or **OverviewMap_cpp** level.
 2. Click on the **ArcGISMapActor** in the Outliner panel.
 3. Set your API key under the Authentication section in the Details panel.
 4. Click Play and select a city from the list.
 
-## How to Setup (Sample Viewer)
+## How to setup (Sample Viewer)
 
 1. Click Play in Unreal Editor.
 2. Input your API key under the **API Key Drop-down**.
