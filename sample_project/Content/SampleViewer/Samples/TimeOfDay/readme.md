@@ -1,6 +1,6 @@
 # Visualize and control the time of day
 
-Control the Time of Day manually, simulate it at a given speed, or animate it from one time to anoter.
+Control the Time of Day manually, simulate it at a given speed, or animate it from one time to another.
 
 ![Image of Time of Day Sample](TimeOfDay.png)
 
