@@ -20,7 +20,7 @@ Query objects from the feature layer provided, or provide your own, in order to 
 ## How to use the sample
 
 1. A Feature Layer of park trees is already available. When you run the scene, these feature items are spawned at their default latitude and longitude with all their associated properties. 
-2. Clicking on any of these objects under the **Outliner** in unreal to see it's latatude, longitude, and any properties recieved by the query.
+2. Click on any of these objects under the **Outliner** drop-down in Unreal Engine to see its latitude, longitude, and any properties received by the query.
 3. The Outfields drop-down is set by default to **Get All Outfields**. Click on any other outfield to deselect **Get All Outfields** and return only the outfield selected; multi-select is supported. Outfields are the properties associated with individual features.
 
 ## Important note
