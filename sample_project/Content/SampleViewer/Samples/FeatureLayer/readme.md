@@ -4,27 +4,28 @@ Query objects from the feature layer provided, or provide your own, in order to 
 
 ![Image of Feature Layer Sample](FeatureLayer.png)
 
-## How to Setup (Feature Layer Level)
+## How to setup (Feature Layer Level)
 
 1. Open the **FeatureLayer_lvl** level.
 2. Click on the **ArcGISMapActor** in the Outliner panel.
-3. Set your API key under Authentication section in the Details panel.
+3. Set your API key under the Authentication section in the Details panel.
 4. Click play and select a stadium from the list.
 
-## How to Setup (Sample Viewer)
+## How to setup (Sample Viewer)
 
 1. Click Play in Unreal Editor.
-2. Input your API key under the **API Key Drop down**.
-3. Click the **Sample Drop Down** and select **Feature Layer**.
+2. Input your API key under the **API Key Drop-down**.
+3. Click the **Sample Drop-down** and select **Feature Layer**.
 
-## How to Use
+## How to use the sample
 
-1. Already available is a Feature Layer of park trees, upon running the scene, these feature items will be spawned in at their default latitude and longitude and with all of the properties associated with that feature item. 
-2. Clicking on any of these objects under the **Outliner** in unreal to see it's latatude, longitude, and any properties recieved by the query.
-3. Under the outfields drop down, by default it will be set to "Get All Outfields". Clicking on any of the other outfields will deselect "Get All Outfields" and will only get the outfield selected. Multi-select is supported. Outfields are the properties associated with the individual features.
+1. A Feature Layer of park trees is already available. When you run the scene, these feature items are spawned at their default latitude and longitude with all their associated properties. 
+2. Click on any of these objects under the **Outliner** drop-down in Unreal Engine to see its latitude, longitude, and any properties received by the query.
+3. The Outfields drop-down is set by default to **Get All Outfields**. Click on any other outfield to deselect **Get All Outfields** and return only the outfield selected; multi-select is supported. Outfields are the properties associated with individual features.
 
-## Important Note
-If the user would like to change the default link, they may place the link into the input field on screen. However if the link they plan to use has different **Request Headers** than the default ones we have set (/0/, query?, f=geojson, where=1=1, outfields=*), then the user will need to change them on the bp_feature game object in the **Outliner**. Each header has a different job for the link and gets added to the link once the user enters it into the input field.
+## Important note
+
+To change the default link, users can update the link in the input field. However, if the link they provide has different **Request Headers** than the default ones provided (/0/, query?, f=geojson, where=1=1, outfields=*), the user must update these on the `bp_feature` game object in the **Outliner**. Each header performs a different function for the link and is added to the link once the user enters it into the input field.
 
 ## How it works
 
