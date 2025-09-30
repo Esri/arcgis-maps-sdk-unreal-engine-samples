@@ -5,6 +5,8 @@
 #include "Materials/MaterialParameterCollection.h"
 #include "ViewshedCamera.generated.h"
 
+class UArcGISLocationComponent;
+
 UCLASS()
 class SAMPLE_PROJECT_API AViewshedCamera : public AActor
 {
@@ -23,10 +25,13 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	UMaterialInstanceDynamic* MID;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UArcGISLocationComponent* locationComponent;
+
 private:
 	void CreateDepthTexture();
 	void GetProjectionMatrix();
-
+	
 	UPROPERTY(EditAnywhere)
 	UMaterial* ViewshedMaterial;
 
