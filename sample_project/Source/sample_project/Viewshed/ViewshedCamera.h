@@ -26,6 +26,9 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
+	bool bPrintDebubMetrices = false;
+
+	UPROPERTY(EditAnywhere)
 	UMaterial* ViewshedMaterial;
 
 	UPROPERTY(EditAnywhere)
@@ -48,6 +51,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	UMaterialParameterCollectionInstance* MPCInstance;
+
+	void LogViewshedMatrix(const TCHAR* Label, const FMatrix& MatrixToLog);
 
 	void SetDepthTextureOnMaterial();
 	void SetViewProjectionMatrixOnMaterial();
