@@ -102,7 +102,7 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	// We keep the material custom expression style: clipPos = mul(VP, float4(WorldPos,1)).
 	// That implies VP should be constructed as Projection * View (column-vector convention).
 	// (Our HLSL: mul(VP, v) treats v as a column vector on the right.)
-	FMatrix GPUViewProjectionMatrix = ViewMatrix * AdjustedProjectionMatrix;
+	FMatrix GPUViewProjectionMatrix = AdjustedProjectionMatrix * ViewMatrix;
 
 	auto MakeRow = [&](const FMatrix& Mat, int r)
 	{
