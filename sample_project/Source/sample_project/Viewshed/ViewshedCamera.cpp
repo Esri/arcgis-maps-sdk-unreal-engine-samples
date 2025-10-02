@@ -27,14 +27,11 @@ AViewshedCamera::AViewshedCamera()
 
 	ViewshedCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("ViewshedCamera"));
 	ViewshedCamera->SetupAttachment(RootComponent);
-	ViewshedCamera->CaptureSource = ESceneCaptureSource::SCS_SceneDepth;
-	ViewshedCamera->OrthoWidth = 5000;
 
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("LocationComponent"));
 	locationComponent->SetupAttachment(RootComponent);
 	
 	ViewshedCameraMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ViewshedCameraMesh"));
-	ViewshedCameraMesh->SetWorldScale3D(FVector(3.5));
 	ViewshedCameraMesh->SetupAttachment(ViewshedCamera);
 	ViewshedCameraMesh->SetStaticMesh(mesh);
 }
@@ -44,17 +41,8 @@ void AViewshedCamera::BeginPlay()
 	Super::BeginPlay();
 
 	SetGlobalParameters();
-}
 
-void AViewshedCamera::CreateDepthTexture()
-{
-	DepthTexture = NewObject<UTextureRenderTarget2D>(this);
-	DepthTexture->InitAutoFormat(DepthWidth, DepthHeight);
-	DepthTexture->RenderTargetFormat = RTF_R32f;
-	DepthTexture->bAutoGenerateMips = false;
-	DepthTexture->Filter = TF_Bilinear;
-	DepthTexture->bForceLinearGamma = true;
-	DepthTexture->UpdateResourceImmediate(true);
+	GetProjectionMatrix();
 }
 
 void AViewshedCamera::Tick(float DeltaTime)
@@ -72,47 +60,14 @@ void AViewshedCamera::Tick(float DeltaTime)
 	}
 	
 	GetProjectionMatrix();
+
 	LastViewshedCameraPosition = GetActorLocation();
 	LastViewshedCameraRotation = GetActorRotation();
 }
 
-/*void AViewshedCamera::GetProjectionMatrix()
-{
-    FMinimalViewInfo viewInfo;
-    viewInfo.Location = ViewshedCamera->GetComponentLocation();
-    viewInfo.Rotation = ViewshedCamera->GetComponentRotation();
-    viewInfo.FOV = ViewshedCamera->FOVAngle;
-    
-    FMatrix ViewMatrix;
-    FMatrix ProjectionMatrix;
-    FMatrix ViewProjectionMatrix;
-    
-    UGameplayStatics::GetViewProjectionMatrix(viewInfo, ViewMatrix, ProjectionMatrix, ViewProjectionMatrix);
-    FMatrix GPUProjectionMatrix = AdjustProjectionMatrixForRHI(ViewProjectionMatrix);
-    FMatrix Transposed = GPUProjectionMatrix.GetTransposed();
-    
-    // Break into rows
-    FVector4 Row0(GPUProjectionMatrix.M[0][0], GPUProjectionMatrix.M[0][1], GPUProjectionMatrix.M[0][2], GPUProjectionMatrix.M[0][3]);
-    FVector4 Row1(GPUProjectionMatrix.M[1][0], GPUProjectionMatrix.M[1][1], GPUProjectionMatrix.M[1][2], GPUProjectionMatrix.M[1][3]);
-    FVector4 Row2(GPUProjectionMatrix.M[2][0], GPUProjectionMatrix.M[2][1], GPUProjectionMatrix.M[2][2], GPUProjectionMatrix.M[2][3]);
-    FVector4 Row3(GPUProjectionMatrix.M[3][0], GPUProjectionMatrix.M[3][1], GPUProjectionMatrix.M[3][2], GPUProjectionMatrix.M[3][3]);
-
-    UE_LOG(LogTemp, Warning, TEXT("Row 1: '%s', Row 2: '%s', Row 3: '%s', Row 4: '%s'"), *Row0.ToString(), *Row1.ToString(), *Row2.ToString(), *Row3.ToString());
-    
-    // Pass to material
-    MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), FLinearColor(Row0.X, Row0.Y, Row0.Z, Row0.W));
-    MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), FLinearColor(Row1.X, Row1.Y, Row1.Z, Row1.W));
-    MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), FLinearColor(Row2.X, Row2.Y, Row2.Z, Row2.W));
-    MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), FLinearColor(Row3.X, Row3.Y, Row3.Z, Row3.W));
-
-    // Pass far plane
-    MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), ViewshedCamera->MaxViewDistanceOverride);
-}*/
-
 void AViewshedCamera::GetProjectionMatrix()
 {
 	FMinimalViewInfo viewInfo;
-	//ViewshedCamera->GetCameraView(GetWorld()->GetTimeSeconds(), viewInfo);
 	viewInfo.Location = ViewshedCamera->GetComponentLocation();
 	viewInfo.Rotation = ViewshedCamera->GetComponentRotation();
 	viewInfo.FOV = ViewshedCamera->FOVAngle;
@@ -122,26 +77,24 @@ void AViewshedCamera::GetProjectionMatrix()
 	FMatrix ViewProjectionMatrix;
 
 	UGameplayStatics::GetViewProjectionMatrix(viewInfo, ViewMatrix, ProjectionMatrix, ViewProjectionMatrix);
-	FMatrix GPUViewProjectionMatrix = AdjustProjectionMatrixForRHI(ViewProjectionMatrix);
-	FMatrix Transposed = GPUViewProjectionMatrix; //GetTransposed();
 
-	auto SendRow = [&](int rowIndex, const TCHAR* paramName)
+	FMatrix AdjustedProjectionMatrix = AdjustProjectionMatrixForRHI(ProjectionMatrix);
+	FMatrix GPUViewProjectionMatrix = ViewMatrix * AdjustedProjectionMatrix;
+
+	auto MakeRow = [&](int r)
 	{
-		MPCInstance->SetVectorParameterValue(
-			paramName,
-			FLinearColor(
-				Transposed.M[rowIndex][0],
-				Transposed.M[rowIndex][1],
-				Transposed.M[rowIndex][2],
-				Transposed.M[rowIndex][3]
-			)
+		return FLinearColor(
+			GPUViewProjectionMatrix.M[r][0],
+			GPUViewProjectionMatrix.M[r][1],
+			GPUViewProjectionMatrix.M[r][2],
+			GPUViewProjectionMatrix.M[r][3]
 		);
 	};
 
-	SendRow(0, TEXT("ArcGISViewshedViewProjectionMatrixRow1"));
-	SendRow(1, TEXT("ArcGISViewshedViewProjectionMatrixRow2"));
-	SendRow(2, TEXT("ArcGISViewshedViewProjectionMatrixRow3"));
-	SendRow(3, TEXT("ArcGISViewshedViewProjectionMatrixRow4"));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), MakeRow(1));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), MakeRow(2));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), MakeRow(3));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), MakeRow(0));
 
 	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), ViewshedCamera->MaxViewDistanceOverride);
 
@@ -154,8 +107,8 @@ void AViewshedCamera::GetProjectionMatrix()
 	FLinearColor OutValue4;
 	MPCInstance->GetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), OutValue4);
 	
-	UE_LOG(LogTemp, Warning, TEXT("Row 1: '%s', Row 2: '%s', Row 3: '%s', Row 4: '%s'"),
-		*OutValue1.ToString(), *OutValue2.ToString(), *OutValue3.ToString(), *OutValue4.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Row 1: '%s', Row 2: '%s', Row 3: '%s', Row 4: '%s'"), *OutValue1.ToString(), *OutValue2.ToString(), *OutValue3.ToString(), *OutValue4.ToString());
+
 	ViewshedCamera->CaptureScene();
 }
 
