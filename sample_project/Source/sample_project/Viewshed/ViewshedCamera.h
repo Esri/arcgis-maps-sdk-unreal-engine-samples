@@ -26,7 +26,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	bool bPrintDebubMatrices = false;
+	bool bPrintDebugMatrices = false;
 
 	UPROPERTY(EditAnywhere, meta=(ClampMin="0.001"))
 	float NearClipPlane = 10.0f;

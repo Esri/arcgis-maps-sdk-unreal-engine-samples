@@ -128,7 +128,7 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewMatrixRow3"), MakeRow(ViewMatrix, 2));
 	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewMatrixRow4"), MakeRow(ViewMatrix, 3));
 
-	if (!bPrintDebubMatrices)
+	if (!bPrintDebugMatrices)
 	{
 		return;
 	}
