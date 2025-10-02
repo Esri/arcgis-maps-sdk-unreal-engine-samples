@@ -74,8 +74,12 @@ void AViewshedCamera::Tick(float DeltaTime)
 	{
 		return;
 	}
-	
+
+	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), ViewshedCamera->MaxViewDistanceOverride);
+
 	SetViewProjectionMatrixOnMaterial();
+
+	ViewshedCamera->CaptureScene();
 
 	LastViewshedCameraPosition = GetActorLocation();
 	LastViewshedCameraRotation = GetActorRotation();
@@ -102,40 +106,44 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	// (Our HLSL: mul(VP, v) treats v as a column vector on the right.)
 	FMatrix GPUViewProjectionMatrix = AdjustedProjectionMatrix * ViewMatrix;
 
-	auto MakeRow = [&](int r)
+	auto MakeRow = [&](const FMatrix& Mat, int r)
 	{
 		return FLinearColor(
-			GPUViewProjectionMatrix.M[r][0],
-			GPUViewProjectionMatrix.M[r][1],
-			GPUViewProjectionMatrix.M[r][2],
-			GPUViewProjectionMatrix.M[r][3]
+			Mat.M[r][0],
+			Mat.M[r][1],
+			Mat.M[r][2],
+			Mat.M[r][3]
 		);
 	};
 
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), MakeRow(0));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), MakeRow(1));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), MakeRow(2));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), MakeRow(3));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), MakeRow(GPUViewProjectionMatrix, 0));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), MakeRow(GPUViewProjectionMatrix, 1));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), MakeRow(GPUViewProjectionMatrix, 2));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), MakeRow(GPUViewProjectionMatrix, 3));
 
-	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), ViewshedCamera->MaxViewDistanceOverride);
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewMatrixRow1"), MakeRow(ViewMatrix, 0));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewMatrixRow2"), MakeRow(ViewMatrix, 1));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewMatrixRow3"), MakeRow(ViewMatrix, 2));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewMatrixRow4"), MakeRow(ViewMatrix, 3));
 
+	if (!bPrintDebubMetrices)
+	{
+		return;
+	}
+
+	LogViewshedMatrix(TEXT("Raw CPU ViewProj (pre-RHI)"), CombinedCPUViewProj);
+	LogViewshedMatrix(TEXT("Adjusted GPU ViewProj (Projection*View)"), GPUViewProjectionMatrix);
+	LogViewshedMatrix(TEXT("View Matrix"), ViewMatrix);
+	LogViewshedMatrix(TEXT("Adjusted Projection Matrix"), AdjustedProjectionMatrix);
+}
+
+void AViewshedCamera::LogViewshedMatrix(const TCHAR* Label, const FMatrix& MatrixToLog)
+{
 	auto RowToString = [](const FMatrix& M, int r)
 	{
 		return FString::Printf(TEXT("[% .6f, % .6f, % .6f, % .6f]"), M.M[r][0], M.M[r][1], M.M[r][2], M.M[r][3]);
 	};
 
-	UE_LOG(LogTemp, Warning, TEXT("Raw CPU ViewProj (pre-RHI):\nR0 %s\nR1 %s\nR2 %s\nR3 %s"),
-		*RowToString(CombinedCPUViewProj,0), *RowToString(CombinedCPUViewProj,1), *RowToString(CombinedCPUViewProj,2), *RowToString(CombinedCPUViewProj,3));
-
-	UE_LOG(LogTemp, Warning, TEXT("Adjusted GPU ViewProj (Projection*View):\nR0 %s\nR1 %s\nR2 %s\nR3 %s"),
-		*RowToString(GPUViewProjectionMatrix,0), *RowToString(GPUViewProjectionMatrix,1), *RowToString(GPUViewProjectionMatrix,2), *RowToString(GPUViewProjectionMatrix,3));
-
-	FLinearColor OutValue1; MPCInstance->GetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), OutValue1);
-	FLinearColor OutValue2; MPCInstance->GetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), OutValue2);
-	FLinearColor OutValue3; MPCInstance->GetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), OutValue3);
-	FLinearColor OutValue4; MPCInstance->GetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), OutValue4);
-
-	UE_LOG(LogTemp, Warning, TEXT("Stored GPU VP Rows:\nR1 %s\nR2 %s\nR3 %s\nR4 %s"), *OutValue1.ToString(), *OutValue2.ToString(), *OutValue3.ToString(), *OutValue4.ToString());
-
-	ViewshedCamera->CaptureScene();
+	UE_LOG(LogTemp, Verbose, TEXT("%s:\nR0 %s\nR1 %s\nR2 %s\nR3 %s"), Label,
+		*RowToString(MatrixToLog,0), *RowToString(MatrixToLog,1), *RowToString(MatrixToLog,2), *RowToString(MatrixToLog,3));
 }
