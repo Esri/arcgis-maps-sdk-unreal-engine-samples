@@ -75,7 +75,9 @@ void AViewshedCamera::Tick(float DeltaTime)
 		return;
 	}
 
-	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), ViewshedCamera->MaxViewDistanceOverride);
+	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), FarClipPlane);
+
+	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedNearPlane"), NearClipPlane);
 
 	SetViewProjectionMatrixOnMaterial();
 
