@@ -126,7 +126,7 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewMatrixRow3"), MakeRow(ViewMatrix, 2));
 	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewMatrixRow4"), MakeRow(ViewMatrix, 3));
 
-	if (!bPrintDebubMetrices)
+	if (!bPrintDebubMatrices)
 	{
 		return;
 	}
@@ -144,6 +144,6 @@ void AViewshedCamera::LogViewshedMatrix(const TCHAR* Label, const FMatrix& Matri
 		return FString::Printf(TEXT("[% .6f, % .6f, % .6f, % .6f]"), M.M[r][0], M.M[r][1], M.M[r][2], M.M[r][3]);
 	};
 
-	UE_LOG(LogTemp, Verbose, TEXT("%s:\nR0 %s\nR1 %s\nR2 %s\nR3 %s"), Label,
+	UE_LOG(LogTemp, Warning, TEXT("%s:\nR0 %s\nR1 %s\nR2 %s\nR3 %s"), Label,
 		*RowToString(MatrixToLog,0), *RowToString(MatrixToLog,1), *RowToString(MatrixToLog,2), *RowToString(MatrixToLog,3));
 }
