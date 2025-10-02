@@ -20,11 +20,7 @@ protected:
 
 public:	
 	virtual void Tick(float DeltaTime) override;
-	void SetGlobalParameters();
 
-	UPROPERTY(VisibleAnywhere)
-	UMaterialInstanceDynamic* MID;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UArcGISLocationComponent* locationComponent;
 
@@ -48,9 +44,13 @@ private:
 	UMaterialParameterCollection* GlobalTextureMPC = LoadObject<UMaterialParameterCollection>(nullptr, TEXT("/Script/Engine.MaterialParameterCollection'/Game/SampleViewer/Samples/Viewshed/ViewshedMaterialParameterCollection.ViewshedMaterialParameterCollection'"));
 
 	UPROPERTY(VisibleAnywhere)
+	UMaterialInstanceDynamic* MID;
+
+	UPROPERTY(VisibleAnywhere)
 	UMaterialParameterCollectionInstance* MPCInstance;
 
-	void GetProjectionMatrix();
+	void SetDepthTextureOnMaterial();
+	void SetViewProjectionMatrixOnMaterial();
 
 	FVector LastViewshedCameraPosition;
 	FRotator LastViewshedCameraRotation;

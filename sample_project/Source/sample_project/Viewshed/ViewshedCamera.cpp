@@ -40,9 +40,25 @@ void AViewshedCamera::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetGlobalParameters();
+	SetDepthTextureOnMaterial();
 
-	GetProjectionMatrix();
+	SetViewProjectionMatrixOnMaterial();
+}
+
+void AViewshedCamera::SetDepthTextureOnMaterial()
+{
+	MPCInstance = GetWorld()->GetParameterCollectionInstance(GlobalTextureMPC);
+	MID = UMaterialInstanceDynamic::Create(ViewshedMaterial, this);
+	
+	if (!MID)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to load Material Instance"));
+		return;
+	}
+	
+	MID->SetTextureParameterValue(FName("_ArcGISViewshedDepthTex"), DepthTexture);
+
+	UE_LOG(LogTemp, Warning, TEXT("Texture parameter '%s' set correctly."), *DepthTexture->GetName());
 }
 
 void AViewshedCamera::Tick(float DeltaTime)
@@ -59,13 +75,13 @@ void AViewshedCamera::Tick(float DeltaTime)
 		return;
 	}
 	
-	GetProjectionMatrix();
+	SetViewProjectionMatrixOnMaterial();
 
 	LastViewshedCameraPosition = GetActorLocation();
 	LastViewshedCameraRotation = GetActorRotation();
 }
 
-void AViewshedCamera::GetProjectionMatrix()
+void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 {
 	FMinimalViewInfo viewInfo;
 	viewInfo.Location = ViewshedCamera->GetComponentLocation();
@@ -110,23 +126,4 @@ void AViewshedCamera::GetProjectionMatrix()
 	UE_LOG(LogTemp, Warning, TEXT("Row 1: '%s', Row 2: '%s', Row 3: '%s', Row 4: '%s'"), *OutValue1.ToString(), *OutValue2.ToString(), *OutValue3.ToString(), *OutValue4.ToString());
 
 	ViewshedCamera->CaptureScene();
-}
-
-void AViewshedCamera::SetGlobalParameters()
-{
-	MPCInstance = GetWorld()->GetParameterCollectionInstance(GlobalTextureMPC);
-	MID = UMaterialInstanceDynamic::Create(ViewshedMaterial, this);
-	
-	if (!MID)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to load Material Instance"));
-		return;
-	}
-	
-	MID->SetTextureParameterValue(FName("_ArcGISViewshedDepthTex"), DepthTexture);
-
-	UTexture* RetrievedTexture = nullptr;
-	MID->GetTextureParameterValue(FName("_ArcGISViewshedDepthTex"), RetrievedTexture);
-
-	UE_LOG(LogTemp, Warning, TEXT("Texture parameter '%s' set correctly."), *DepthTexture->GetName());
 }
