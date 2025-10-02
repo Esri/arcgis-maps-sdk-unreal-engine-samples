@@ -26,7 +26,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	bool bPrintDebubMetrices = false;
+	bool bPrintDebubMatrices = false;
 
 	UPROPERTY(EditAnywhere)
 	UMaterial* ViewshedMaterial;
