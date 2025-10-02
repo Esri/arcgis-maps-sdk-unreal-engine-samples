@@ -119,7 +119,6 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 
 	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), ViewshedCamera->MaxViewDistanceOverride);
 
-	// Debug: Log raw (unadjusted) combined matrix and the final GPU matrix for verification.
 	auto RowToString = [](const FMatrix& M, int r)
 	{
 		return FString::Printf(TEXT("[% .6f, % .6f, % .6f, % .6f]"), M.M[r][0], M.M[r][1], M.M[r][2], M.M[r][3]);
@@ -135,7 +134,7 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	FLinearColor OutValue2; MPCInstance->GetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), OutValue2);
 	FLinearColor OutValue3; MPCInstance->GetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), OutValue3);
 	FLinearColor OutValue4; MPCInstance->GetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), OutValue4);
-	
+
 	UE_LOG(LogTemp, Warning, TEXT("Stored GPU VP Rows:\nR1 %s\nR2 %s\nR3 %s\nR4 %s"), *OutValue1.ToString(), *OutValue2.ToString(), *OutValue3.ToString(), *OutValue4.ToString());
 
 	ViewshedCamera->CaptureScene();
