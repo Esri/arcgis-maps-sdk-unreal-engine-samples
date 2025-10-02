@@ -28,10 +28,10 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool bPrintDebubMatrices = false;
 
-	UPROPERTY(EditAnywhere, Category="Viewshed|Clipping", meta=(ClampMin="0.001"))
+	UPROPERTY(EditAnywhere, meta=(ClampMin="0.001"))
 	float NearClipPlane = 10.0f;
 
-	UPROPERTY(EditAnywhere, Category="Viewshed|Clipping", meta=(ClampMin="1.0"))
+	UPROPERTY(EditAnywhere, meta=(ClampMin="1.0"))
 	float FarClipPlane = 10000.0f;
 
 	UPROPERTY(EditAnywhere)
