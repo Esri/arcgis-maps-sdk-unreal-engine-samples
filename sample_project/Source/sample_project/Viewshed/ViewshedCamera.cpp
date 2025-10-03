@@ -27,6 +27,7 @@ AViewshedCamera::AViewshedCamera()
 
 	ViewshedCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("ViewshedCamera"));
 	ViewshedCamera->SetupAttachment(RootComponent);
+	ViewshedCamera->CaptureSource = SCS_SceneDepth;
 
 	locationComponent = CreateDefaultSubobject<UArcGISLocationComponent>(TEXT("LocationComponent"));
 	locationComponent->SetupAttachment(RootComponent);
@@ -102,7 +103,7 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	// We keep the material custom expression style: clipPos = mul(VP, float4(WorldPos,1)).
 	// That implies VP should be constructed as Projection * View (column-vector convention).
 	// (Our HLSL: mul(VP, v) treats v as a column vector on the right.)
-	FMatrix GPUViewProjectionMatrix = AdjustedProjectionMatrix * ViewMatrix;
+	FMatrix GPUViewProjectionMatrix = ViewMatrix * AdjustedProjectionMatrix;
 
 	auto MakeRow = [&](const FMatrix& Mat, int r)
 	{
@@ -116,6 +117,9 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 
 	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), FarClipPlane);
 	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedNearPlane"), NearClipPlane);
+
+	MPCInstance->SetVectorParameterValue(TEXT("CameraForward"), ViewshedCamera->GetForwardVector());
+	MPCInstance->SetVectorParameterValue(TEXT("CameraPosition"), ViewshedCamera->GetComponentLocation());
 	
 	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), MakeRow(GPUViewProjectionMatrix, 0));
 	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), MakeRow(GPUViewProjectionMatrix, 1));
