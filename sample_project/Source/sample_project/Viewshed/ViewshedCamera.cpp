@@ -117,10 +117,10 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), FarClipPlane);
 	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedNearPlane"), NearClipPlane);
 	
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), MakeRow(GPUViewProjectionMatrix, 1));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), MakeRow(GPUViewProjectionMatrix, 2));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), MakeRow(GPUViewProjectionMatrix, 3));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), MakeRow(GPUViewProjectionMatrix, 0));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), MakeRow(GPUViewProjectionMatrix, 0));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), MakeRow(GPUViewProjectionMatrix, 1));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), MakeRow(GPUViewProjectionMatrix, 2));
+	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), MakeRow(GPUViewProjectionMatrix, 3));
 
 	if (!bPrintDebugMatrices)
 	{
