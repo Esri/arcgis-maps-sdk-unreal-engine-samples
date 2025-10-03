@@ -100,9 +100,6 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	// Apply RHI/platform adjustments (Y flip, reversed Z, etc.) to match actual GPU usage.
 	FMatrix AdjustedProjectionMatrix = AdjustProjectionMatrixForRHI(ProjectionMatrix);
 
-	// We keep the material custom expression style: clipPos = mul(VP, float4(WorldPos,1)).
-	// That implies VP should be constructed as Projection * View (column-vector convention).
-	// (Our HLSL: mul(VP, v) treats v as a column vector on the right.)
 	FMatrix GPUViewProjectionMatrix = ViewMatrix * AdjustedProjectionMatrix;
 
 	auto MakeRow = [&](const FMatrix& Mat, int r)
