@@ -65,4 +65,6 @@ private:
 
 	FVector LastViewshedCameraPosition;
 	FRotator LastViewshedCameraRotation;
+	float LastFarClipPlane;
+	float LastNearClipPlane;
 };

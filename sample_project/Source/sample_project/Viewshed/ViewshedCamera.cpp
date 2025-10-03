@@ -71,7 +71,7 @@ void AViewshedCamera::Tick(float DeltaTime)
 		return;
 	}
 
-	if (LastViewshedCameraPosition == GetActorLocation() && LastViewshedCameraRotation == GetActorRotation())
+	if (LastViewshedCameraPosition == GetActorLocation() && LastViewshedCameraRotation == GetActorRotation() && FarClipPlane == LastFarClipPlane && NearClipPlane == LastNearClipPlane)
 	{
 		return;
 	}
@@ -82,6 +82,8 @@ void AViewshedCamera::Tick(float DeltaTime)
 
 	LastViewshedCameraPosition = GetActorLocation();
 	LastViewshedCameraRotation = GetActorRotation();
+	LastFarClipPlane = FarClipPlane;
+	LastNearClipPlane = NearClipPlane;
 }
 
 void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
