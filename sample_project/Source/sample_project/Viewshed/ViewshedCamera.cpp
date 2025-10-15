@@ -88,7 +88,8 @@ void AViewshedCamera::Tick(float DeltaTime)
 
 void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 {
-	FMinimalViewInfo viewInfo;
+	FMinimalViewInfo viewInfo;// = ViewshedCamera->
+	viewInfo.AspectRatio = DepthTexture ? (float(DepthTexture->SizeX) / DepthTexture->SizeY) : 1.f;
 	viewInfo.Location = ViewshedCamera->GetComponentLocation();
 	viewInfo.Rotation = ViewshedCamera->GetComponentRotation();
 	viewInfo.FOV = ViewshedCamera->FOVAngle;
@@ -102,17 +103,18 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	// Apply RHI/platform adjustments (Y flip, reversed Z, etc.) to match actual GPU usage.
 	FMatrix AdjustedProjectionMatrix = AdjustProjectionMatrixForRHI(ProjectionMatrix);
 
-	FMatrix GPUViewProjectionMatrix = ViewMatrix * AdjustedProjectionMatrix;
+	//FMatrix LeftViewProjMatrix = (ViewMatrix * AdjustedProjectionMatrix);//.GetTransposed();
+	FMatrix LeftViewProjMatrix = CombinedCPUViewProj;//(ViewMatrix * AdjustedProjectionMatrix);//.GetTransposed();
 
-	auto MakeRow = [&](const FMatrix& Mat, int r)
-	{
-		return FLinearColor(
-			Mat.M[r][0],
-			Mat.M[r][1],
-			Mat.M[r][2],
-			Mat.M[r][3]
-		);
-	};
+	// auto MakeRow = [&](const FMatrix& Mat, int r)
+	// {
+	// 	return FLinearColor(
+	// 		Mat.M[0][r],
+	// 		Mat.M[1][r],
+	// 		Mat.M[2][r],
+	// 		Mat.M[3][r]
+	// 	);
+	// };
 
 	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedFarPlane"), FarClipPlane);
 	MPCInstance->SetScalarParameterValue(TEXT("ArcGISViewshedNearPlane"), NearClipPlane);
@@ -120,10 +122,23 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	MPCInstance->SetVectorParameterValue(TEXT("CameraForward"), ViewshedCamera->GetForwardVector());
 	MPCInstance->SetVectorParameterValue(TEXT("CameraPosition"), ViewshedCamera->GetComponentLocation());
 	
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), MakeRow(GPUViewProjectionMatrix, 0));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), MakeRow(GPUViewProjectionMatrix, 1));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), MakeRow(GPUViewProjectionMatrix, 2));
-	MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), MakeRow(GPUViewProjectionMatrix, 3));
+	// MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow1"), MakeRow(GPUViewProjectionMatrix, 0));
+	// MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow2"), MakeRow(GPUViewProjectionMatrix, 1));
+	// MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow3"), MakeRow(GPUViewProjectionMatrix, 2));
+	// MPCInstance->SetVectorParameterValue(TEXT("ArcGISViewshedViewProjectionMatrixRow4"), MakeRow(GPUViewProjectionMatrix, 3));
+
+	MPCInstance->SetVectorParameterValue(
+		"ArcGISViewshedViewProjectionMatrixRow1",
+		FVector4d(LeftViewProjMatrix.M[0][0], LeftViewProjMatrix.M[0][1], LeftViewProjMatrix.M[0][2], LeftViewProjMatrix.M[0][3]));
+	MPCInstance->SetVectorParameterValue(
+		"ArcGISViewshedViewProjectionMatrixRow2",
+		FVector4d(LeftViewProjMatrix.M[1][0], LeftViewProjMatrix.M[1][1], LeftViewProjMatrix.M[1][2], LeftViewProjMatrix.M[1][3]));
+	MPCInstance->SetVectorParameterValue(
+		"ArcGISViewshedViewProjectionMatrixRow3",
+		FVector4d(LeftViewProjMatrix.M[2][0], LeftViewProjMatrix.M[2][1], LeftViewProjMatrix.M[2][2], LeftViewProjMatrix.M[2][3]));
+	MPCInstance->SetVectorParameterValue(
+		"ArcGISViewshedViewProjectionMatrixRow4",
+		FVector4d(LeftViewProjMatrix.M[3][0], LeftViewProjMatrix.M[3][1], LeftViewProjMatrix.M[3][2], LeftViewProjMatrix.M[3][3]));
 
 	if (!bPrintDebugMatrices)
 	{
@@ -131,7 +146,7 @@ void AViewshedCamera::SetViewProjectionMatrixOnMaterial()
 	}
 
 	LogViewshedMatrix(TEXT("Raw CPU ViewProj (pre-RHI)"), CombinedCPUViewProj);
-	LogViewshedMatrix(TEXT("Adjusted GPU ViewProj (Projection*View)"), GPUViewProjectionMatrix);
+	LogViewshedMatrix(TEXT("Adjusted GPU ViewProj (View * Projection)"), LeftViewProjMatrix);
 	LogViewshedMatrix(TEXT("View Matrix"), ViewMatrix);
 	LogViewshedMatrix(TEXT("Adjusted Projection Matrix"), AdjustedProjectionMatrix);
 }
