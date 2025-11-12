@@ -34,7 +34,6 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMapType.h"
 #include "ArcGISMapsSDK/CAPI/Invoke.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
-#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 
 #include <ArcGISMapsSDK/Utils/ArcGISViewCoordinateTransformer.h>
 #include "ArcGISPawn.h"
@@ -69,8 +68,10 @@ void AIdentify::BeginPlay()
 		InputManager = Cast<AInputManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AInputManager::StaticClass()));
 	}
 
-	InputManager->OnInputTrigger.AddDynamic(this, &AIdentify::IdentifyAtMouseClick);
+	//InputManager->OnInputTrigger.AddDynamic(this, &AIdentify::IdentifyAtMouseClick);
 	//InputManager->OnInputEnd.AddDynamic(this, &AIdentify::EndGeometry);
+	InputManager->OnInputTrigger.AddDynamic(this, &AIdentify::OnInputTriggered);
+
 
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
@@ -151,7 +152,7 @@ FString AIdentify::IdentifyAtMouseClick()
 
 		auto dateAttributeValue = tmap.Find("LSTMODDATE");
 		auto dateType = dateAttributeValue->GetAttributeValueType();
-
+		
 		if (dateType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::DateTime)
 		{
 			auto date = dateAttributeValue->GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::DateTime>();
@@ -166,4 +167,15 @@ FString AIdentify::IdentifyAtMouseClick()
 		return "Error: " + exception.GetMessage();
 	}
 	return outputString;
+}
+
+void AIdentify::OnInputTriggered()
+{
+	LastIdentifyOutput = IdentifyAtMouseClick();
+
+	UE_LOG(LogTemp, Log, TEXT("%s"), *LastIdentifyOutput);
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, LastIdentifyOutput);
+	}
 }
