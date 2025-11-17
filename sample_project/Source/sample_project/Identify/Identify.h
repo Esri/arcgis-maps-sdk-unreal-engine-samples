@@ -5,7 +5,21 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/ListView.h"
 #include "Identify.generated.h"
+
+USTRUCT(BlueprintType)
+struct FAttributeRow
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, Category = "Identify")
+	FString Key;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Identify")
+	FString Value;
+};
 
 UCLASS()
 class AIdentify : public AActor
@@ -15,6 +29,15 @@ class AIdentify : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AIdentify();
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
+	TSubclassOf<UUserWidget> UIWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UUserWidget> UIWidget;
+	UPROPERTY(BlueprintReadOnly, Category = "Identify")
+	TArray<FAttributeRow> LastAttributes;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identify|UI")
+	TSubclassOf<UObject> PropertyRowClass; 
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -27,6 +50,7 @@ public:
 
 	UFUNCTION() 
 	void OnInputTriggered();
+	void RefreshListViewFromAttributes();
 
 private:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
@@ -35,6 +59,10 @@ private:
 	AArcGISMapActor* MapActor;
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISMapComponent> MapComponent;
+	UWidget* BuildingInfoPanel;
 
 	FString LastIdentifyOutput;
+
+	UPROPERTY()
+	UListView* PropertyListView = nullptr;
 };

@@ -17,7 +17,9 @@
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/Utils/ArcGISViewCoordinateTransformer.h"
 #include "sample_project/InputManager.h"
-
+#include "Components/ListView.h"
+#include "UObject/ConstructorHelpers.h"
+#include "UObject/UnrealType.h"   
 #include "ArcGISPawn.h"
 // Sets default values
 AIdentify::AIdentify()
@@ -49,8 +51,6 @@ void AIdentify::BeginPlay()
 		InputManager = Cast<AInputManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AInputManager::StaticClass()));
 	}
 
-	//InputManager->OnInputTrigger.AddDynamic(this, &AIdentify::IdentifyAtMouseClick);
-	//InputManager->OnInputEnd.AddDynamic(this, &AIdentify::EndGeometry);
 	InputManager->OnInputTrigger.AddDynamic(this, &AIdentify::OnInputTriggered);
 
 
@@ -60,6 +60,36 @@ void AIdentify::BeginPlay()
 	{
 		playerController->bShowMouseCursor = true;
 		playerController->bEnableClickEvents = true;
+	}
+
+	if (UIWidgetClass)
+	{
+		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+		if (!UIWidget)
+		{
+			return;
+		}
+
+		UIWidget->AddToViewport();
+
+		PropertyListView = Cast<UListView>(UIWidget->GetWidgetFromName(TEXT("ListView")));
+
+		BuildingInfoPanel = Cast<UWidget>(UIWidget->GetWidgetFromName(TEXT("BuildingInfoPanel")));
+
+		if (BuildingInfoPanel)
+		{
+			BuildingInfoPanel->SetVisibility(ESlateVisibility::Collapsed); 
+		}
+
+		if (!PropertyListView)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ListView not found on UI widget"));
+		}
+		
+		if (UIWidget->FindFunction("ShowInstruction"))
+		{
+			UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
+		}
 	}
 }
 
@@ -176,6 +206,8 @@ FString AIdentify::IdentifyAtMouseClick()
 
 		FString outputString = "[";
 
+		LastAttributes.Empty();
+
 		for (int i = 0; i < identifyLayerResultsSize; i++)
 		{
 			outputString += "[";
@@ -201,12 +233,18 @@ FString AIdentify::IdentifyAtMouseClick()
 					auto attributeKey = attributeKeys[k];
 					auto attributeValue = attributes.At(attributeKey);
 
-					outputString += "\"" + attributeKey + "\": \"" + GetStringFromAttributeValue(attributeValue) + "\"";
+					const FString ValueString = GetStringFromAttributeValue(attributeValue);
 
+					outputString += "\"" + attributeKey + "\": \"" + ValueString + "\"";
 					if (k < attributeKeys.Num() - 1)
 					{
 						outputString += ", ";
 					}
+
+					FAttributeRow Row;
+					Row.Key = attributeKey;
+					Row.Value = ValueString;
+					LastAttributes.Add(Row);
 				}
 
 				outputString += "}";
@@ -237,13 +275,67 @@ FString AIdentify::IdentifyAtMouseClick()
 	}
 }
 
+void AIdentify::RefreshListViewFromAttributes()
+{
+	PropertyListView->ClearListItems();
+
+	UClass* RowClass = PropertyRowClass.Get();
+
+	FProperty* KeyBaseProperty = RowClass->FindPropertyByName(TEXT("Key"));
+	FProperty* ValueBaseProperty = RowClass->FindPropertyByName(TEXT("Value"));
+
+	FStrProperty* KeyProp = CastField<FStrProperty>(KeyBaseProperty);
+	FStrProperty* ValueProp = CastField<FStrProperty>(ValueBaseProperty);
+
+	if (!KeyProp || !ValueProp)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Key or Value property not found or not FString on PropertyRowClass"));
+		return;
+	}
+
+	for (const FAttributeRow& RowData : LastAttributes)
+	{
+		UObject* NewItemObject = NewObject<UObject>(this, PropertyRowClass);
+		if (!NewItemObject)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NewItemObject is null"));
+			continue;
+		}
+
+		KeyProp->SetPropertyValue_InContainer(NewItemObject, RowData.Key);
+		ValueProp->SetPropertyValue_InContainer(NewItemObject, RowData.Value);
+
+		PropertyListView->AddItem(NewItemObject);
+	}
+}
+
 void AIdentify::OnInputTriggered()
 {
 	LastIdentifyOutput = IdentifyAtMouseClick();
 
 	UE_LOG(LogTemp, Log, TEXT("%s"), *LastIdentifyOutput);
+
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, LastIdentifyOutput);
 	}
+
+	if (LastAttributes.Num() > 0)
+	{
+		RefreshListViewFromAttributes();
+
+		if (BuildingInfoPanel)
+		{
+			BuildingInfoPanel->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+	else
+	{
+		if (BuildingInfoPanel)
+		{
+			BuildingInfoPanel->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
 }
+
+
