@@ -8,6 +8,9 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/ListView.h"
 #include "Identify.generated.h"
+class UListView; 
+class UWidget;
+class UTextBlock; 
 
 USTRUCT(BlueprintType)
 struct FAttributeRow
@@ -20,6 +23,16 @@ struct FAttributeRow
 	UPROPERTY(BlueprintReadWrite, Category = "Identify")
 	FString Value;
 };
+
+USTRUCT(BlueprintType)
+struct FFeatureAttributeSet
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FAttributeRow> Attributes;
+};
+
 
 UCLASS()
 class AIdentify : public AActor
@@ -37,20 +50,26 @@ public:
 	TArray<FAttributeRow> LastAttributes;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identify|UI")
 	TSubclassOf<UObject> PropertyRowClass; 
+	UPROPERTY(BlueprintReadOnly)
+	TArray<FFeatureAttributeSet> AllFeaturesAttributes;
+	UPROPERTY(BlueprintReadOnly)
+	int32 CurrentFeatureIndex = 0;
+	virtual void Tick(float DeltaTime) override;
+	FString IdentifyAtMouseClick();
+	UFUNCTION()
+	void OnInputTriggered();
+	void RefreshListViewFromAttributes();
+	void UpdatePageTexts();
 
+	UFUNCTION(BlueprintCallable)
+	void ShowNextFeature();
+
+	UFUNCTION(BlueprintCallable)
+	void ShowPreviousFeature();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	FString IdentifyAtMouseClick();
-
-	UFUNCTION() 
-	void OnInputTriggered();
-	void RefreshListViewFromAttributes();
 
 private:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
@@ -62,7 +81,10 @@ private:
 	UWidget* BuildingInfoPanel;
 
 	FString LastIdentifyOutput;
-
 	UPROPERTY()
 	UListView* PropertyListView = nullptr;
+	UPROPERTY()
+	class UTextBlock* CurrentPageText = nullptr;
+	UPROPERTY()
+	class UTextBlock* TotalPageText = nullptr;
 };

@@ -21,6 +21,10 @@
 #include "UObject/ConstructorHelpers.h"
 #include "UObject/UnrealType.h"   
 #include "ArcGISPawn.h"
+#include "Internationalization/Text.h"
+#include "Components/TextBlock.h"
+#include "Components/ListView.h"
+
 // Sets default values
 AIdentify::AIdentify()
 {
@@ -75,6 +79,9 @@ void AIdentify::BeginPlay()
 		PropertyListView = Cast<UListView>(UIWidget->GetWidgetFromName(TEXT("ListView")));
 
 		BuildingInfoPanel = Cast<UWidget>(UIWidget->GetWidgetFromName(TEXT("BuildingInfoPanel")));
+
+		CurrentPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("CurrentPage")));
+		TotalPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalPage")));
 
 		if (BuildingInfoPanel)
 		{
@@ -156,24 +163,26 @@ FString GetStringFromAttributeValue(const Esri::GameEngine::Attributes::ArcGISAt
 	return "<unknown-type>";
 }
 
-
 FString AIdentify::IdentifyAtMouseClick()
 {
 	APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
 	if (!PlayerController)
 	{
-		return "Null player controller";
+		return TEXT("Null player controller");
 	}
 
 	FVector Location, Direction;
 	const TArray<AActor*> ActorsToIgnore;
 	FHitResult HitResult;
+
 	PlayerController->DeprojectMousePositionToWorld(Location, Direction);
 
 	if (!UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
 											   EDrawDebugTrace::None, HitResult, true))
 	{
-		return "Line trace did not hit any actor";
+		AllFeaturesAttributes.Empty();
+		LastAttributes.Empty();
+		return TEXT("Line trace did not hit any actor");
 	}
 
 	auto geoPosition = MapComponent->TransformEnginePositionToPoint(HitResult.TraceStart)->APIObject;
@@ -194,39 +203,42 @@ FString AIdentify::IdentifyAtMouseClick()
 
 		if (!identifyLayerResults)
 		{
-			return "Null identify layer results collection";
+			AllFeaturesAttributes.Empty();
+			LastAttributes.Empty();
+			return TEXT("Null identify layer results collection");
 		}
 
 		if (identifyLayerResults.GetSize() == 0)
 		{
-			return "Empty identify layer results collection";
+			AllFeaturesAttributes.Empty();
+			LastAttributes.Empty();
+			return TEXT("Empty identify layer results collection");
 		}
 
 		auto identifyLayerResultsSize = identifyLayerResults.GetSize();
 
-		FString outputString = "[";
+		FString outputString = TEXT("[");
 
+		AllFeaturesAttributes.Empty();
 		LastAttributes.Empty();
 
 		for (int i = 0; i < identifyLayerResultsSize; i++)
 		{
-			outputString += "[";
+			outputString += TEXT("[");
 
 			auto identifyLayerResult = identifyLayerResults.At(i);
-
 			auto geoElements = identifyLayerResult.GetGeoElements();
-
 			auto geoElementsSize = geoElements.GetSize();
 
 			for (int j = 0; j < geoElementsSize; j++)
 			{
-				outputString += "{";
+				outputString += TEXT("{");
 
 				auto feature = geoElements.At(j);
-
 				auto attributes = feature.GetAttributes();
-
 				auto attributeKeys = attributes.GetKeys();
+
+				FFeatureAttributeSet FeatureSet;
 
 				for (int k = 0; k < attributeKeys.Num(); k++)
 				{
@@ -235,35 +247,47 @@ FString AIdentify::IdentifyAtMouseClick()
 
 					const FString ValueString = GetStringFromAttributeValue(attributeValue);
 
-					outputString += "\"" + attributeKey + "\": \"" + ValueString + "\"";
+					outputString += TEXT("\"") + attributeKey + TEXT("\": \"") + ValueString + TEXT("\"");
 					if (k < attributeKeys.Num() - 1)
 					{
-						outputString += ", ";
+						outputString += TEXT(", ");
 					}
 
 					FAttributeRow Row;
 					Row.Key = attributeKey;
 					Row.Value = ValueString;
-					LastAttributes.Add(Row);
+					FeatureSet.Attributes.Add(Row); 
 				}
 
-				outputString += "}";
+				AllFeaturesAttributes.Add(FeatureSet);
+
+				outputString += TEXT("}");
 
 				if (j < geoElementsSize - 1)
 				{
-					outputString += ", ";
+					outputString += TEXT(", ");
 				}
 			}
 
-			outputString += "]";
+			outputString += TEXT("]");
 
 			if (i < identifyLayerResultsSize - 1)
 			{
-				outputString += ", ";
+				outputString += TEXT(", ");
 			}
 		}
 
-		outputString += "]";
+		outputString += TEXT("]");
+
+		if (AllFeaturesAttributes.Num() > 0)
+		{
+			CurrentFeatureIndex = 0;
+			LastAttributes = AllFeaturesAttributes[0].Attributes;
+		}
+		else
+		{
+			LastAttributes.Empty();
+		}
 
 		return outputString;
 	}
@@ -271,7 +295,11 @@ FString AIdentify::IdentifyAtMouseClick()
 	{
 		point1.SetHandle(nullptr);
 		point2.SetHandle(nullptr);
-		return "Error: " + exception.GetMessage();
+
+		AllFeaturesAttributes.Empty();
+		LastAttributes.Empty();
+
+		return TEXT("Error: ") + exception.GetMessage();
 	}
 }
 
@@ -323,6 +351,7 @@ void AIdentify::OnInputTriggered()
 	if (LastAttributes.Num() > 0)
 	{
 		RefreshListViewFromAttributes();
+		UpdatePageTexts();
 
 		if (BuildingInfoPanel)
 		{
@@ -338,4 +367,53 @@ void AIdentify::OnInputTriggered()
 	}
 }
 
+void AIdentify::ShowNextFeature()
+{
+	const int32 Total = AllFeaturesAttributes.Num();
+	if (Total <= 1)
+	{
+		return;
+	}
 
+	CurrentFeatureIndex = (CurrentFeatureIndex + 1) % Total;
+
+	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
+	RefreshListViewFromAttributes();
+	UpdatePageTexts();
+}
+
+void AIdentify::ShowPreviousFeature()
+{
+	const int32 Total = AllFeaturesAttributes.Num();
+	if (Total <= 1)
+	{
+		return;
+	}
+
+	CurrentFeatureIndex = (CurrentFeatureIndex - 1 + Total) % Total;
+
+	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
+	RefreshListViewFromAttributes();
+	UpdatePageTexts();
+}
+
+void AIdentify::UpdatePageTexts()
+{
+	if (!CurrentPageText || !TotalPageText)
+	{
+		return;
+	}
+
+	const int32 Total = AllFeaturesAttributes.Num();
+
+	if (Total <= 0)
+	{
+		CurrentPageText->SetText(FText::GetEmpty());
+		TotalPageText->SetText(FText::GetEmpty());
+	}
+	else
+	{
+		CurrentPageText->SetText(FText::AsNumber(CurrentFeatureIndex + 1));
+		TotalPageText->SetText(FText::AsNumber(Total));
+	}
+}
