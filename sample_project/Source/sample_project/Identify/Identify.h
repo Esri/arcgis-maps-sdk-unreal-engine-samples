@@ -73,6 +73,7 @@ public:
 	void SetupHighlightAttributesOnMap();
 	int64 GetCurrentFeatureID() const;
 	void ApplySelectionToMaterial();
+	bool IsInvalidDateString(const FString& DateString);
 
 protected:
 	// Called when the game starts or when spawned

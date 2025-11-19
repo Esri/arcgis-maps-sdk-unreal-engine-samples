@@ -56,15 +56,12 @@ void AIdentify::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
 	}
 
-	//SpatialReference = MapComponent->GetOriginPosition()->GetSpatialReference();
-
 	if (!InputManager)
 	{
 		InputManager = Cast<AInputManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AInputManager::StaticClass()));
 	}
 
 	InputManager->OnInputTrigger.AddDynamic(this, &AIdentify::OnInputTriggered);
-
 
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
@@ -113,62 +110,6 @@ void AIdentify::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-}
-
-FString GetStringFromAttributeValue(const Esri::GameEngine::Attributes::ArcGISAttributeValue& attributeValue)
-{
-	auto attributeType = attributeValue.GetAttributeValueType();
-
-	if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::DateTime)
-	{
-		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::DateTime>().ToString();
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float32)
-	{
-		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float32>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64)
-	{
-		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::GUID)
-	{
-		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::GUID>().ToString();
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int16)
-	{
-		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int16>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int32)
-	{
-		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int32>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int64)
-	{
-		return FString::Printf(TEXT("%lld"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int64>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64)
-	{
-		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::String)
-	{
-		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::String>();
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint16)
-	{
-		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint16>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint32)
-	{
-		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint32>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint64)
-	{
-		return FString::Printf(TEXT("%lld"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint64>());
-	}
-
-	return "<unknown-type>";
 }
 
 FString AIdentify::IdentifyAtMouseClick()
@@ -230,6 +171,7 @@ FString AIdentify::IdentifyAtMouseClick()
 		AllFeaturesAttributes.Empty();
 		LastAttributes.Empty();
 
+		//parse geoElements and attributes
 		for (int i = 0; i < identifyLayerResultsSize; i++)
 		{
 			outputString += TEXT("[");
@@ -254,6 +196,12 @@ FString AIdentify::IdentifyAtMouseClick()
 					auto attributeValue = attributes.At(attributeKey);
 
 					const FString ValueString = GetStringFromAttributeValue(attributeValue);
+					FString ValueStringForUI = ValueString;
+
+					if (attributeKey == "LSTMODDATE" && IsInvalidDateString(ValueString))
+					{
+						ValueStringForUI = TEXT("");
+					}
 
 					outputString += TEXT("\"") + attributeKey + TEXT("\": \"") + ValueString + TEXT("\"");
 					if (k < attributeKeys.Num() - 1)
@@ -263,7 +211,7 @@ FString AIdentify::IdentifyAtMouseClick()
 
 					FAttributeRow Row;
 					Row.Key = attributeKey;
-					Row.Value = ValueString;
+					Row.Value = ValueStringForUI;
 					FeatureSet.Attributes.Add(Row); 
 				}
 
@@ -311,6 +259,168 @@ FString AIdentify::IdentifyAtMouseClick()
 	}
 }
 
+FString GetStringFromAttributeValue(const Esri::GameEngine::Attributes::ArcGISAttributeValue& attributeValue)
+{
+	auto attributeType = attributeValue.GetAttributeValueType();
+
+	if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::DateTime)
+	{
+		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::DateTime>().ToString();
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float32)
+	{
+		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float32>());
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64)
+	{
+		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64>());
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::GUID)
+	{
+		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::GUID>().ToString();
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int16)
+	{
+		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int16>());
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int32)
+	{
+		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int32>());
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int64)
+	{
+		return FString::Printf(TEXT("%lld"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int64>());
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64)
+	{
+		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64>());
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::String)
+	{
+		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::String>();
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint16)
+	{
+		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint16>());
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint32)
+	{
+		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint32>());
+	}
+	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint64)
+	{
+		return FString::Printf(TEXT("%lld"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint64>());
+	}
+
+	return "<unknown-type>";
+}
+
+void AIdentify::SetupHighlightAttributesOnMap()
+{
+	if (!MapComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MapComponent is null"));
+		return;
+	}
+
+	UArcGISMap* Map = MapComponent->GetMap();
+
+	if (!Map)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Map is null"));
+		return;
+	}
+
+	UArcGISLayer* Layer = Map->GetLayers()->At(0);
+
+	if (!Layer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("First layer is null"));
+		return;
+	}
+
+	auto* ObjectSceneLayer = Cast<UArcGIS3DObjectSceneLayer>(Layer);
+
+	if (!ObjectSceneLayer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("First layer is not UArcGIS3DObjectSceneLayer"));
+		return;
+	}
+
+	if (!HighlightLayerName.IsEmpty() && ObjectSceneLayer->GetName() != HighlightLayerName)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("First layer name (%s) != HighlightLayerName (%s)"), *ObjectSceneLayer->GetName(), *HighlightLayerName);
+	}
+
+	//Tell ArcGIS which attribute should be exposed to the material (OBJECTID)
+	auto LayerAttributes = Esri::Unreal::ArcGISImmutableArray<FString>::CreateBuilder();
+	LayerAttributes.Add(HighlightIdFieldName);
+
+	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGIS3DObjectSceneLayer>(ObjectSceneLayer->APIObject);
+
+	LayerAPI->SetAttributesToVisualize(LayerAttributes.MoveToArray());
+
+	if (HighlightMaterial)
+	{
+		ObjectSceneLayer->SetMaterialReference(HighlightMaterial);
+
+		UE_LOG(LogTemp, Log, TEXT("Highlight material set on layer %s (field %s)"), *ObjectSceneLayer->GetName(), *HighlightIdFieldName);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HighlightMaterial is null on Identify; layer = %s"), *ObjectSceneLayer->GetName());
+	}
+}
+
+// Find the current feature's OBJECTID
+int64 AIdentify::GetCurrentFeatureID() const
+{
+	if (!AllFeaturesAttributes.IsValidIndex(CurrentFeatureIndex))
+	{
+		return -1;
+	}
+
+	const FFeatureAttributeSet& FeatureSet = AllFeaturesAttributes[CurrentFeatureIndex];
+
+	for (const FAttributeRow& Row : FeatureSet.Attributes)
+	{
+		if (Row.Key == HighlightIdFieldName)
+		{
+			return FCString::Atoi64(*Row.Value);
+		}
+	}
+
+	return -1;
+}
+
+void AIdentify::ApplySelectionToMaterial()
+{
+	if (!BuildingSelectionCollection)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+
+	if (!World)
+	{
+		return;
+	}
+
+	const int64 FeatureID = GetCurrentFeatureID();
+
+	UMaterialParameterCollectionInstance* Instance = World->GetParameterCollectionInstance(BuildingSelectionCollection);
+
+	if (!Instance)
+	{
+		return;
+	}
+
+	const float SelectedIdFloat = (FeatureID >= 0) ? static_cast<float>(FeatureID) : -1.0f;
+
+	Instance->SetScalarParameterValue(TEXT("SelectedID"), SelectedIdFloat);
+}
+
 void AIdentify::RefreshListViewFromAttributes()
 {
 	PropertyListView->ClearListItems();
@@ -325,7 +435,7 @@ void AIdentify::RefreshListViewFromAttributes()
 
 	if (!KeyProp || !ValueProp)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Key or Value property not found or not FString on PropertyRowClass"));
+		UE_LOG(LogTemp, Warning, TEXT("Key or Value property not found"));
 		return;
 	}
 
@@ -345,16 +455,79 @@ void AIdentify::RefreshListViewFromAttributes()
 	}
 }
 
+//show next feature/geoElements within the current selection
+void AIdentify::ShowNextFeature()
+{
+	const int32 Total = AllFeaturesAttributes.Num();
+	if (Total <= 1)
+	{
+		return;
+	}
+
+	CurrentFeatureIndex = (CurrentFeatureIndex + 1) % Total;
+
+	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
+	RefreshListViewFromAttributes();
+	UpdatePageTexts();
+	ApplySelectionToMaterial();
+}
+
+void AIdentify::ShowPreviousFeature()
+{
+	const int32 Total = AllFeaturesAttributes.Num();
+	if (Total <= 1)
+	{
+		return;
+	}
+
+	CurrentFeatureIndex = (CurrentFeatureIndex - 1 + Total) % Total;
+
+	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
+	RefreshListViewFromAttributes();
+	UpdatePageTexts();
+	ApplySelectionToMaterial();
+}
+
+void AIdentify::UpdatePageTexts()
+{
+	if (!CurrentPageText || !TotalPageText)
+	{
+		return;
+	}
+
+	const int32 Total = AllFeaturesAttributes.Num();
+
+	if (Total <= 0)
+	{
+		CurrentPageText->SetText(FText::GetEmpty());
+		TotalPageText->SetText(FText::GetEmpty());
+	}
+	else
+	{
+		CurrentPageText->SetText(FText::AsNumber(CurrentFeatureIndex + 1));
+		TotalPageText->SetText(FText::AsNumber(Total));
+	}
+}
+
+//a simple method to filter out incorrect date format which will be resolved in future release.
+bool AIdentify::IsInvalidDateString(const FString& DateString)
+{
+	if (DateString.IsEmpty())
+	{
+		return true;
+	}
+
+	if (DateString.Contains(TEXT("-00.00.00")))
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void AIdentify::OnInputTriggered()
 {
 	LastIdentifyOutput = IdentifyAtMouseClick();
-
-	UE_LOG(LogTemp, Log, TEXT("%s"), *LastIdentifyOutput);
-
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, LastIdentifyOutput);
-	}
 
 	if (LastAttributes.Num() > 0)
 	{
@@ -383,156 +556,4 @@ void AIdentify::OnInputTriggered()
 			}
 		}
 	}
-}
-
-void AIdentify::ShowNextFeature()
-{
-	const int32 Total = AllFeaturesAttributes.Num();
-	if (Total <= 1)
-	{
-		return;
-	}
-
-	CurrentFeatureIndex = (CurrentFeatureIndex + 1) % Total;
-
-	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
-	RefreshListViewFromAttributes();
-	UpdatePageTexts();
-}
-
-void AIdentify::ShowPreviousFeature()
-{
-	const int32 Total = AllFeaturesAttributes.Num();
-	if (Total <= 1)
-	{
-		return;
-	}
-
-	CurrentFeatureIndex = (CurrentFeatureIndex - 1 + Total) % Total;
-
-	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
-	RefreshListViewFromAttributes();
-	UpdatePageTexts();
-}
-
-void AIdentify::UpdatePageTexts()
-{
-	if (!CurrentPageText || !TotalPageText)
-	{
-		return;
-	}
-
-	const int32 Total = AllFeaturesAttributes.Num();
-
-	if (Total <= 0)
-	{
-		CurrentPageText->SetText(FText::GetEmpty());
-		TotalPageText->SetText(FText::GetEmpty());
-	}
-	else
-	{
-		CurrentPageText->SetText(FText::AsNumber(CurrentFeatureIndex + 1));
-		TotalPageText->SetText(FText::AsNumber(Total));
-	}
-}
-
-void AIdentify::SetupHighlightAttributesOnMap()
-{
-	if (!MapComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("MapComponent is null"));
-		return;
-	}
-
-	UArcGISMap* Map = MapComponent->GetMap();
-	if (!Map)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Map is null"));
-		return;
-	}
-
-	UArcGISLayer* Layer = Map->GetLayers()->At(0);
-	if (!Layer)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("First layer is null"));
-		return;
-	}
-
-	auto* ObjectSceneLayer = Cast<UArcGIS3DObjectSceneLayer>(Layer);
-	if (!ObjectSceneLayer)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("First layer is not UArcGIS3DObjectSceneLayer"));
-		return;
-	}
-
-	if (!HighlightLayerName.IsEmpty() && ObjectSceneLayer->GetName() != HighlightLayerName)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("First layer name (%s) != HighlightLayerName (%s)"),
-			   *ObjectSceneLayer->GetName(), *HighlightLayerName);
-	}
-
-	auto LayerAttributes = Esri::Unreal::ArcGISImmutableArray<FString>::CreateBuilder();
-	LayerAttributes.Add(HighlightIdFieldName); 
-
-	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGIS3DObjectSceneLayer>(ObjectSceneLayer->APIObject);
-
-	LayerAPI->SetAttributesToVisualize(LayerAttributes.MoveToArray());
-
-	if (HighlightMaterial)
-	{
-		ObjectSceneLayer->SetMaterialReference(HighlightMaterial);
-
-		UE_LOG(LogTemp, Log, TEXT("Highlight material set on layer %s (field %s)"), *ObjectSceneLayer->GetName(), *HighlightIdFieldName);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("HighlightMaterial is null on Identify; layer = %s"), *ObjectSceneLayer->GetName());
-	}
-}
-
-int64 AIdentify::GetCurrentFeatureID() const
-{
-	if (!AllFeaturesAttributes.IsValidIndex(CurrentFeatureIndex))
-	{
-		return -1;
-	}
-
-	const FFeatureAttributeSet& FeatureSet = AllFeaturesAttributes[CurrentFeatureIndex];
-
-	for (const FAttributeRow& Row : FeatureSet.Attributes)
-	{
-		if (Row.Key == HighlightIdFieldName) 
-		{
-			return FCString::Atoi64(*Row.Value); 
-		}
-	}
-
-	return -1;
-}
-
-void AIdentify::ApplySelectionToMaterial()
-{
-	if (!BuildingSelectionCollection)
-	{
-		return;
-	}
-
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return;
-	}
-
-	const int64 FeatureID = GetCurrentFeatureID();
-
-	UMaterialParameterCollectionInstance* Instance = World->GetParameterCollectionInstance(BuildingSelectionCollection);
-
-	if (!Instance)
-	{
-		return;
-	}
-
-	const float SelectedIdFloat = (FeatureID >= 0) ? static_cast<float>(FeatureID) : -1.0f;
-
-	Instance->SetScalarParameterValue(TEXT("SelectedID"), SelectedIdFloat);
 }
