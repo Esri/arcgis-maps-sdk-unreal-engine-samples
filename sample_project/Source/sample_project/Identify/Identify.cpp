@@ -3,7 +3,6 @@
 #include "Identify.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
-
 #include "ArcGISMapsSDK/API/GameEngine/Attributes/ArcGISAttributeValue.h"
 #include "ArcGISMapsSDK/API/GameEngine/Map/ArcGISGeoElement.h"
 #include "ArcGISMapsSDK/API/GameEngine/MapView/ArcGISIdentifyLayerResult.h"
@@ -23,7 +22,16 @@
 #include "ArcGISPawn.h"
 #include "Internationalization/Text.h"
 #include "Components/TextBlock.h"
-#include "Components/ListView.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "Materials/MaterialParameterCollectionInstance.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/ArcGIS3DObjectSceneLayer.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISImmutableArray.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISArrayBuilder.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGIS3DObjectSceneLayer.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/Base/ArcGISLayer.h"
 
 // Sets default values
 AIdentify::AIdentify()
@@ -77,9 +85,7 @@ void AIdentify::BeginPlay()
 		UIWidget->AddToViewport();
 
 		PropertyListView = Cast<UListView>(UIWidget->GetWidgetFromName(TEXT("ListView")));
-
 		BuildingInfoPanel = Cast<UWidget>(UIWidget->GetWidgetFromName(TEXT("BuildingInfoPanel")));
-
 		CurrentPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("CurrentPage")));
 		TotalPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalPage")));
 
@@ -98,6 +104,8 @@ void AIdentify::BeginPlay()
 			UIWidget->ProcessEvent(UIWidget->FindFunction("ShowInstruction"), nullptr);
 		}
 	}
+
+	SetupHighlightAttributesOnMap();
 }
 
 // Called every frame
@@ -357,12 +365,22 @@ void AIdentify::OnInputTriggered()
 		{
 			BuildingInfoPanel->SetVisibility(ESlateVisibility::Visible);
 		}
+
+		ApplySelectionToMaterial();
 	}
 	else
 	{
 		if (BuildingInfoPanel)
 		{
 			BuildingInfoPanel->SetVisibility(ESlateVisibility::Collapsed);
+		}
+
+		if (BuildingSelectionCollection)
+		{
+			if (auto* Instance = GetWorld()->GetParameterCollectionInstance(BuildingSelectionCollection))
+			{
+				Instance->SetScalarParameterValue(TEXT("SelectedID"), -1.0f);
+			}
 		}
 	}
 }
@@ -416,4 +434,105 @@ void AIdentify::UpdatePageTexts()
 		CurrentPageText->SetText(FText::AsNumber(CurrentFeatureIndex + 1));
 		TotalPageText->SetText(FText::AsNumber(Total));
 	}
+}
+
+void AIdentify::SetupHighlightAttributesOnMap()
+{
+	if (!MapComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MapComponent is null"));
+		return;
+	}
+
+	UArcGISMap* Map = MapComponent->GetMap();
+	if (!Map)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Map is null"));
+		return;
+	}
+
+	UArcGISLayer* Layer = Map->GetLayers()->At(0);
+	if (!Layer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("First layer is null"));
+		return;
+	}
+
+	auto* ObjectSceneLayer = Cast<UArcGIS3DObjectSceneLayer>(Layer);
+	if (!ObjectSceneLayer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("First layer is not UArcGIS3DObjectSceneLayer"));
+		return;
+	}
+
+	if (!HighlightLayerName.IsEmpty() && ObjectSceneLayer->GetName() != HighlightLayerName)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("First layer name (%s) != HighlightLayerName (%s)"),
+			   *ObjectSceneLayer->GetName(), *HighlightLayerName);
+	}
+
+	auto LayerAttributes = Esri::Unreal::ArcGISImmutableArray<FString>::CreateBuilder();
+	LayerAttributes.Add(HighlightIdFieldName); 
+
+	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGIS3DObjectSceneLayer>(ObjectSceneLayer->APIObject);
+
+	LayerAPI->SetAttributesToVisualize(LayerAttributes.MoveToArray());
+
+	if (HighlightMaterial)
+	{
+		ObjectSceneLayer->SetMaterialReference(HighlightMaterial);
+
+		UE_LOG(LogTemp, Log, TEXT("Highlight material set on layer %s (field %s)"), *ObjectSceneLayer->GetName(), *HighlightIdFieldName);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HighlightMaterial is null on Identify; layer = %s"), *ObjectSceneLayer->GetName());
+	}
+}
+
+int64 AIdentify::GetCurrentFeatureID() const
+{
+	if (!AllFeaturesAttributes.IsValidIndex(CurrentFeatureIndex))
+	{
+		return -1;
+	}
+
+	const FFeatureAttributeSet& FeatureSet = AllFeaturesAttributes[CurrentFeatureIndex];
+
+	for (const FAttributeRow& Row : FeatureSet.Attributes)
+	{
+		if (Row.Key == HighlightIdFieldName) 
+		{
+			return FCString::Atoi64(*Row.Value); 
+		}
+	}
+
+	return -1;
+}
+
+void AIdentify::ApplySelectionToMaterial()
+{
+	if (!BuildingSelectionCollection)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	const int64 FeatureID = GetCurrentFeatureID();
+
+	UMaterialParameterCollectionInstance* Instance = World->GetParameterCollectionInstance(BuildingSelectionCollection);
+
+	if (!Instance)
+	{
+		return;
+	}
+
+	const float SelectedIdFloat = (FeatureID >= 0) ? static_cast<float>(FeatureID) : -1.0f;
+
+	Instance->SetScalarParameterValue(TEXT("SelectedID"), SelectedIdFloat);
 }

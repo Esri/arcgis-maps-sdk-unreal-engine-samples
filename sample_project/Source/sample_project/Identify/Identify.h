@@ -11,6 +11,9 @@
 class UListView; 
 class UWidget;
 class UTextBlock; 
+class UArcGIS3DObjectSceneLayer;
+class UMaterial;
+class UMaterialParameterCollection;
 
 USTRUCT(BlueprintType)
 struct FAttributeRow
@@ -67,6 +70,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ShowPreviousFeature();
 
+	void SetupHighlightAttributesOnMap();
+	int64 GetCurrentFeatureID() const;
+	void ApplySelectionToMaterial();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -87,4 +94,16 @@ private:
 	class UTextBlock* CurrentPageText = nullptr;
 	UPROPERTY()
 	class UTextBlock* TotalPageText = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Highlight")
+	FString HighlightIdFieldName = TEXT("OBJECTID"); 
+
+	UPROPERTY(EditAnywhere, Category = "Highlight")
+	UMaterialParameterCollection* BuildingSelectionCollection = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Highlight")
+	UMaterial* HighlightMaterial = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Highlight")
+	FString HighlightLayerName; 
 };
