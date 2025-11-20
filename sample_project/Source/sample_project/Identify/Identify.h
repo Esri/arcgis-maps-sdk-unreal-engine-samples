@@ -2,15 +2,16 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/ListView.h"
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
 #include "Identify.generated.h"
-class UListView; 
+
+class UListView;
 class UWidget;
-class UTextBlock; 
+class UTextBlock;
 class UArcGIS3DObjectSceneLayer;
 class UMaterial;
 class UMaterialParameterCollection;
@@ -36,15 +37,15 @@ struct FFeatureAttributeSet
 	TArray<FAttributeRow> Attributes;
 };
 
-
 UCLASS()
 class AIdentify : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AIdentify();
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -52,28 +53,27 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Identify")
 	TArray<FAttributeRow> LastAttributes;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identify|UI")
-	TSubclassOf<UObject> PropertyRowClass; 
+	TSubclassOf<UObject> PropertyRowClass;
 	UPROPERTY(BlueprintReadOnly)
 	TArray<FFeatureAttributeSet> AllFeaturesAttributes;
-	UPROPERTY(BlueprintReadOnly)
-	int32 CurrentFeatureIndex = 0;
-	virtual void Tick(float DeltaTime) override;
-	FString IdentifyAtMouseClick();
+
 	UFUNCTION()
 	void OnInputTriggered();
-	void RefreshListViewFromAttributes();
-	void UpdatePageTexts();
-
 	UFUNCTION(BlueprintCallable)
 	void ShowNextFeature();
-
 	UFUNCTION(BlueprintCallable)
 	void ShowPreviousFeature();
 
 	void SetupHighlightAttributesOnMap();
 	int64 GetCurrentFeatureID() const;
 	void ApplySelectionToMaterial();
+	FString IdentifyAtMouseClick();
+	void RefreshListViewFromAttributes();
+	void UpdatePageTexts();
+	virtual void Tick(float DeltaTime) override;
+
 	bool IsInvalidDateString(const FString& DateString);
+	int32 CurrentFeatureIndex = 0;
 
 protected:
 	// Called when the game starts or when spawned
@@ -86,25 +86,21 @@ private:
 	AArcGISMapActor* MapActor;
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISMapComponent> MapComponent;
-	UWidget* BuildingInfoPanel;
-
-	FString LastIdentifyOutput;
 	UPROPERTY()
 	UListView* PropertyListView = nullptr;
 	UPROPERTY()
 	class UTextBlock* CurrentPageText = nullptr;
 	UPROPERTY()
 	class UTextBlock* TotalPageText = nullptr;
-
 	UPROPERTY(EditAnywhere, Category = "Highlight")
-	FString HighlightIdFieldName = TEXT("OBJECTID"); 
-
+	FString HighlightIdFieldName = TEXT("OBJECTID");
 	UPROPERTY(EditAnywhere, Category = "Highlight")
 	UMaterialParameterCollection* BuildingSelectionCollection = nullptr;
-
 	UPROPERTY(EditAnywhere, Category = "Highlight")
 	UMaterial* HighlightMaterial = nullptr;
-
 	UPROPERTY(EditAnywhere, Category = "Highlight")
-	FString HighlightLayerName; 
+	FString HighlightLayerName;
+
+	UWidget* BuildingInfoPanel;
+	FString LastIdentifyOutput;
 };
