@@ -69,6 +69,7 @@ void AIdentify::BeginPlay()
 	{
 		playerController->bShowMouseCursor = true;
 		playerController->bEnableClickEvents = true;
+		playerController->bEnableTouchEvents = true;
 	}
 
 	if (UIWidgetClass)
