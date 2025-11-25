@@ -18,8 +18,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Http.h"
+#include "Engine/DataTable.h"
 #include "ArcGISFeatureLayerQuery.generated.h"
 
+class FJsonValue;
 class AFeatureItemBase;
 class AFeatureItem;
 class UArcGISMapComponent;

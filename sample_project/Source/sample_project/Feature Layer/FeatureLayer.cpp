@@ -21,7 +21,11 @@
 #include "Blueprint/UserWidget.h"
 #include "FeatureItem.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "Dom/JsonObject.h"
+#include "Dom/JsonValue.h"
+#include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialInstance.h"
 #include "sample_project/InputManager.h"
 
 AFeatureLayer::AFeatureLayer()
