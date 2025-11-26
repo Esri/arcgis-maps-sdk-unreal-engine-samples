@@ -22,9 +22,13 @@
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "Components/TextRenderComponent.h"
+#include "Engine/StaticMesh.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
 #include "QueryLocation.generated.h"
+
+class UMaterial;
+class UStaticMesh;
 
 UCLASS()
 class SAMPLE_PROJECT_API AQueryLocation : public AActor
@@ -59,9 +63,9 @@ private:
 	UArcGISMapComponent* MapComponent;
 	APawn* PawnActor;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
-	UStaticMesh* PinMesh = LoadObject<UStaticMesh>(nullptr, TEXT("StaticMesh'/Game/SampleViewer/SharedResources/Geometries/Pin.Pin'"));
+	UStaticMesh* PinMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
-	UStaticMesh* PointMesh = LoadObject<UStaticMesh>(nullptr, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+	UStaticMesh* PointMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess))
 	UMaterial* PointMaterial = LoadObject<UMaterial>(nullptr, TEXT("Material'/Game/SampleViewer/SharedResources/Materials/M_PinHead.M_PinHead'"));
 };
