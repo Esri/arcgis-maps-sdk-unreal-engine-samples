@@ -103,4 +103,5 @@ private:
 
 	UWidget* BuildingInfoPanel;
 	FString LastIdentifyOutput;
+	float Length = 10000000.0f;
 };

@@ -177,19 +177,14 @@ FString AIdentify::IdentifyAtMouseClick()
 
 	PlayerController->DeprojectMousePositionToWorld(Location, Direction);
 
-	if (!UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
-											   EDrawDebugTrace::None, HitResult, true))
-	{
-		AllFeaturesAttributes.Empty();
-		LastAttributes.Empty();
-		return TEXT("Line trace did not hit any actor");
-	}
+	const FVector Start = Location;
+	const FVector End = Location + Direction * Length;
 
-	auto geoPosition = MapComponent->TransformEnginePositionToPoint(HitResult.TraceStart)->APIObject;
-	auto geoPosition2 = MapComponent->TransformEnginePositionToPoint(HitResult.TraceEnd)->APIObject;
+	auto geoPositionStart = MapComponent->TransformEnginePositionToPoint(Start)->APIObject;
+	auto geoPositionEnd = MapComponent->TransformEnginePositionToPoint(End)->APIObject;
 
-	auto point1 = Esri::GameEngine::Geometry::ArcGISPoint(std::move(geoPosition->GetHandle()));
-	auto point2 = Esri::GameEngine::Geometry::ArcGISPoint(std::move(geoPosition2->GetHandle()));
+	auto point1 = Esri::GameEngine::Geometry::ArcGISPoint(std::move(geoPositionStart->GetHandle()));
+	auto point2 = Esri::GameEngine::Geometry::ArcGISPoint(std::move(geoPositionEnd->GetHandle()));
 
 	auto view = MapComponent->GetView()->APIObject;
 
@@ -326,28 +321,34 @@ void AIdentify::SetupHighlightAttributesOnMap()
 		return;
 	}
 
-	UArcGISLayer* Layer = Map->GetLayers()->At(0);
-
-	if (!Layer)
+	UArcGISLayerCollection* MapLayers = Map->GetLayers();
+	if (!MapLayers)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("First layer is null"));
+		UE_LOG(LogTemp, Warning, TEXT("Layers is null"));
 		return;
 	}
 
-	auto* ObjectSceneLayer = Cast<UArcGIS3DObjectSceneLayer>(Layer);
+	UArcGIS3DObjectSceneLayer* ObjectSceneLayer = nullptr;
 
-	if (!ObjectSceneLayer)
+	if (!HighlightLayerName.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("First layer is not UArcGIS3DObjectSceneLayer"));
-		return;
+		for (int32 i = 0; i < MapLayers->GetSize(); ++i)
+		{
+			if (auto* Layer = MapLayers->At(i))
+			{
+				if (auto* Candidate = Cast<UArcGIS3DObjectSceneLayer>(Layer))
+				{
+					if (Candidate->GetName() == HighlightLayerName)
+					{
+						ObjectSceneLayer = Candidate;
+						UE_LOG(LogTemp, Warning, TEXT("found layer to highlight"));
+						break;
+					}
+				}
+			}
+		}
 	}
 
-	if (!HighlightLayerName.IsEmpty() && ObjectSceneLayer->GetName() != HighlightLayerName)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("First layer name (%s) != HighlightLayerName (%s)"), *ObjectSceneLayer->GetName(), *HighlightLayerName);
-	}
-
-	//Tell ArcGIS which attribute should be exposed to the material (OBJECTID)
 	auto LayerAttributes = Esri::Unreal::ArcGISImmutableArray<FString>::CreateBuilder();
 	LayerAttributes.Add(HighlightIdFieldName);
 
