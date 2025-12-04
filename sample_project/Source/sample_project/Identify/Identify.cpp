@@ -86,15 +86,17 @@ void AIdentify::BeginPlay()
 		BuildingInfoPanel = Cast<UWidget>(UIWidget->GetWidgetFromName(TEXT("BuildingInfoPanel")));
 		CurrentPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("CurrentPage")));
 		TotalPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalPage")));
+		BuildingList = Cast<UScrollBox>(UIWidget->GetWidgetFromName(TEXT("BuildingList")));
+
+		if (!BuildingList)
+		{
+			UE_LOG(LogTemp, Error, TEXT("BuildingList ScrollBox not found!"));
+		}
+
 
 		if (BuildingInfoPanel)
 		{
 			BuildingInfoPanel->SetVisibility(ESlateVisibility::Collapsed);
-		}
-
-		if (!PropertyListView)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ListView not found on UI widget"));
 		}
 	}
 
@@ -463,12 +465,7 @@ void AIdentify::ShowNextFeature()
 	}
 
 	CurrentFeatureIndex = (CurrentFeatureIndex + 1) % Total;
-
-	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
-
-	RefreshListViewFromAttributes();
-	UpdatePageTexts();
-	ApplySelectionToMaterial();
+	ApplyCurrentFeature();
 }
 
 void AIdentify::ShowPreviousFeature()
@@ -480,13 +477,9 @@ void AIdentify::ShowPreviousFeature()
 	}
 
 	CurrentFeatureIndex = (CurrentFeatureIndex - 1 + Total) % Total;
-
-	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
-
-	RefreshListViewFromAttributes();
-	UpdatePageTexts();
-	ApplySelectionToMaterial();
+	ApplyCurrentFeature();
 }
+
 
 void AIdentify::UpdatePageTexts()
 {
@@ -506,6 +499,137 @@ void AIdentify::UpdatePageTexts()
 	{
 		CurrentPageText->SetText(FText::AsNumber(CurrentFeatureIndex + 1));
 		TotalPageText->SetText(FText::AsNumber(Total));
+	}
+}
+
+void AIdentify::ApplyCurrentFeature()
+{
+	if (!AllFeaturesAttributes.IsValidIndex(CurrentFeatureIndex))
+	{
+		LastAttributes.Empty();
+		RefreshListViewFromAttributes();
+		UpdatePageTexts();
+		ApplySelectionToMaterial();
+		return;
+	}
+
+	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
+
+	RefreshListViewFromAttributes();
+	UpdatePageTexts();
+	ApplySelectionToMaterial();
+}
+
+int32 AIdentify::GetFeatureCount() const
+{
+	return AllFeaturesAttributes.Num();
+}
+
+int32 AIdentify::GetCurrentFeatureIndex() const
+{
+	return CurrentFeatureIndex;
+}
+
+void AIdentify::SelectFeatureByIndex(int32 Index)
+{
+	const int32 Total = AllFeaturesAttributes.Num();
+	if (Total <= 0)
+	{
+		return;
+	}
+
+
+	CurrentFeatureIndex = FMath::Clamp(Index, 0, Total - 1);
+
+	ApplyCurrentFeature(); 
+}
+
+void AIdentify::OnBuildingSelected(bool bIsChecked)
+{
+	if (!bIsChecked)
+	{
+		return;
+	}
+
+	int32 SelectedIndex = INDEX_NONE;
+
+	for (int32 i = 0; i < BuildingCheckBoxes.Num(); ++i)
+	{
+		if (i == CurrentFeatureIndex)
+		{
+			continue;
+		}
+
+		if (BuildingCheckBoxes[i] && BuildingCheckBoxes[i]->IsChecked())
+		{
+			SelectedIndex = i;
+			break;
+		}
+	}
+
+	CurrentFeatureIndex = SelectedIndex;
+
+	for (int32 i = 0; i < BuildingCheckBoxes.Num(); ++i)
+	{
+		if (BuildingCheckBoxes[i])
+		{
+			BuildingCheckBoxes[i]->SetIsChecked(i == CurrentFeatureIndex);
+		}
+	}
+
+	ApplyCurrentFeature();
+}
+
+
+void AIdentify::UpdateBuildingListUI()
+{
+	if (!BuildingList)
+	{
+		return;
+	}
+
+	BuildingList->ClearChildren();
+	BuildingCheckBoxes.Empty();
+
+	const int32 Total = AllFeaturesAttributes.Num();
+
+	for (int32 i = 0; i < Total; ++i)
+	{
+		UHorizontalBox* Row = NewObject<UHorizontalBox>(UIWidget);
+		if (!Row)
+		{
+			continue;
+		}
+
+		UCheckBox* Check = NewObject<UCheckBox>(UIWidget);
+		if (!Check)
+		{
+			continue;
+		}
+
+		Check->SetIsChecked(i == CurrentFeatureIndex);
+
+		BuildingCheckBoxes.Add(Check);
+
+		Check->OnCheckStateChanged.AddDynamic(this, &AIdentify::OnBuildingSelected);
+
+		UTextBlock* Label = NewObject<UTextBlock>(UIWidget);
+		if (Label)
+		{
+			Label->SetText(FText::FromString(FString::Printf(TEXT("Building %d"), i + 1)));
+			Label->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+			FSlateFontInfo FontInfo = Label->Font;
+			FontInfo.Size = 14; 
+			Label->SetFont(FontInfo);
+		}
+
+		Row->AddChildToHorizontalBox(Check);
+		if (Label)
+		{
+			Row->AddChildToHorizontalBox(Label);
+		}
+
+		BuildingList->AddChild(Row);
 	}
 }
 
@@ -535,6 +659,8 @@ void AIdentify::OnInputTriggered()
 		}
 
 		ApplySelectionToMaterial();
+		UpdateBuildingListUI();
+
 	}
 	else
 	{

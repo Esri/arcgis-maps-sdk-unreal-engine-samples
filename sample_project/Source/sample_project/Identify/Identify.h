@@ -6,10 +6,17 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/ListView.h"
 #include "CoreMinimal.h"
+#include "Components/CheckBox.h"
+#include "Components/TextBlock.h"
 #include "GameFramework/Actor.h"
+#include "Components/ScrollBox.h"
+#include "Components/HorizontalBox.h"
 #include "Identify.generated.h"
 
 class UListView;
+class UScrollBox;
+class UHorizontalBox;
+class UCheckBox;
 class UWidget;
 class UTextBlock;
 class UArcGIS3DObjectSceneLayer;
@@ -63,14 +70,32 @@ public:
 	void ShowNextFeature();
 	UFUNCTION(BlueprintCallable)
 	void ShowPreviousFeature();
+	UFUNCTION(BlueprintCallable, Category = "Identify|UI")
+	int32 GetFeatureCount() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Identify|UI")
+	void SelectFeatureByIndex(int32 Index);
+
+	UFUNCTION(BlueprintCallable, Category = "Identify|UI")
+	int32 GetCurrentFeatureIndex() const;
+
 
 	void SetupHighlightAttributesOnMap();
 	int64 GetCurrentFeatureID() const;
 	void ApplySelectionToMaterial();
 	FString IdentifyAtMouseClick();
+	UFUNCTION()
 	void RefreshListViewFromAttributes();
+	UFUNCTION()
 	void UpdatePageTexts();
+	UFUNCTION()
+	void ApplyCurrentFeature();
+	UFUNCTION()
+	void UpdateBuildingListUI();
 	virtual void Tick(float DeltaTime) override;
+	UFUNCTION()
+	void OnBuildingSelected(bool bIsChecked);
+
 
 	bool IsInvalidDateString(const FString& DateString);
 	int32 CurrentFeatureIndex = 0;
@@ -88,6 +113,12 @@ private:
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 	UPROPERTY()
 	UListView* PropertyListView = nullptr;
+
+	UPROPERTY()
+	UScrollBox* BuildingList = nullptr;
+
+	UPROPERTY()
+	TArray<UCheckBox*> BuildingCheckBoxes;
 	UPROPERTY()
 	class UTextBlock* CurrentPageText = nullptr;
 	UPROPERTY()
