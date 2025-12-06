@@ -1,4 +1,17 @@
-﻿// /* Copyright 2025 Esri* * Licensed under the Apache License Version 2.0 (the "License"); * you may not use this file except in compliance with the License. * You may obtain a copy of the License at * *     http://www.apache.org/licenses/LICENSE-2.0 * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS, * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. * See the License for the specific language governing permissions and * limitations under the License. */
+﻿/* Copyright 2025 Esri
+ *
+ * Licensed under the Apache License Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include "Identify.h"
 #include "ArcGISMapsSDK/API/GameEngine/Attributes/ArcGISAttributeValue.h"
@@ -45,8 +58,6 @@ void AIdentify::BeginPlay()
 {
 	Super::BeginPlay();
 
-	MapActor = Cast<AArcGISMapActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass()));
-
 	if (MapActor)
 	{
 		MapComponent = MapActor->GetMapComponent();
@@ -87,12 +98,21 @@ void AIdentify::BeginPlay()
 		CurrentPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("CurrentPage")));
 		TotalPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalPage")));
 		BuildingList = Cast<UScrollBox>(UIWidget->GetWidgetFromName(TEXT("BuildingList")));
+		RadioButton = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("RadioButton")));
+		BuildingLabelTemplate = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("BuildingRowLabelTemplate")));
+		TotalNumText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalNum")));
 
-		if (!BuildingList)
+		if (BuildingLabelTemplate)
 		{
-			UE_LOG(LogTemp, Error, TEXT("BuildingList ScrollBox not found!"));
+			BuildingRowFontInfo = BuildingLabelTemplate->GetFont();
+			bHasBuildingRowFont = true;
 		}
 
+		if (RadioButton)
+		{
+			CachedRadioStyle = RadioButton->GetWidgetStyle();
+			bHasRadioStyle = true;
+		}
 
 		if (BuildingInfoPanel)
 		{
@@ -174,7 +194,6 @@ FString AIdentify::IdentifyAtMouseClick()
 	}
 
 	FVector Location, Direction;
-	const TArray<AActor*> ActorsToIgnore;
 	FHitResult HitResult;
 
 	PlayerController->DeprojectMousePositionToWorld(Location, Direction);
@@ -192,32 +211,23 @@ FString AIdentify::IdentifyAtMouseClick()
 
 	try
 	{
+		AllFeaturesAttributes.Empty();
+		LastAttributes.Empty();
+
 		auto results = view->IdentifyLayersAsync(point1, point2, -1);
 		point1.SetHandle(nullptr);
 		point2.SetHandle(nullptr);
 
 		auto identifyLayerResults = results.Get();
 
-		if (!identifyLayerResults)
+		if (!identifyLayerResults || identifyLayerResults.IsEmpty())
 		{
-			AllFeaturesAttributes.Empty();
-			LastAttributes.Empty();
-			return TEXT("Null identify layer results collection");
-		}
-
-		if (identifyLayerResults.GetSize() == 0)
-		{
-			AllFeaturesAttributes.Empty();
-			LastAttributes.Empty();
-			return TEXT("Empty identify layer results collection");
+			return TEXT("No identify layer results collection");
 		}
 
 		auto identifyLayerResultsSize = identifyLayerResults.GetSize();
 
 		FString outputString = TEXT("[");
-
-		AllFeaturesAttributes.Empty();
-		LastAttributes.Empty();
 
 		//parse geoElements and attributes
 		for (int i = 0; i < identifyLayerResultsSize; i++)
@@ -246,7 +256,7 @@ FString AIdentify::IdentifyAtMouseClick()
 					const FString ValueString = GetStringFromAttributeValue(attributeValue);
 					FString ValueStringForUI = ValueString;
 
-					if (attributeKey == "LSTMODDATE" && IsInvalidDateString(ValueString))
+					if (IsInvalidDate(attributeValue))
 					{
 						ValueStringForUI = TEXT("");
 					}
@@ -343,7 +353,6 @@ void AIdentify::SetupHighlightAttributesOnMap()
 					if (Candidate->GetName() == HighlightLayerName)
 					{
 						ObjectSceneLayer = Candidate;
-						UE_LOG(LogTemp, Warning, TEXT("found layer to highlight"));
 						break;
 					}
 				}
@@ -361,12 +370,6 @@ void AIdentify::SetupHighlightAttributesOnMap()
 	if (HighlightMaterial)
 	{
 		ObjectSceneLayer->SetMaterialReference(HighlightMaterial);
-
-		UE_LOG(LogTemp, Log, TEXT("Highlight material set on layer %s (field %s)"), *ObjectSceneLayer->GetName(), *HighlightIdFieldName);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("HighlightMaterial is null on Identify; layer = %s"), *ObjectSceneLayer->GetName());
 	}
 }
 
@@ -455,31 +458,21 @@ void AIdentify::RefreshListViewFromAttributes()
 	}
 }
 
-//show next feature/geoElements within the current selection
-void AIdentify::ShowNextFeature()
+void AIdentify::ShowFeature(bool bPrevious)
 {
-	const int32 Total = AllFeaturesAttributes.Num();
-	if (Total <= 1)
+	int32 Total = AllFeaturesAttributes.Num();
+
+	if (bPrevious)
 	{
-		return;
+		CurrentFeatureIndex = (CurrentFeatureIndex - 1 + Total) % Total;
+	}
+	else
+	{
+		CurrentFeatureIndex = (CurrentFeatureIndex + 1) % Total;
 	}
 
-	CurrentFeatureIndex = (CurrentFeatureIndex + 1) % Total;
 	ApplyCurrentFeature();
 }
-
-void AIdentify::ShowPreviousFeature()
-{
-	const int32 Total = AllFeaturesAttributes.Num();
-	if (Total <= 1)
-	{
-		return;
-	}
-
-	CurrentFeatureIndex = (CurrentFeatureIndex - 1 + Total) % Total;
-	ApplyCurrentFeature();
-}
-
 
 void AIdentify::UpdatePageTexts()
 {
@@ -518,16 +511,7 @@ void AIdentify::ApplyCurrentFeature()
 	RefreshListViewFromAttributes();
 	UpdatePageTexts();
 	ApplySelectionToMaterial();
-}
-
-int32 AIdentify::GetFeatureCount() const
-{
-	return AllFeaturesAttributes.Num();
-}
-
-int32 AIdentify::GetCurrentFeatureIndex() const
-{
-	return CurrentFeatureIndex;
+	SyncBuildingCheckStates();
 }
 
 void AIdentify::SelectFeatureByIndex(int32 Index)
@@ -538,10 +522,9 @@ void AIdentify::SelectFeatureByIndex(int32 Index)
 		return;
 	}
 
-
 	CurrentFeatureIndex = FMath::Clamp(Index, 0, Total - 1);
 
-	ApplyCurrentFeature(); 
+	ApplyCurrentFeature();
 }
 
 void AIdentify::OnBuildingSelected(bool bIsChecked)
@@ -580,7 +563,6 @@ void AIdentify::OnBuildingSelected(bool bIsChecked)
 	ApplyCurrentFeature();
 }
 
-
 void AIdentify::UpdateBuildingListUI()
 {
 	if (!BuildingList)
@@ -592,6 +574,7 @@ void AIdentify::UpdateBuildingListUI()
 	BuildingCheckBoxes.Empty();
 
 	const int32 Total = AllFeaturesAttributes.Num();
+	TotalNumText->SetText(FText::AsNumber(Total));
 
 	for (int32 i = 0; i < Total; ++i)
 	{
@@ -607,6 +590,11 @@ void AIdentify::UpdateBuildingListUI()
 			continue;
 		}
 
+		if (bHasRadioStyle)
+		{
+			Check->SetWidgetStyle(CachedRadioStyle);
+		}
+
 		Check->SetIsChecked(i == CurrentFeatureIndex);
 
 		BuildingCheckBoxes.Add(Check);
@@ -618,30 +606,55 @@ void AIdentify::UpdateBuildingListUI()
 		{
 			Label->SetText(FText::FromString(FString::Printf(TEXT("Building %d"), i + 1)));
 			Label->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-			FSlateFontInfo FontInfo = Label->Font;
-			FontInfo.Size = 14; 
+			FSlateFontInfo FontInfo = Label->GetFont();
+			Label->SetFont(BuildingRowFontInfo);
+			FontInfo.Size = 14;
 			Label->SetFont(FontInfo);
 		}
 
-		Row->AddChildToHorizontalBox(Check);
-		if (Label)
+		UHorizontalBoxSlot* CheckSlot = Row->AddChildToHorizontalBox(Check);
+		if (CheckSlot)
 		{
-			Row->AddChildToHorizontalBox(Label);
+			CheckSlot->SetVerticalAlignment(VAlign_Center);
+		}
+
+		UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(Label);
+		if (LabelSlot)
+		{
+			LabelSlot->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));
+			LabelSlot->SetVerticalAlignment(VAlign_Center);
 		}
 
 		BuildingList->AddChild(Row);
 	}
 }
 
-//a simple method to filter out incorrect date format which will be resolved in future release.
-bool AIdentify::IsInvalidDateString(const FString& DateString)
+void AIdentify::SyncBuildingCheckStates()
 {
-	if (DateString.Contains(TEXT("-00.00.00")))
+	for (int32 i = 0; i < BuildingCheckBoxes.Num(); ++i)
 	{
-		return true;
+		if (BuildingCheckBoxes[i])
+		{
+			BuildingCheckBoxes[i]->SetIsChecked(i == CurrentFeatureIndex);
+		}
+	}
+}
+
+//Filter out incorrect date format. See known issue (BUG-000181006): https://developers.arcgis.com/unreal-engine/release-notes/release-notes-2-2-0/.
+bool AIdentify::IsInvalidDate(const Esri::GameEngine::Attributes::ArcGISAttributeValue& AttributeValue)
+{
+	using namespace Esri::GameEngine::Attributes;
+
+	if (AttributeValue.GetAttributeValueType() != ArcGISAttributeValueType::DateTime)
+	{
+		return false;
 	}
 
-	return false;
+	auto DateValue = AttributeValue.GetValue<ArcGISAttributeValueType::DateTime>();
+
+	int32 Year = DateValue.GetYear();
+
+	return (Year < 1800);
 }
 
 void AIdentify::OnInputTriggered()
@@ -652,15 +665,12 @@ void AIdentify::OnInputTriggered()
 	{
 		RefreshListViewFromAttributes();
 		UpdatePageTexts();
-
 		if (BuildingInfoPanel)
 		{
 			BuildingInfoPanel->SetVisibility(ESlateVisibility::Visible);
 		}
-
 		ApplySelectionToMaterial();
 		UpdateBuildingListUI();
-
 	}
 	else
 	{
