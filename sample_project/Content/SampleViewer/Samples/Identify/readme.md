@@ -6,7 +6,7 @@ Select buildings in a 3D Object Scene Layer, view their attributes in a table, a
 
 ## How to use the sample
 
-1. Hold **Shift** and **left-click** to select a building. The *Building Select / Identify* panel shows:
+1. Hold **Shift** and **Left-click** to select a building. The *Building Select / Identify* panel shows:
    - A paged list of all features hit by the ray.
    - A scrollable table of key–value attribute pairs for the current feature.
 3. Use the **\<** and **\>** buttons to switch between features when multiple features are returned.
@@ -22,7 +22,7 @@ Select buildings in a 3D Object Scene Layer, view their attributes in a table, a
   - A `ListView` uses a simple row UObject with `Key` and `Value` properties.
   - `RefreshListViewFromAttributes()` populates the list by setting those properties and adding each row as a list item.
   - Page text (e.g. `1 of 3`) is updated based on the current feature index.
-- **highlighting** workflow:
+- **Highlighting** workflow:
   - On startup, `SetupHighlightAttributesOnMap()`:
     - Gets the building `UArcGIS3DObjectSceneLayer` from the map.
     - Calls `SetAttributesToVisualize()` on the layer’s API object with `"OBJECTID"` so the material can access each feature’s ID.
