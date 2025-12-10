@@ -89,7 +89,7 @@ public:
 	void SetupHighlightAttributesOnMap();
 	int64 GetCurrentFeatureID() const;
 	void ApplySelectionToMaterial();
-	FString IdentifyAtMouseClick();
+	void IdentifyAtMouseClick();
 	UFUNCTION()
 	void RefreshListViewFromAttributes();
 	UFUNCTION()
@@ -150,7 +150,6 @@ private:
 	FCheckBoxStyle CachedRadioStyle;
 	bool bHasRadioStyle = false;
 	UWidget* BuildingInfoPanel;
-	FString LastIdentifyOutput;
 	float Length = 10000000.0f;
 	int32 CurrentFeatureIndex = 0;
 };

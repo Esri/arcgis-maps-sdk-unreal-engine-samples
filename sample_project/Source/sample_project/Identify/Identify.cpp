@@ -131,67 +131,53 @@ void AIdentify::Tick(float DeltaTime)
 
 FString GetStringFromAttributeValue(const Esri::GameEngine::Attributes::ArcGISAttributeValue& attributeValue)
 {
+	using namespace Esri::GameEngine::Attributes;
+
 	auto attributeType = attributeValue.GetAttributeValueType();
 
-	if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::DateTime)
+	switch (attributeType)
 	{
-		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::DateTime>().ToString();
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float32)
-	{
-		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float32>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64)
-	{
-		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::GUID)
-	{
-		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::GUID>().ToString();
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int16)
-	{
-		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int16>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int32)
-	{
-		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int32>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int64)
-	{
-		return FString::Printf(TEXT("%lld"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Int64>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64)
-	{
-		return FString::SanitizeFloat(attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Float64>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::String)
-	{
-		return attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::String>();
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint16)
-	{
-		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint16>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint32)
-	{
-		return FString::Printf(TEXT("%d"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint32>());
-	}
-	else if (attributeType == Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint64)
-	{
-		return FString::Printf(TEXT("%lld"), attributeValue.GetValue<Esri::GameEngine::Attributes::ArcGISAttributeValueType::Uint64>());
-	}
+		case ArcGISAttributeValueType::DateTime:
+			return attributeValue.GetValue<ArcGISAttributeValueType::DateTime>().ToString();
 
-	return "<unknown-type>";
+		case ArcGISAttributeValueType::Float32:
+			return FString::SanitizeFloat(attributeValue.GetValue<ArcGISAttributeValueType::Float32>());
+
+		case ArcGISAttributeValueType::Float64:
+			return FString::SanitizeFloat(attributeValue.GetValue<ArcGISAttributeValueType::Float64>());
+
+		case ArcGISAttributeValueType::GUID:
+			return attributeValue.GetValue<ArcGISAttributeValueType::GUID>().ToString();
+
+		case ArcGISAttributeValueType::Int16:
+			return FString::Printf(TEXT("%d"), attributeValue.GetValue<ArcGISAttributeValueType::Int16>());
+
+		case ArcGISAttributeValueType::Int32:
+			return FString::Printf(TEXT("%d"), attributeValue.GetValue<ArcGISAttributeValueType::Int32>());
+
+		case ArcGISAttributeValueType::Int64:
+			return FString::Printf(TEXT("%lld"), attributeValue.GetValue<ArcGISAttributeValueType::Int64>());
+
+		case ArcGISAttributeValueType::String:
+			return attributeValue.GetValue<ArcGISAttributeValueType::String>();
+
+		case ArcGISAttributeValueType::Uint16:
+			return FString::Printf(TEXT("%d"), attributeValue.GetValue<ArcGISAttributeValueType::Uint16>());
+
+		case ArcGISAttributeValueType::Uint32:
+			return FString::Printf(TEXT("%d"), attributeValue.GetValue<ArcGISAttributeValueType::Uint32>());
+
+		case ArcGISAttributeValueType::Uint64:
+			return FString::Printf(TEXT("%lld"), attributeValue.GetValue<ArcGISAttributeValueType::Uint64>());
+
+		default:
+			return TEXT("<unknown-type>");
+	}
 }
 
-FString AIdentify::IdentifyAtMouseClick()
+void AIdentify::IdentifyAtMouseClick()
 {
 	APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
-	if (!PlayerController)
-	{
-		return TEXT("Null player controller");
-	}
 
 	FVector Location, Direction;
 	FHitResult HitResult;
@@ -209,111 +195,63 @@ FString AIdentify::IdentifyAtMouseClick()
 
 	auto view = MapComponent->GetView()->APIObject;
 
-	try
+	AllFeaturesAttributes.Empty();
+	LastAttributes.Empty();
+
+	auto results = view->IdentifyLayersAsync(point1, point2, -1);
+	point1.SetHandle(nullptr);
+	point2.SetHandle(nullptr);
+
+	auto identifyLayerResults = results.Get();
+
+	auto identifyLayerResultsSize = identifyLayerResults.GetSize();
+
+	//parse geoElements and attributes
+	for (int i = 0; i < identifyLayerResultsSize; i++)
 	{
-		AllFeaturesAttributes.Empty();
-		LastAttributes.Empty();
+		auto identifyLayerResult = identifyLayerResults.At(i);
+		auto geoElements = identifyLayerResult.GetGeoElements();
+		auto geoElementsSize = geoElements.GetSize();
 
-		auto results = view->IdentifyLayersAsync(point1, point2, -1);
-		point1.SetHandle(nullptr);
-		point2.SetHandle(nullptr);
-
-		auto identifyLayerResults = results.Get();
-
-		if (!identifyLayerResults || identifyLayerResults.IsEmpty())
+		for (int j = 0; j < geoElementsSize; j++)
 		{
-			return TEXT("No identify layer results collection");
-		}
+			auto feature = geoElements.At(j);
+			auto attributes = feature.GetAttributes();
+			auto attributeKeys = attributes.GetKeys();
 
-		auto identifyLayerResultsSize = identifyLayerResults.GetSize();
+			FFeatureAttributeSet FeatureSet;
 
-		FString outputString = TEXT("[");
-
-		//parse geoElements and attributes
-		for (int i = 0; i < identifyLayerResultsSize; i++)
-		{
-			outputString += TEXT("[");
-
-			auto identifyLayerResult = identifyLayerResults.At(i);
-			auto geoElements = identifyLayerResult.GetGeoElements();
-			auto geoElementsSize = geoElements.GetSize();
-
-			for (int j = 0; j < geoElementsSize; j++)
+			for (int k = 0; k < attributeKeys.Num(); k++)
 			{
-				outputString += TEXT("{");
+				auto attributeKey = attributeKeys[k];
+				auto attributeValue = attributes.At(attributeKey);
 
-				auto feature = geoElements.At(j);
-				auto attributes = feature.GetAttributes();
-				auto attributeKeys = attributes.GetKeys();
+				const FString ValueString = GetStringFromAttributeValue(attributeValue);
+				FString ValueStringForUI = ValueString;
 
-				FFeatureAttributeSet FeatureSet;
-
-				for (int k = 0; k < attributeKeys.Num(); k++)
+				if (IsInvalidDate(attributeValue))
 				{
-					auto attributeKey = attributeKeys[k];
-					auto attributeValue = attributes.At(attributeKey);
-
-					const FString ValueString = GetStringFromAttributeValue(attributeValue);
-					FString ValueStringForUI = ValueString;
-
-					if (IsInvalidDate(attributeValue))
-					{
-						ValueStringForUI = TEXT("");
-					}
-
-					outputString += TEXT("\"") + attributeKey + TEXT("\": \"") + ValueString + TEXT("\"");
-					if (k < attributeKeys.Num() - 1)
-					{
-						outputString += TEXT(", ");
-					}
-
-					FAttributeRow Row;
-					Row.Key = attributeKey;
-					Row.Value = ValueStringForUI;
-					FeatureSet.Attributes.Add(Row);
+					ValueStringForUI = TEXT("");
 				}
 
-				AllFeaturesAttributes.Add(FeatureSet);
-
-				outputString += TEXT("}");
-
-				if (j < geoElementsSize - 1)
-				{
-					outputString += TEXT(", ");
-				}
+				FAttributeRow Row;
+				Row.Key = attributeKey;
+				Row.Value = ValueStringForUI;
+				FeatureSet.Attributes.Add(Row);
 			}
 
-			outputString += TEXT("]");
-
-			if (i < identifyLayerResultsSize - 1)
-			{
-				outputString += TEXT(", ");
-			}
+			AllFeaturesAttributes.Add(FeatureSet);
 		}
-
-		outputString += TEXT("]");
-
-		if (AllFeaturesAttributes.Num() > 0)
-		{
-			CurrentFeatureIndex = 0;
-			LastAttributes = AllFeaturesAttributes[0].Attributes;
-		}
-		else
-		{
-			LastAttributes.Empty();
-		}
-
-		return outputString;
 	}
-	catch (Esri::Unreal::ArcGISException exception)
+
+	if (AllFeaturesAttributes.Num() > 0)
 	{
-		point1.SetHandle(nullptr);
-		point2.SetHandle(nullptr);
-
-		AllFeaturesAttributes.Empty();
+		CurrentFeatureIndex = 0;
+		LastAttributes = AllFeaturesAttributes[0].Attributes;
+	}
+	else
+	{
 		LastAttributes.Empty();
-
-		return TEXT("Error: ") + exception.GetMessage();
 	}
 }
 
@@ -659,7 +597,7 @@ bool AIdentify::IsInvalidDate(const Esri::GameEngine::Attributes::ArcGISAttribut
 
 void AIdentify::OnInputTriggered()
 {
-	LastIdentifyOutput = IdentifyAtMouseClick();
+	IdentifyAtMouseClick();
 
 	if (LastAttributes.Num() > 0)
 	{
