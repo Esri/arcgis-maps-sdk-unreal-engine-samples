@@ -25,6 +25,7 @@
 #include "Components/ListView.h"
 #include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
+#include "Components/WidgetSwitcher.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Styling/SlateTypes.h"
@@ -41,6 +42,7 @@ class UArcGIS3DObjectSceneLayer;
 class UMaterial;
 class UMaterialParameterCollection;
 class UButton;
+class UWidgetSwitcher;
 
 USTRUCT(BlueprintType)
 struct FAttributeRow
@@ -70,86 +72,123 @@ class AIdentify : public AActor
 
 public:
 	// Sets default values for this actor's properties
-	AIdentify();
 
-	UPROPERTY(BlueprintReadWrite)
-	TObjectPtr<UUserWidget> UIWidget;
-	UPROPERTY(BlueprintReadOnly)
-	TArray<FAttributeRow> LastAttributes;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UObject> PropertyRowClass;
 	UPROPERTY(BlueprintReadOnly)
 	TArray<FFeatureAttributeSet> AllFeaturesAttributes;
 
-	UFUNCTION()
-	void OnInputTriggered();
+	UPROPERTY(BlueprintReadOnly)
+	TArray<FAttributeRow> LastAttributes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UObject> PropertyRowClass;
+
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<UUserWidget> UIWidget;
+
 	UFUNCTION(BlueprintCallable)
 	void SelectFeatureByIndex(int32 Index);
+
 	UFUNCTION(BlueprintCallable)
 	void SetupHighlightAttributesOnMap();
-	int64 GetCurrentFeatureID() const;
-	void ApplySelectionToMaterial();
-	void IdentifyAtMouseClick();
-	UFUNCTION()
-	void RefreshListViewFromAttributes();
-	UFUNCTION()
-	void UpdatePageTexts();
-	UFUNCTION()
-	void ApplyCurrentFeature();
-	UFUNCTION()
-	void UpdateBuildingListUI();
-	virtual void Tick(float DeltaTime) override;
-	UFUNCTION()
-	void OnBuildingSelected(bool bIsChecked);
-	UFUNCTION(BlueprintCallable)
-
-	void ShowFeature(bool bPrevious = false);
-	void SyncBuildingCheckStates();
-	bool IsInvalidDate(const Esri::GameEngine::Attributes::ArcGISAttributeValue& AttributeValue);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
-	class AInputManager* InputManager;
-	UPROPERTY(EditAnywhere)
-	AArcGISMapActor* MapActor;
-	UPROPERTY(EditAnywhere)
-	UArcGISMapComponent* MapComponent = nullptr;
-	UPROPERTY()
-	UListView* PropertyListView = nullptr;
-	UPROPERTY()
-	UScrollBox* BuildingList = nullptr;
+	FSlateFontInfo BuildingRowFontInfo;
+	FCheckBoxStyle CachedRadioStyle;
+	int32 CurrentFeatureIndex = 0;
+	int64 GetCurrentFeatureID() const;
+	bool bHasBuildingRowFont = false;
+	bool bHasRadioStyle = false;
+	float Length = 10000000.0f;
+
 	UPROPERTY()
 	TArray<UCheckBox*> BuildingCheckBoxes;
+
 	UPROPERTY()
-	class UTextBlock* CurrentPageText = nullptr;
-	UPROPERTY()
-	class UTextBlock* TotalPageText = nullptr;
-	UPROPERTY(EditAnywhere)
-	FString HighlightIdFieldName = TEXT("OBJECTID");
-	UPROPERTY(EditAnywhere)
-	UMaterialParameterCollection* BuildingSelectionCollection = nullptr;
-	UPROPERTY(EditAnywhere)
-	UMaterial* HighlightMaterial = nullptr;
-	UPROPERTY(EditAnywhere)
-	FString HighlightLayerName;
-	UPROPERTY()
-	UCheckBox* RadioButton;
+	UWidget* BuildingInfoPanel;
+
 	UPROPERTY()
 	UTextBlock* BuildingLabelTemplate;
+
+	UPROPERTY()
+	UScrollBox* BuildingList = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	UMaterialParameterCollection* BuildingSelectionCollection = nullptr;
+
+	UPROPERTY()
+	class UTextBlock* CurrentPageText = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	FString HighlightIdFieldName = TEXT("OBJECTID");
+
+	UPROPERTY(EditAnywhere)
+	FString HighlightLayerName;
+
+	UPROPERTY(EditAnywhere)
+	UMaterial* HighlightMaterial = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
+	class AInputManager* InputManager;
+
+	UPROPERTY(EditAnywhere)
+	AArcGISMapActor* MapActor;
+
+	UPROPERTY(EditAnywhere)
+	UArcGISMapComponent* MapComponent = nullptr;
+
+	UPROPERTY()
+	UListView* PropertyListView = nullptr;
+
+	UPROPERTY()
+	UCheckBox* RadioButton;
+
+	UPROPERTY()
+	UButton* ResetButton;
+
 	UPROPERTY()
 	UTextBlock* TotalNumText;
+
+	UPROPERTY()
+	class UTextBlock* TotalPageText = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
 
-	FSlateFontInfo BuildingRowFontInfo;
-	bool bHasBuildingRowFont = false;
-	FCheckBoxStyle CachedRadioStyle;
-	bool bHasRadioStyle = false;
-	UWidget* BuildingInfoPanel;
-	float Length = 10000000.0f;
-	int32 CurrentFeatureIndex = 0;
+	UPROPERTY()
+	UWidgetSwitcher* WidgetSwitcher;
+
+	UFUNCTION()
+	void RefreshListViewFromAttributes();
+
+	UFUNCTION()
+	void UpdatePageTexts();
+
+	UFUNCTION()
+	void ApplyCurrentFeature();
+
+	UFUNCTION()
+	void UpdateBuildingListUI();
+
+	UFUNCTION()
+	void OnBuildingSelected(bool bIsChecked);
+
+	UFUNCTION(BlueprintCallable)
+	void ShowFeature(bool bPrevious = false);
+
+	UFUNCTION()
+	void OnResetClicked();
+
+	UFUNCTION()
+	void OnInputTriggered();
+
+	void SyncBuildingCheckStates();
+	bool IsInvalidDate(const Esri::GameEngine::Attributes::ArcGISAttributeValue& AttributeValue);
+	void ClearSelectionAndUI();
+	void ApplySelectionToMaterial();
+	void IdentifyAtMouseClick();
+	AIdentify();
 };

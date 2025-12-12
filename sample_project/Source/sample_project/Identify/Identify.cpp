@@ -86,6 +86,7 @@ void AIdentify::BeginPlay()
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+
 		if (!UIWidget)
 		{
 			return;
@@ -99,8 +100,15 @@ void AIdentify::BeginPlay()
 		TotalPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalPage")));
 		BuildingList = Cast<UScrollBox>(UIWidget->GetWidgetFromName(TEXT("BuildingList")));
 		RadioButton = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("RadioButton")));
-		BuildingLabelTemplate = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("BuildingRowLabelTemplate")));
+		BuildingLabelTemplate = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TextTemplate")));
 		TotalNumText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalNum")));
+		ResetButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("ResetButton")));
+		WidgetSwitcher = Cast<UWidgetSwitcher>(UIWidget->GetWidgetFromName(TEXT("WidgetSwitcher")));
+
+		if (ResetButton)
+		{
+			ResetButton->OnClicked.AddDynamic(this, &AIdentify::OnResetClicked);
+		}
 
 		if (BuildingLabelTemplate)
 		{
@@ -121,12 +129,6 @@ void AIdentify::BeginPlay()
 	}
 
 	SetupHighlightAttributesOnMap();
-}
-
-// Called every frame
-void AIdentify::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 FString GetStringFromAttributeValue(const Esri::GameEngine::Attributes::ArcGISAttributeValue& attributeValue)
@@ -272,6 +274,7 @@ void AIdentify::SetupHighlightAttributesOnMap()
 	}
 
 	UArcGISLayerCollection* MapLayers = Map->GetLayers();
+
 	if (!MapLayers)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Layers is null"));
@@ -340,16 +343,9 @@ void AIdentify::ApplySelectionToMaterial()
 		return;
 	}
 
-	UWorld* World = GetWorld();
-
-	if (!World)
-	{
-		return;
-	}
-
 	const int64 FeatureID = GetCurrentFeatureID();
 
-	UMaterialParameterCollectionInstance* Instance = World->GetParameterCollectionInstance(BuildingSelectionCollection);
+	UMaterialParameterCollectionInstance* Instance = GetWorld()->GetParameterCollectionInstance(BuildingSelectionCollection);
 
 	if (!Instance)
 	{
@@ -455,6 +451,7 @@ void AIdentify::ApplyCurrentFeature()
 void AIdentify::SelectFeatureByIndex(int32 Index)
 {
 	const int32 Total = AllFeaturesAttributes.Num();
+
 	if (Total <= 0)
 	{
 		return;
@@ -499,6 +496,8 @@ void AIdentify::OnBuildingSelected(bool bIsChecked)
 	}
 
 	ApplyCurrentFeature();
+
+	WidgetSwitcher->SetActiveWidgetIndex(0);
 }
 
 void AIdentify::UpdateBuildingListUI()
@@ -517,12 +516,14 @@ void AIdentify::UpdateBuildingListUI()
 	for (int32 i = 0; i < Total; ++i)
 	{
 		UHorizontalBox* Row = NewObject<UHorizontalBox>(UIWidget);
+
 		if (!Row)
 		{
 			continue;
 		}
 
 		UCheckBox* Check = NewObject<UCheckBox>(UIWidget);
+
 		if (!Check)
 		{
 			continue;
@@ -540,6 +541,7 @@ void AIdentify::UpdateBuildingListUI()
 		Check->OnCheckStateChanged.AddDynamic(this, &AIdentify::OnBuildingSelected);
 
 		UTextBlock* Label = NewObject<UTextBlock>(UIWidget);
+
 		if (Label)
 		{
 			Label->SetText(FText::FromString(FString::Printf(TEXT("Building %d"), i + 1)));
@@ -547,16 +549,17 @@ void AIdentify::UpdateBuildingListUI()
 			FSlateFontInfo FontInfo = Label->GetFont();
 			Label->SetFont(BuildingRowFontInfo);
 			FontInfo.Size = 14;
-			Label->SetFont(FontInfo);
 		}
 
 		UHorizontalBoxSlot* CheckSlot = Row->AddChildToHorizontalBox(Check);
+
 		if (CheckSlot)
 		{
 			CheckSlot->SetVerticalAlignment(VAlign_Center);
 		}
 
 		UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(Label);
+
 		if (LabelSlot)
 		{
 			LabelSlot->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));
@@ -576,6 +579,28 @@ void AIdentify::SyncBuildingCheckStates()
 			BuildingCheckBoxes[i]->SetIsChecked(i == CurrentFeatureIndex);
 		}
 	}
+}
+
+void AIdentify::OnResetClicked()
+{
+	ClearSelectionAndUI();
+}
+
+void AIdentify::ClearSelectionAndUI()
+{
+	AllFeaturesAttributes.Empty();
+	LastAttributes.Empty();
+	CurrentFeatureIndex = INDEX_NONE;
+	BuildingCheckBoxes.Empty();
+	PropertyListView->ClearListItems();
+	BuildingList->ClearChildren();
+	CurrentPageText->SetText(FText::GetEmpty());
+	TotalPageText->SetText(FText::GetEmpty());
+	TotalNumText->SetText(FText::GetEmpty());
+	BuildingInfoPanel->SetVisibility(ESlateVisibility::Collapsed);
+
+	auto* Instance = GetWorld()->GetParameterCollectionInstance(BuildingSelectionCollection);
+	Instance->SetScalarParameterValue(TEXT("SelectedID"), -1.0f);
 }
 
 //Filter out incorrect date format. See known issue (BUG-000181006): https://developers.arcgis.com/unreal-engine/release-notes/release-notes-2-2-0/.
@@ -603,26 +628,17 @@ void AIdentify::OnInputTriggered()
 	{
 		RefreshListViewFromAttributes();
 		UpdatePageTexts();
+
 		if (BuildingInfoPanel)
 		{
 			BuildingInfoPanel->SetVisibility(ESlateVisibility::Visible);
 		}
+
 		ApplySelectionToMaterial();
 		UpdateBuildingListUI();
 	}
 	else
 	{
-		if (BuildingInfoPanel)
-		{
-			BuildingInfoPanel->SetVisibility(ESlateVisibility::Collapsed);
-		}
-
-		if (BuildingSelectionCollection)
-		{
-			if (auto* Instance = GetWorld()->GetParameterCollectionInstance(BuildingSelectionCollection))
-			{
-				Instance->SetScalarParameterValue(TEXT("SelectedID"), -1.0f);
-			}
-		}
+		ClearSelectionAndUI();
 	}
 }

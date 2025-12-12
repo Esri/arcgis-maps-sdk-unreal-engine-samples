@@ -10,6 +10,7 @@ Select buildings in a 3D Object Scene Layer, view their attributes in a table, a
    - A paged list of all features hit by the ray.
    - A scrollable table of key–value attribute pairs for the current feature.
 3. Use the **\<** and **\>** buttons to switch between features when multiple features are returned.
+4. Use the menu icon to see a list of buildings. 
 4. The currently selected building is highlighted in the scene.
 
 ## How it works
