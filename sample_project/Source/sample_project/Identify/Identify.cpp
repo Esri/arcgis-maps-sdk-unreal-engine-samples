@@ -58,14 +58,13 @@ void AIdentify::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (MapActor)
-	{
-		MapComponent = MapActor->GetMapComponent();
-	}
-	else
+	if (!MapActor)
 	{
 		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
+		return;
 	}
+
+	MapComponent = MapActor->GetMapComponent();
 
 	if (!InputManager)
 	{
@@ -362,6 +361,11 @@ void AIdentify::RefreshListViewFromAttributes()
 {
 	PropertyListView->ClearListItems();
 
+	if (!PropertyRowClass)
+	{
+		return;
+	}
+
 	UClass* RowClass = PropertyRowClass.Get();
 
 	FProperty* KeyBaseProperty = RowClass->FindPropertyByName(TEXT("Key"));
@@ -466,6 +470,7 @@ void AIdentify::OnBuildingSelected(bool bIsChecked)
 {
 	if (!bIsChecked)
 	{
+		SyncBuildingCheckStates();
 		return;
 	}
 
