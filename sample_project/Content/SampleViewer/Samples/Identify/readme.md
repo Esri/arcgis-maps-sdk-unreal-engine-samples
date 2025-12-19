@@ -1,4 +1,4 @@
-# Identify 
+# Visualize identify results
 
 Select buildings in a 3D Object Scene Layer, view their attributes in a table, and highlight the currently selected building in the scene.
 
