@@ -15,7 +15,12 @@
 
 #include "QueryLocation.h"
 
- // Sets default values
+#include "Components/StaticMeshComponent.h"
+#include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+#include "Materials/Material.h"
+
+// Sets default values
 AQueryLocation::AQueryLocation()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.

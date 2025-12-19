@@ -15,11 +15,13 @@
 
 #include "ArcGISFeatureLayerQuery.h"
 
-#include "FeatureItemBase.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPoint.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISSurfacePlacementMode.h"
+#include "Engine/Engine.h"
+#include "EngineGlobals.h"
+#include "FeatureItemBase.h"
 #include "Kismet/GameplayStatics.h"
 
 AArcGISFeatureLayerQuery::AArcGISFeatureLayerQuery()
@@ -157,8 +159,8 @@ void AArcGISFeatureLayerQuery::ParseData(bool GetAllFeatures, int StartValue, in
 			item->Latitude = featureData.GeoProperties[1];
 			featureItem->SetOwner(this);
 			item->locationComponent->SetSurfacePlacementMode(EArcGISSurfacePlacementMode::OnTheGround);
-			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-				item->Longitude, item->Latitude, 0, MapComponent->GetOriginPosition()->GetSpatialReference());
+			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(item->Longitude, item->Latitude, 0,
+																							MapComponent->GetOriginPosition()->GetSpatialReference());
 			item->locationComponent->SetPosition(position);
 			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
 			item->locationComponent->SetRotation(rotation);
@@ -250,8 +252,8 @@ void AArcGISFeatureLayerQuery::SpawnFeatures(int Start, int Last)
 
 		if (MapComponent)
 		{
-			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-				item->Longitude, item->Latitude, 0, MapComponent->GetOriginPosition()->GetSpatialReference());
+			UArcGISPoint* position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(item->Longitude, item->Latitude, 0,
+																							MapComponent->GetOriginPosition()->GetSpatialReference());
 			item->locationComponent->SetPosition(position);
 			UArcGISRotation* rotation = UArcGISRotation::CreateArcGISRotation(90, 0, 90);
 			item->locationComponent->SetRotation(rotation);

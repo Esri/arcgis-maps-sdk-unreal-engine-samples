@@ -23,6 +23,8 @@
 #include "Engine/DataTable.h"
 #include "FeatureLayer.generated.h"
 
+class UUserWidget;
+class UMaterialInstance;
 class AFeatureItem;
 class UInputAction;
 class UInputMappingContext;

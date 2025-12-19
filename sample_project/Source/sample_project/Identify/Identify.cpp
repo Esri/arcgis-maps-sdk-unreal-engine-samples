@@ -1,0 +1,649 @@
+﻿/* Copyright 2025 Esri
+ *
+ * Licensed under the Apache License Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "Identify.h"
+#include "ArcGISMapsSDK/API/GameEngine/Attributes/ArcGISAttributeValue.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/ArcGIS3DObjectSceneLayer.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/Base/ArcGISLayer.h"
+#include "ArcGISMapsSDK/API/GameEngine/Map/ArcGISGeoElement.h"
+#include "ArcGISMapsSDK/API/GameEngine/MapView/ArcGISIdentifyLayerResult.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
+#include "ArcGISMapsSDK/API/Standard/ArcGISElement.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISArrayBuilder.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISException.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISFuture.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISImmutableArray.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISImmutableCollection.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGIS3DObjectSceneLayer.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
+#include "ArcGISMapsSDK/CAPI/Invoke.h"
+#include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
+#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "ArcGISMapsSDK/Utils/ArcGISViewCoordinateTransformer.h"
+#include "ArcGISPawn.h"
+#include "Components/ListView.h"
+#include "Components/TextBlock.h"
+#include "Engine/World.h"
+#include "Internationalization/Text.h"
+#include "Kismet/GameplayStatics.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "Materials/MaterialParameterCollectionInstance.h"
+#include "UObject/ConstructorHelpers.h"
+#include "UObject/UnrealType.h"
+#include "sample_project/InputManager.h"
+
+// Sets default values
+AIdentify::AIdentify()
+{
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+}
+
+// Called when the game starts or when spawned
+void AIdentify::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (!MapActor)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
+		return;
+	}
+
+	MapComponent = MapActor->GetMapComponent();
+
+	if (!InputManager)
+	{
+		InputManager = Cast<AInputManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AInputManager::StaticClass()));
+	}
+
+	InputManager->OnInputTrigger.AddDynamic(this, &AIdentify::OnInputTriggered);
+
+	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (playerController)
+	{
+		playerController->bShowMouseCursor = true;
+		playerController->bEnableClickEvents = true;
+		playerController->bEnableTouchEvents = true;
+	}
+
+	if (UIWidgetClass)
+	{
+		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+
+		if (!UIWidget)
+		{
+			return;
+		}
+
+		UIWidget->AddToViewport();
+
+		PropertyListView = Cast<UListView>(UIWidget->GetWidgetFromName(TEXT("ListView")));
+		BuildingInfoPanel = Cast<UWidget>(UIWidget->GetWidgetFromName(TEXT("BuildingInfoPanel")));
+		CurrentPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("CurrentPage")));
+		TotalPageText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalPage")));
+		BuildingList = Cast<UScrollBox>(UIWidget->GetWidgetFromName(TEXT("BuildingList")));
+		RadioButton = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("RadioButton")));
+		BuildingLabelTemplate = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TextTemplate")));
+		TotalNumText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("TotalNum")));
+		ResetButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("ResetButton")));
+		WidgetSwitcher = Cast<UWidgetSwitcher>(UIWidget->GetWidgetFromName(TEXT("WidgetSwitcher")));
+
+		if (ResetButton)
+		{
+			ResetButton->OnClicked.AddDynamic(this, &AIdentify::OnResetClicked);
+		}
+
+		if (BuildingLabelTemplate)
+		{
+			BuildingRowFontInfo = BuildingLabelTemplate->GetFont();
+			bHasBuildingRowFont = true;
+		}
+
+		if (RadioButton)
+		{
+			CachedRadioStyle = RadioButton->GetWidgetStyle();
+			bHasRadioStyle = true;
+		}
+
+		if (BuildingInfoPanel)
+		{
+			BuildingInfoPanel->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
+
+	SetupHighlightAttributesOnMap();
+}
+
+FString GetStringFromAttributeValue(const Esri::GameEngine::Attributes::ArcGISAttributeValue& attributeValue)
+{
+	using namespace Esri::GameEngine::Attributes;
+
+	auto attributeType = attributeValue.GetAttributeValueType();
+
+	switch (attributeType)
+	{
+		case ArcGISAttributeValueType::DateTime:
+			return attributeValue.GetValue<ArcGISAttributeValueType::DateTime>().ToString();
+
+		case ArcGISAttributeValueType::Float32:
+			return FString::SanitizeFloat(attributeValue.GetValue<ArcGISAttributeValueType::Float32>());
+
+		case ArcGISAttributeValueType::Float64:
+			return FString::SanitizeFloat(attributeValue.GetValue<ArcGISAttributeValueType::Float64>());
+
+		case ArcGISAttributeValueType::GUID:
+			return attributeValue.GetValue<ArcGISAttributeValueType::GUID>().ToString();
+
+		case ArcGISAttributeValueType::Int16:
+			return FString::Printf(TEXT("%d"), attributeValue.GetValue<ArcGISAttributeValueType::Int16>());
+
+		case ArcGISAttributeValueType::Int32:
+			return FString::Printf(TEXT("%d"), attributeValue.GetValue<ArcGISAttributeValueType::Int32>());
+
+		case ArcGISAttributeValueType::Int64:
+			return FString::Printf(TEXT("%lld"), attributeValue.GetValue<ArcGISAttributeValueType::Int64>());
+
+		case ArcGISAttributeValueType::String:
+			return attributeValue.GetValue<ArcGISAttributeValueType::String>();
+
+		case ArcGISAttributeValueType::Uint16:
+			return FString::Printf(TEXT("%d"), attributeValue.GetValue<ArcGISAttributeValueType::Uint16>());
+
+		case ArcGISAttributeValueType::Uint32:
+			return FString::Printf(TEXT("%d"), attributeValue.GetValue<ArcGISAttributeValueType::Uint32>());
+
+		case ArcGISAttributeValueType::Uint64:
+			return FString::Printf(TEXT("%lld"), attributeValue.GetValue<ArcGISAttributeValueType::Uint64>());
+
+		default:
+			return TEXT("<unknown-type>");
+	}
+}
+
+void AIdentify::IdentifyAtMouseClick()
+{
+	APlayerController* PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
+
+	FVector Location, Direction;
+	FHitResult HitResult;
+
+	PlayerController->DeprojectMousePositionToWorld(Location, Direction);
+
+	const FVector Start = Location;
+	const FVector End = Location + Direction * Length;
+
+	auto geoPositionStart = MapComponent->TransformEnginePositionToPoint(Start)->APIObject;
+	auto geoPositionEnd = MapComponent->TransformEnginePositionToPoint(End)->APIObject;
+
+	auto point1 = Esri::GameEngine::Geometry::ArcGISPoint(std::move(geoPositionStart->GetHandle()));
+	auto point2 = Esri::GameEngine::Geometry::ArcGISPoint(std::move(geoPositionEnd->GetHandle()));
+
+	auto view = MapComponent->GetView()->APIObject;
+
+	AllFeaturesAttributes.Empty();
+	LastAttributes.Empty();
+
+	auto results = view->IdentifyLayersAsync(point1, point2, -1);
+	point1.SetHandle(nullptr);
+	point2.SetHandle(nullptr);
+
+	auto identifyLayerResults = results.Get();
+
+	auto identifyLayerResultsSize = identifyLayerResults.GetSize();
+
+	//parse geoElements and attributes
+	for (int i = 0; i < identifyLayerResultsSize; i++)
+	{
+		auto identifyLayerResult = identifyLayerResults.At(i);
+		auto geoElements = identifyLayerResult.GetGeoElements();
+		auto geoElementsSize = geoElements.GetSize();
+
+		for (int j = 0; j < geoElementsSize; j++)
+		{
+			auto feature = geoElements.At(j);
+			auto attributes = feature.GetAttributes();
+			auto attributeKeys = attributes.GetKeys();
+
+			FFeatureAttributeSet FeatureSet;
+
+			for (int k = 0; k < attributeKeys.Num(); k++)
+			{
+				auto attributeKey = attributeKeys[k];
+				auto attributeValue = attributes.At(attributeKey);
+
+				const FString ValueString = GetStringFromAttributeValue(attributeValue);
+				FString ValueStringForUI = ValueString;
+
+				if (IsInvalidDate(attributeValue))
+				{
+					ValueStringForUI = TEXT("");
+				}
+
+				FAttributeRow Row;
+				Row.Key = attributeKey;
+				Row.Value = ValueStringForUI;
+				FeatureSet.Attributes.Add(Row);
+			}
+
+			AllFeaturesAttributes.Add(FeatureSet);
+		}
+	}
+
+	if (AllFeaturesAttributes.Num() > 0)
+	{
+		CurrentFeatureIndex = 0;
+		LastAttributes = AllFeaturesAttributes[0].Attributes;
+	}
+	else
+	{
+		LastAttributes.Empty();
+	}
+}
+
+void AIdentify::SetupHighlightAttributesOnMap()
+{
+	if (!MapComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MapComponent is null"));
+		return;
+	}
+
+	UArcGISMap* Map = MapComponent->GetMap();
+
+	if (!Map)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Map is null"));
+		return;
+	}
+
+	UArcGISLayerCollection* MapLayers = Map->GetLayers();
+
+	if (!MapLayers)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Layers is null"));
+		return;
+	}
+
+	UArcGIS3DObjectSceneLayer* ObjectSceneLayer = nullptr;
+
+	if (!HighlightLayerName.IsEmpty())
+	{
+		for (int32 i = 0; i < MapLayers->GetSize(); ++i)
+		{
+			if (auto* Layer = MapLayers->At(i))
+			{
+				if (auto* Candidate = Cast<UArcGIS3DObjectSceneLayer>(Layer))
+				{
+					if (Candidate->GetName() == HighlightLayerName)
+					{
+						ObjectSceneLayer = Candidate;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	auto LayerAttributes = Esri::Unreal::ArcGISImmutableArray<FString>::CreateBuilder();
+	LayerAttributes.Add(HighlightIdFieldName);
+
+	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGIS3DObjectSceneLayer>(ObjectSceneLayer->APIObject);
+
+	LayerAPI->SetAttributesToVisualize(LayerAttributes.MoveToArray());
+
+	if (HighlightMaterial)
+	{
+		ObjectSceneLayer->SetMaterialReference(HighlightMaterial);
+	}
+}
+
+// Find the current feature's OBJECTID
+int64 AIdentify::GetCurrentFeatureID() const
+{
+	if (!AllFeaturesAttributes.IsValidIndex(CurrentFeatureIndex))
+	{
+		return -1;
+	}
+
+	const FFeatureAttributeSet& FeatureSet = AllFeaturesAttributes[CurrentFeatureIndex];
+
+	for (const FAttributeRow& Row : FeatureSet.Attributes)
+	{
+		if (Row.Key == HighlightIdFieldName)
+		{
+			return FCString::Atoi64(*Row.Value);
+		}
+	}
+
+	return -1;
+}
+
+//updates the Material Parameter Collection so that every building’s material knows which feature ID should be highlighted.
+void AIdentify::ApplySelectionToMaterial()
+{
+	if (!BuildingSelectionCollection)
+	{
+		return;
+	}
+
+	const int64 FeatureID = GetCurrentFeatureID();
+
+	UMaterialParameterCollectionInstance* Instance = GetWorld()->GetParameterCollectionInstance(BuildingSelectionCollection);
+
+	if (!Instance)
+	{
+		return;
+	}
+
+	const float SelectedIdFloat = (FeatureID >= 0) ? static_cast<float>(FeatureID) : -1.0f;
+
+	//Write the selected feature ID into the Material Parameter Collection
+	Instance->SetScalarParameterValue(TEXT("SelectedID"), SelectedIdFloat);
+}
+
+void AIdentify::RefreshListViewFromAttributes()
+{
+	PropertyListView->ClearListItems();
+
+	if (!PropertyRowClass)
+	{
+		return;
+	}
+
+	UClass* RowClass = PropertyRowClass.Get();
+
+	FProperty* KeyBaseProperty = RowClass->FindPropertyByName(TEXT("Key"));
+	FProperty* ValueBaseProperty = RowClass->FindPropertyByName(TEXT("Value"));
+
+	FStrProperty* KeyProp = CastField<FStrProperty>(KeyBaseProperty);
+	FStrProperty* ValueProp = CastField<FStrProperty>(ValueBaseProperty);
+
+	if (!KeyProp || !ValueProp)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Key or Value property not found"));
+		return;
+	}
+
+	for (const FAttributeRow& RowData : LastAttributes)
+	{
+		UObject* NewItemObject = NewObject<UObject>(this, PropertyRowClass);
+		if (!NewItemObject)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NewItemObject is null"));
+			continue;
+		}
+
+		KeyProp->SetPropertyValue_InContainer(NewItemObject, RowData.Key);
+		ValueProp->SetPropertyValue_InContainer(NewItemObject, RowData.Value);
+
+		PropertyListView->AddItem(NewItemObject);
+	}
+}
+
+void AIdentify::ShowFeature(bool bPrevious)
+{
+	int32 Total = AllFeaturesAttributes.Num();
+
+	if (bPrevious)
+	{
+		CurrentFeatureIndex = (CurrentFeatureIndex - 1 + Total) % Total;
+	}
+	else
+	{
+		CurrentFeatureIndex = (CurrentFeatureIndex + 1) % Total;
+	}
+
+	ApplyCurrentFeature();
+}
+
+void AIdentify::UpdatePageTexts()
+{
+	if (!CurrentPageText || !TotalPageText)
+	{
+		return;
+	}
+
+	const int32 Total = AllFeaturesAttributes.Num();
+
+	if (Total <= 0)
+	{
+		CurrentPageText->SetText(FText::GetEmpty());
+		TotalPageText->SetText(FText::GetEmpty());
+	}
+	else
+	{
+		CurrentPageText->SetText(FText::AsNumber(CurrentFeatureIndex + 1));
+		TotalPageText->SetText(FText::AsNumber(Total));
+	}
+}
+
+void AIdentify::ApplyCurrentFeature()
+{
+	if (!AllFeaturesAttributes.IsValidIndex(CurrentFeatureIndex))
+	{
+		LastAttributes.Empty();
+		RefreshListViewFromAttributes();
+		UpdatePageTexts();
+		ApplySelectionToMaterial();
+		return;
+	}
+
+	LastAttributes = AllFeaturesAttributes[CurrentFeatureIndex].Attributes;
+
+	RefreshListViewFromAttributes();
+	UpdatePageTexts();
+	ApplySelectionToMaterial();
+	SyncBuildingCheckStates();
+}
+
+void AIdentify::SelectFeatureByIndex(int32 Index)
+{
+	const int32 Total = AllFeaturesAttributes.Num();
+
+	if (Total <= 0)
+	{
+		return;
+	}
+
+	CurrentFeatureIndex = FMath::Clamp(Index, 0, Total - 1);
+
+	ApplyCurrentFeature();
+}
+
+void AIdentify::OnBuildingSelected(bool bIsChecked)
+{
+	if (!bIsChecked)
+	{
+		SyncBuildingCheckStates();
+		return;
+	}
+
+	int32 SelectedIndex = INDEX_NONE;
+
+	for (int32 i = 0; i < BuildingCheckBoxes.Num(); ++i)
+	{
+		if (i == CurrentFeatureIndex)
+		{
+			continue;
+		}
+
+		if (BuildingCheckBoxes[i] && BuildingCheckBoxes[i]->IsChecked())
+		{
+			SelectedIndex = i;
+			break;
+		}
+	}
+
+	CurrentFeatureIndex = SelectedIndex;
+
+	for (int32 i = 0; i < BuildingCheckBoxes.Num(); ++i)
+	{
+		if (BuildingCheckBoxes[i])
+		{
+			BuildingCheckBoxes[i]->SetIsChecked(i == CurrentFeatureIndex);
+		}
+	}
+
+	ApplyCurrentFeature();
+
+	WidgetSwitcher->SetActiveWidgetIndex(0);
+}
+
+void AIdentify::UpdateBuildingListUI()
+{
+	if (!BuildingList)
+	{
+		return;
+	}
+
+	BuildingList->ClearChildren();
+	BuildingCheckBoxes.Empty();
+
+	const int32 Total = AllFeaturesAttributes.Num();
+	TotalNumText->SetText(FText::AsNumber(Total));
+
+	for (int32 i = 0; i < Total; ++i)
+	{
+		UHorizontalBox* Row = NewObject<UHorizontalBox>(UIWidget);
+
+		if (!Row)
+		{
+			continue;
+		}
+
+		UCheckBox* Check = NewObject<UCheckBox>(UIWidget);
+
+		if (!Check)
+		{
+			continue;
+		}
+
+		if (bHasRadioStyle)
+		{
+			Check->SetWidgetStyle(CachedRadioStyle);
+		}
+
+		Check->SetIsChecked(i == CurrentFeatureIndex);
+
+		BuildingCheckBoxes.Add(Check);
+
+		Check->OnCheckStateChanged.AddDynamic(this, &AIdentify::OnBuildingSelected);
+
+		UTextBlock* Label = NewObject<UTextBlock>(UIWidget);
+
+		if (Label)
+		{
+			Label->SetText(FText::FromString(FString::Printf(TEXT("Building %d"), i + 1)));
+			Label->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+			FSlateFontInfo FontInfo = Label->GetFont();
+			Label->SetFont(BuildingRowFontInfo);
+			FontInfo.Size = 14;
+		}
+
+		UHorizontalBoxSlot* CheckSlot = Row->AddChildToHorizontalBox(Check);
+
+		if (CheckSlot)
+		{
+			CheckSlot->SetVerticalAlignment(VAlign_Center);
+		}
+
+		UHorizontalBoxSlot* LabelSlot = Row->AddChildToHorizontalBox(Label);
+
+		if (LabelSlot)
+		{
+			LabelSlot->SetPadding(FMargin(8.f, 0.f, 0.f, 0.f));
+			LabelSlot->SetVerticalAlignment(VAlign_Center);
+		}
+
+		BuildingList->AddChild(Row);
+	}
+}
+
+void AIdentify::SyncBuildingCheckStates()
+{
+	for (int32 i = 0; i < BuildingCheckBoxes.Num(); ++i)
+	{
+		if (BuildingCheckBoxes[i])
+		{
+			BuildingCheckBoxes[i]->SetIsChecked(i == CurrentFeatureIndex);
+		}
+	}
+}
+
+void AIdentify::OnResetClicked()
+{
+	ClearSelectionAndUI();
+}
+
+void AIdentify::ClearSelectionAndUI()
+{
+	AllFeaturesAttributes.Empty();
+	LastAttributes.Empty();
+	CurrentFeatureIndex = INDEX_NONE;
+	BuildingCheckBoxes.Empty();
+	PropertyListView->ClearListItems();
+	BuildingList->ClearChildren();
+	CurrentPageText->SetText(FText::GetEmpty());
+	TotalPageText->SetText(FText::GetEmpty());
+	TotalNumText->SetText(FText::GetEmpty());
+	BuildingInfoPanel->SetVisibility(ESlateVisibility::Collapsed);
+
+	auto* Instance = GetWorld()->GetParameterCollectionInstance(BuildingSelectionCollection);
+	Instance->SetScalarParameterValue(TEXT("SelectedID"), -1.0f);
+}
+
+//Filter out incorrect date format. See known issue (BUG-000181006): https://developers.arcgis.com/unreal-engine/release-notes/release-notes-2-2-0/.
+bool AIdentify::IsInvalidDate(const Esri::GameEngine::Attributes::ArcGISAttributeValue& AttributeValue)
+{
+	using namespace Esri::GameEngine::Attributes;
+
+	if (AttributeValue.GetAttributeValueType() != ArcGISAttributeValueType::DateTime)
+	{
+		return false;
+	}
+
+	auto DateValue = AttributeValue.GetValue<ArcGISAttributeValueType::DateTime>();
+
+	int32 Year = DateValue.GetYear();
+
+	return (Year < 1800);
+}
+
+void AIdentify::OnInputTriggered()
+{
+	IdentifyAtMouseClick();
+
+	if (LastAttributes.Num() > 0)
+	{
+		RefreshListViewFromAttributes();
+		UpdatePageTexts();
+
+		if (BuildingInfoPanel)
+		{
+			BuildingInfoPanel->SetVisibility(ESlateVisibility::Visible);
+		}
+
+		ApplySelectionToMaterial();
+		UpdateBuildingListUI();
+	}
+	else
+	{
+		ClearSelectionAndUI();
+	}
+}
