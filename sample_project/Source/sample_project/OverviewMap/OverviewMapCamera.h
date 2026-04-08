@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include "Blueprint/UserWidget.h"
 #include "CoreMinimal.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "GameFramework/Actor.h"
