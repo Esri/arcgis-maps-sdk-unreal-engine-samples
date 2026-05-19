@@ -29,7 +29,7 @@ public class sample_projectEditorTarget : TargetRules
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
 #else
 		bLegacyParentIncludePaths = false;
-		CppStandard = CppStandardVersion.Latest;
+		CppStandard = CppStandardVersion.Default;
 		DefaultBuildSettings = BuildSettingsVersion.Latest;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 #endif
