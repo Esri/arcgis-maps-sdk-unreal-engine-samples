@@ -23,8 +23,6 @@ public class sample_projectTarget : TargetRules
 		Type = TargetType.Game;
 		ExtraModuleNames.AddRange( new string[] { "sample_project" } );
 		
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
 		bLegacyParentIncludePaths = false;
 		CppStandard = CppStandardVersion.Default;
 		DefaultBuildSettings = BuildSettingsVersion.Latest;

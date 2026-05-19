@@ -24,11 +24,9 @@ public class sample_projectEditorTarget : TargetRules
 		WindowsPlatform.bStrictConformanceMode = true;
 		ExtraModuleNames.AddRange( new string[] { "sample_project" } );
 		
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
 		bLegacyParentIncludePaths = false;
 		CppStandard = CppStandardVersion.Default;
 		DefaultBuildSettings = BuildSettingsVersion.Latest;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
-   }
+    }
 }
