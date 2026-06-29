@@ -81,7 +81,7 @@ void AQueryLocation::FinalizeAddressQuery()
 	TextComponent->SetRelativeLocation(FVector3d(2000, 0, 4000));
 
 	auto cameraManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
-	cameraManager->StartCameraFade(1, 0, .1, FColor::Black, false, true);
+	cameraManager->StartCameraFade(1, 0, 0.1f, FColor::Black, false, true);
 	
 	// Remove the callback for draw status and tick prerequisites 
 	MapComponent->GetView()->APIObject->SetDrawStatusChanged(nullptr);

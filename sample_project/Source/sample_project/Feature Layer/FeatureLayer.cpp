@@ -176,9 +176,9 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* Item)
 		{
 			auto key = property.Key;
 			auto value = property.Value->AsString();
-			Item->PropertiesNames.Add(key);
+			Item->PropertiesNames.Add(*key);
 			Item->Properties.Add(value);
-			resultProperties.Add(key + ": " + value);
+			resultProperties.Add(FString(key) + TEXT(": ") + value);
 		}
 
 		FString output = "Properties: \n";
