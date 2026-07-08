@@ -53,15 +53,15 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString Data)
 	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(Data);
 	if (FJsonSerializer::Deserialize(JsonReader, JsonParsed))
 	{
-		auto attributes = JsonParsed->GetObjectField("attributes");
-		auto coordinates = JsonParsed->GetObjectField("geometry");
-		auto x = coordinates->GetNumberField("x");
-		auto y = coordinates->GetNumberField("y");
-		auto z = coordinates->GetNumberField("z");
-		auto name = attributes->GetStringField("ACID");
-		auto heading = attributes->GetNumberField("Heading");
-		auto speed = attributes->GetNumberField("GroundSpeedKnots");
-		auto timestampMS = attributes->GetNumberField("DateTimeStamp");
+		auto attributes = JsonParsed->GetObjectField(TEXT("attributes"));
+		auto coordinates = JsonParsed->GetObjectField(TEXT("geometry"));
+		auto x = coordinates->GetNumberField(TEXT("x"));
+		auto y = coordinates->GetNumberField(TEXT("y"));
+		auto z = coordinates->GetNumberField(TEXT("z"));
+		auto name = attributes->GetStringField(TEXT("ACID"));
+		auto heading = attributes->GetNumberField(TEXT("Heading"));
+		auto speed = attributes->GetNumberField(TEXT("GroundSpeedKnots"));
+		auto timestampMS = attributes->GetNumberField(TEXT("DateTimeStamp"));
 		auto datetimeOffset = FDateTime::FromUnixTimestamp(timestampMS);
 		auto dateTimeStamp = datetimeOffset.GetDate();
 		auto planeFeature = FPlaneFeature::Create(name, x, y, z, heading, speed, dateTimeStamp);

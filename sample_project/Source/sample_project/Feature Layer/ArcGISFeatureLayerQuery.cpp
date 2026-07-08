@@ -22,7 +22,10 @@
 #include "Engine/Engine.h"
 #include "EngineGlobals.h"
 #include "FeatureItemBase.h"
+#include "Dom/JsonObject.h"
 #include "Kismet/GameplayStatics.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 AArcGISFeatureLayerQuery::AArcGISFeatureLayerQuery()
 {
@@ -66,7 +69,7 @@ void AArcGISFeatureLayerQuery::OnResponseReceived(FHttpRequestPtr Request, FHttp
 
 			for (auto key : propertyFields)
 			{
-				WebLink.OutFields.Add(key.Key);
+				WebLink.OutFields.Add(*key.Key);
 			}
 			//parse through the features in order to get individual properties associated with the features
 			for (int i = 0; i != Features.Num(); i++)
