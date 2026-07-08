@@ -47,7 +47,7 @@ void AGeocoder::SendAddressQuery(FString Address)
 	}
 	FString Url = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
 	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
-	const auto mapComponent = Cast<UArcGISMapComponent>(mapComponentActor);
+	const auto mapComponent = mapComponentActor ? mapComponentActor->GetComponentByClass<UArcGISMapComponent>() : nullptr;
 	FString APIToken = mapComponent ? mapComponent->GetAPIKey() : "";
 	FString Query;
 
@@ -88,8 +88,8 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 				}
 				if ((Location = JsonObj->TryGetField(TEXT("location")))) {
 					JsonObj = Location->AsObject();
-					JsonObj->TryGetNumberField("x", PointX);
-					JsonObj->TryGetNumberField("y", PointY);
+					JsonObj->TryGetNumberField(TEXT("x"), PointX);
+					JsonObj->TryGetNumberField(TEXT("y"), PointY);
 
 					// Spawn a QueryLocation actor if not already created
 					if (QueryLocation == nullptr) {

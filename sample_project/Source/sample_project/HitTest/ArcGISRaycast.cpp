@@ -130,11 +130,11 @@ FString AArcGISRaycast::GetObjectIDs(FString Response, FString Outfield)
 
 	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 	{
-		TArray<TSharedPtr<FJsonValue>> FeatureIDs = ResponseObj->GetArrayField("features");
+		TArray<TSharedPtr<FJsonValue>> FeatureIDs = ResponseObj->GetArrayField(TEXT("features"));
 
 		for (auto feature : FeatureIDs)
 		{
-			property = feature->AsObject()->GetObjectField("properties")->GetStringField(Outfield);
+			property = feature->AsObject()->GetObjectField(TEXT("properties"))->GetStringField(Outfield);
 		}
 	}
 
