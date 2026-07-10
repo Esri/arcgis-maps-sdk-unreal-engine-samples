@@ -9,11 +9,16 @@
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudColorModulation.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudColorStop.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudColorUniqueValue.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudFilter.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudFixedSizeAlgorithm.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudReturnFilter.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudReturnType.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudRenderer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudRGBRenderer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudStretchRenderer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudUniqueValueRenderer.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudValueFilter.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudValueFilterMode.h"
 #include "ArcGISMapsSDK/API/GameEngine/Map/Symbology/ArcGISSymbolSizeUnits.h"
 #include "ArcGISMapsSDK/API/Standard/ArcGISRGBColor.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISCollection.h"
@@ -21,7 +26,19 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGISPointCloudLayer.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
+#include "Async/Async.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Border.h"
+#include "Components/ButtonSlot.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/ScrollBox.h"
+#include "Components/ScrollBoxSlot.h"
+#include "Components/SizeBox.h"
+#include "Components/Spacer.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
 #include "sample_project/InputManager.h"
 
 namespace
@@ -38,14 +55,23 @@ constexpr double IntensityLow = 10385.0;
 constexpr double IntensityMid = 38032.0;
 constexpr double IntensityHigh = 65680.0;
 constexpr float VisualizeTabHeightOffset = 150.0f;
+constexpr float FilterTabHeightOffset = 430.0f;
 const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
 const FName ExpandableTabWidgetNames[] = {
 	TEXT("CanvasPanel_37"),
 	TEXT("Background"),
 	TEXT("Switcher_PCLTabs"),
 	TEXT("Panel_Visualize"),
-	TEXT("Panel_VisualizeContent")
+	TEXT("Panel_VisualizeContent"),
+	TEXT("Panel_Filter")
 };
+const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType FilterReturnValues[] = {
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::FirstOfMany,
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::Last,
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::LastOfMany,
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::Single
+};
+const TCHAR* FilterReturnLabels[] = {TEXT("First of many"), TEXT("Last"), TEXT("Last of many"), TEXT("Single")};
 
 FText FormatSliderValue(float Value)
 {
@@ -232,6 +258,99 @@ void AddClassValue(Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::Poin
 	UniqueValue.SetDescription(Label);
 	UniqueValues.Add(UniqueValue);
 }
+
+FString GetClassCodeLabel(int32 ClassCode)
+{
+	FString Label;
+	uint8 Red = 0;
+	uint8 Green = 0;
+	uint8 Blue = 0;
+	GetStandardClassInfo(ClassCode, Label, Red, Green, Blue);
+	return Label;
+}
+
+FSlateColor MakeSlateColor(float Red, float Green, float Blue, float Alpha = 1.0f)
+{
+	return FSlateColor(FLinearColor(Red, Green, Blue, Alpha));
+}
+
+void ConfigureTextBlock(UTextBlock* TextBlock, int32 FontSize, const FSlateColor& Color)
+{
+	if (!TextBlock)
+	{
+		return;
+	}
+
+	FSlateFontInfo Font = TextBlock->GetFont();
+	Font.Size = FontSize;
+	TextBlock->SetFont(Font);
+	TextBlock->SetColorAndOpacity(Color);
+}
+
+UTextBlock* CreateText(UObject* Outer, const FString& Text, int32 FontSize, const FSlateColor& Color)
+{
+	UTextBlock* TextBlock = NewObject<UTextBlock>(Outer);
+	TextBlock->SetText(FText::FromString(Text));
+	ConfigureTextBlock(TextBlock, FontSize, Color);
+	return TextBlock;
+}
+
+void SetVerticalSlotPadding(UWidget* Widget, const FMargin& Padding)
+{
+	if (auto* VerticalSlot = Cast<UVerticalBoxSlot>(Widget ? Widget->Slot : nullptr))
+	{
+		VerticalSlot->SetPadding(Padding);
+	}
+	else if (auto* ScrollSlot = Cast<UScrollBoxSlot>(Widget ? Widget->Slot : nullptr))
+	{
+		ScrollSlot->SetPadding(Padding);
+	}
+}
+
+void SetHorizontalSlotPadding(UWidget* Widget, const FMargin& Padding)
+{
+	if (auto* Slot = Cast<UHorizontalBoxSlot>(Widget ? Widget->Slot : nullptr))
+	{
+		Slot->SetPadding(Padding);
+		Slot->SetVerticalAlignment(VAlign_Center);
+	}
+}
+
+UCheckBox* AddCheckBoxRow(UObject* Outer, UPanelWidget* Parent, const FString& Label, bool bChecked)
+{
+	UHorizontalBox* Row = NewObject<UHorizontalBox>(Outer);
+	Parent->AddChild(Row);
+	SetVerticalSlotPadding(Row, FMargin(0.0f, 1.0f, 0.0f, 1.0f));
+
+	UCheckBox* CheckBox = NewObject<UCheckBox>(Outer);
+	CheckBox->SetIsChecked(bChecked);
+	Row->AddChild(CheckBox);
+	SetHorizontalSlotPadding(CheckBox, FMargin(0.0f, 0.0f, 10.0f, 0.0f));
+
+	UTextBlock* LabelText = CreateText(Outer, Label, 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	Row->AddChild(LabelText);
+	SetHorizontalSlotPadding(LabelText, FMargin(0.0f));
+
+	return CheckBox;
+}
+
+UScrollBox* AddFilterScrollSection(UObject* Outer, UVerticalBox* Parent, float Height)
+{
+	USizeBox* SectionBox = NewObject<USizeBox>(Outer);
+	SectionBox->SetHeightOverride(Height);
+	Parent->AddChild(SectionBox);
+	SetVerticalSlotPadding(SectionBox, FMargin(0.0f, 0.0f, 0.0f, 12.0f));
+
+	UScrollBox* ScrollBox = NewObject<UScrollBox>(Outer);
+	ScrollBox->SetOrientation(EOrientation::Orient_Vertical);
+	ScrollBox->SetScrollBarVisibility(ESlateVisibility::Visible);
+	ScrollBox->SetAlwaysShowScrollbar(true);
+	ScrollBox->SetAlwaysShowScrollbarTrack(true);
+	ScrollBox->SetScrollbarThickness(FVector2D(8.0f, 8.0f));
+	SectionBox->AddChild(ScrollBox);
+
+	return ScrollBox;
+}
 } // namespace
 
 // Sets default values
@@ -312,6 +431,7 @@ void APCLController::BeginPlay()
 		CustomizeTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_CustomizeTab")));
 		FilterTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_FilterTab")));
 		VisualizeTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_VisualizeTab")));
+		FilterPanel = Cast<UPanelWidget>(UIWidget->GetWidgetFromName(TEXT("Panel_Filter")));
 
 		if (PointSizeSlider)
 		{
@@ -372,8 +492,10 @@ void APCLController::BeginPlay()
 
 		UpdateSliderValueTexts();
 		UpdateRendererCheckBoxes();
+		BuildFilterTabUI();
 		CreatePointCloudLayer();
 		ApplyPointCloudVisualization();
+		ApplyPointCloudFilters();
 
 		if (UIWidget->FindFunction("ShowInstruction"))
 		{
@@ -501,17 +623,94 @@ void APCLController::OnIntensityRendererCheckStateChanged(bool bIsChecked)
 
 void APCLController::OnCustomizeTabClicked()
 {
-	SetVisualizeTabExpanded(false);
+	SetTabLayout(EPCLTabLayout::Default);
 }
 
 void APCLController::OnFilterTabClicked()
 {
-	SetVisualizeTabExpanded(false);
+	SetTabLayout(EPCLTabLayout::Filter);
 }
 
 void APCLController::OnVisualizeTabClicked()
 {
-	SetVisualizeTabExpanded(true);
+	SetTabLayout(EPCLTabLayout::Visualize);
+}
+
+void APCLController::OnFilterCheckStateChanged(bool bIsChecked)
+{
+	if (bUpdatingFilterCheckBoxes)
+	{
+		return;
+	}
+
+	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
+
+	if (ClassAllCheckBox)
+	{
+		bool bAllClassesChecked = true;
+		for (TObjectPtr<UCheckBox> CheckBox : ClassFilterCheckBoxes)
+		{
+			bAllClassesChecked = bAllClassesChecked && CheckBox && CheckBox->IsChecked();
+		}
+		ClassAllCheckBox->SetIsChecked(bAllClassesChecked);
+	}
+
+	if (ReturnsAllCheckBox)
+	{
+		bool bAllReturnsChecked = true;
+		for (TObjectPtr<UCheckBox> CheckBox : ReturnsFilterCheckBoxes)
+		{
+			bAllReturnsChecked = bAllReturnsChecked && CheckBox && CheckBox->IsChecked();
+		}
+		ReturnsAllCheckBox->SetIsChecked(bAllReturnsChecked);
+	}
+
+	ApplyPointCloudFilters();
+}
+
+void APCLController::OnClassAllFilterCheckStateChanged(bool bIsChecked)
+{
+	if (bUpdatingFilterCheckBoxes)
+	{
+		return;
+	}
+
+	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
+
+	for (TObjectPtr<UCheckBox> CheckBox : ClassFilterCheckBoxes)
+	{
+		if (CheckBox)
+		{
+			CheckBox->SetIsChecked(bIsChecked);
+		}
+	}
+
+	ApplyPointCloudFilters();
+}
+
+void APCLController::OnReturnsAllFilterCheckStateChanged(bool bIsChecked)
+{
+	if (bUpdatingFilterCheckBoxes)
+	{
+		return;
+	}
+
+	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
+
+	for (TObjectPtr<UCheckBox> CheckBox : ReturnsFilterCheckBoxes)
+	{
+		if (CheckBox)
+		{
+			CheckBox->SetIsChecked(bIsChecked);
+		}
+	}
+
+	ApplyPointCloudFilters();
+}
+
+void APCLController::OnResetFiltersClicked()
+{
+	ResetFilterSelections(true);
 }
 
 void APCLController::CreatePointCloudLayer()
@@ -553,10 +752,14 @@ void APCLController::CreatePointCloudLayer()
 
 	TWeakObjectPtr<APCLController> WeakThis(this);
 	PointCloudLayer->APIObject->SetDoneLoading([WeakThis](auto& LoadError) {
-		if (auto* Controller = WeakThis.Get())
-		{
-			Controller->ApplyPointCloudVisualization();
-		}
+		AsyncTask(ENamedThreads::GameThread, [WeakThis]() {
+			if (auto* Controller = WeakThis.Get())
+			{
+				Controller->ApplyPointCloudVisualization();
+				Controller->BuildFilterTabUI();
+				Controller->ApplyPointCloudFilters();
+			}
+		});
 	});
 
 	MapLayers->Add(PointCloudLayer);
@@ -668,12 +871,75 @@ void APCLController::ApplyPointCloudVisualization()
 	ApplyRGBRenderer();
 }
 
+void APCLController::ApplyPointCloudFilters()
+{
+	if (!PointCloudLayer || !PointCloudLayer->APIObject)
+	{
+		return;
+	}
+
+	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
+	if (!LayerAPI || LayerAPI->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
+	{
+		return;
+	}
+
+	RefreshAvailablePointCloudAttributes();
+
+	ActiveFilterCollection = MakeUnique<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter>>();
+	ActiveClassCodeValues.Reset();
+	ActiveReturnsValues.Reset();
+	ActiveClassCodeFilter.Reset();
+	ActiveReturnsFilter.Reset();
+
+	const bool bUseClassFilter = !ClassAttributeName.IsEmpty() && !AreAllClassOptionsSelected() && AreAnyClassOptionsSelected();
+	if (bUseClassFilter)
+	{
+		ActiveClassCodeValues = MakeUnique<Esri::Unreal::ArcGISCollection<double>>();
+		for (int32 Index = 0; Index < ClassFilterCheckBoxes.Num() && Index < ClassFilterValues.Num(); ++Index)
+		{
+			if (ClassFilterCheckBoxes[Index] && ClassFilterCheckBoxes[Index]->IsChecked())
+			{
+				ActiveClassCodeValues->Add(static_cast<double>(ClassFilterValues[Index]));
+			}
+		}
+
+		ActiveClassCodeFilter = MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilter>(
+			ClassAttributeName, *ActiveClassCodeValues, Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilterMode::Include);
+		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter BaseClassFilter(ActiveClassCodeFilter->GetHandle());
+		ActiveFilterCollection->Add(BaseClassFilter);
+		BaseClassFilter.SetHandle(nullptr);
+	}
+
+	const bool bUseReturnsFilter = !ReturnsAttributeName.IsEmpty() && !AreAllReturnsOptionsSelected() && AreAnyReturnsOptionsSelected();
+	if (bUseReturnsFilter)
+	{
+		ActiveReturnsValues = MakeUnique<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType>>();
+		for (int32 Index = 0; Index < ReturnsFilterCheckBoxes.Num() && Index < UE_ARRAY_COUNT(FilterReturnValues); ++Index)
+		{
+			if (ReturnsFilterCheckBoxes[Index] && ReturnsFilterCheckBoxes[Index]->IsChecked())
+			{
+				ActiveReturnsValues->Add(FilterReturnValues[Index]);
+			}
+		}
+
+		ActiveReturnsFilter =
+			MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter>(ReturnsAttributeName, *ActiveReturnsValues);
+		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter BaseReturnsFilter(ActiveReturnsFilter->GetHandle());
+		ActiveFilterCollection->Add(BaseReturnsFilter);
+		BaseReturnsFilter.SetHandle(nullptr);
+	}
+
+	LayerAPI->SetFilters(*ActiveFilterCollection);
+}
+
 void APCLController::RefreshAvailablePointCloudAttributes()
 {
 	RGBAttributeName.Reset();
 	ClassAttributeName.Reset();
 	ElevationAttributeName.Reset();
 	IntensityAttributeName.Reset();
+	ReturnsAttributeName.Reset();
 
 	if (!PointCloudLayer || !PointCloudLayer->APIObject)
 	{
@@ -726,6 +992,11 @@ void APCLController::RefreshAvailablePointCloudAttributes()
 		{
 			IntensityAttributeName = Name;
 		}
+
+		if (ReturnsAttributeName.IsEmpty() && MatchesAttributeName(NormalizedName, TEXT("RETURNS")))
+		{
+			ReturnsAttributeName = Name;
+		}
 	}
 }
 
@@ -767,9 +1038,247 @@ void APCLController::UpdateSliderValueTexts() const
 	}
 }
 
-void APCLController::SetVisualizeTabExpanded(bool bExpanded)
+void APCLController::BuildFilterTabUI()
 {
-	const float HeightOffset = bExpanded ? VisualizeTabHeightOffset : 0.0f;
+	if (!FilterPanel || !UIWidget)
+	{
+		return;
+	}
+
+	FilterPanel->ClearChildren();
+	ClassFilterCheckBoxes.Reset();
+	ClassFilterValues.Reset();
+	ReturnsFilterCheckBoxes.Reset();
+	ClassAllCheckBox = nullptr;
+	ReturnsAllCheckBox = nullptr;
+	ResetFiltersButton = nullptr;
+
+	RefreshAvailablePointCloudAttributes();
+	const bool bHasClassCodeFilter = !ClassAttributeName.IsEmpty();
+	const bool bHasReturnsFilter = !ReturnsAttributeName.IsEmpty();
+
+	if (!bHasClassCodeFilter && !bHasReturnsFilter)
+	{
+		ClearActiveFilters();
+		return;
+	}
+
+	UVerticalBox* Content = NewObject<UVerticalBox>(UIWidget);
+	FilterPanel->AddChild(Content);
+
+	if (auto* CanvasSlot = Cast<UCanvasPanelSlot>(Content->Slot))
+	{
+		CanvasSlot->SetPosition(FVector2D(0.0f, 0.0f));
+		CanvasSlot->SetSize(FVector2D(430.0f, 660.0f));
+	}
+
+	if (bHasClassCodeFilter)
+	{
+		UTextBlock* ClassHeading = CreateText(UIWidget, TEXT("Class Code"), 24, MakeSlateColor(0.78f, 0.78f, 0.82f));
+		Content->AddChild(ClassHeading);
+		SetVerticalSlotPadding(ClassHeading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
+
+		UScrollBox* ClassScrollBox = AddFilterScrollSection(UIWidget, Content, 206.0f);
+
+		ClassAllCheckBox = AddCheckBoxRow(UIWidget, ClassScrollBox, TEXT("<all>"), true);
+		ClassAllCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnClassAllFilterCheckStateChanged);
+
+		for (int32 ClassCode = 0; ClassCode <= 18; ++ClassCode)
+		{
+			UCheckBox* CheckBox = AddCheckBoxRow(UIWidget, ClassScrollBox, GetClassCodeLabel(ClassCode), true);
+			CheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnFilterCheckStateChanged);
+			ClassFilterCheckBoxes.Add(CheckBox);
+			ClassFilterValues.Add(ClassCode);
+		}
+	}
+
+	if (bHasClassCodeFilter && bHasReturnsFilter)
+	{
+		USpacer* SectionSpacer = NewObject<USpacer>(UIWidget);
+		SectionSpacer->SetSize(FVector2D(1.0f, 4.0f));
+		Content->AddChild(SectionSpacer);
+	}
+
+	if (bHasReturnsFilter)
+	{
+		UTextBlock* ReturnsHeading = CreateText(UIWidget, TEXT("Returns"), 24, MakeSlateColor(0.78f, 0.78f, 0.82f));
+		Content->AddChild(ReturnsHeading);
+		SetVerticalSlotPadding(ReturnsHeading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
+
+		UScrollBox* ReturnsScrollBox = AddFilterScrollSection(UIWidget, Content, 148.0f);
+
+		ReturnsAllCheckBox = AddCheckBoxRow(UIWidget, ReturnsScrollBox, TEXT("<all>"), true);
+		ReturnsAllCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnReturnsAllFilterCheckStateChanged);
+
+		for (int32 Index = 0; Index < UE_ARRAY_COUNT(FilterReturnLabels); ++Index)
+		{
+			UCheckBox* CheckBox = AddCheckBoxRow(UIWidget, ReturnsScrollBox, FilterReturnLabels[Index], true);
+			CheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnFilterCheckStateChanged);
+			ReturnsFilterCheckBoxes.Add(CheckBox);
+		}
+	}
+
+	USpacer* InfoSpacer = NewObject<USpacer>(UIWidget);
+	InfoSpacer->SetSize(FVector2D(1.0f, 10.0f));
+	Content->AddChild(InfoSpacer);
+
+	UBorder* InfoBorder = NewObject<UBorder>(UIWidget);
+	InfoBorder->SetBrushColor(FLinearColor(0.05f, 0.05f, 0.06f, 0.58f));
+	Content->AddChild(InfoBorder);
+	SetVerticalSlotPadding(InfoBorder, FMargin(0.0f, 0.0f, 0.0f, 22.0f));
+
+	UHorizontalBox* InfoRow = NewObject<UHorizontalBox>(UIWidget);
+	InfoBorder->SetContent(InfoRow);
+
+	UTextBlock* InfoIcon = CreateText(UIWidget, TEXT("i"), 24, MakeSlateColor(0.67f, 0.27f, 1.0f));
+	InfoRow->AddChild(InfoIcon);
+	SetHorizontalSlotPadding(InfoIcon, FMargin(16.0f, 8.0f, 14.0f, 8.0f));
+
+	UTextBlock* InfoText = CreateText(UIWidget, TEXT("Filtering allows you to include or exclude points\nbased on classification codes, returns and etc."),
+									  14, MakeSlateColor(0.78f, 0.78f, 0.82f));
+	InfoRow->AddChild(InfoText);
+	SetHorizontalSlotPadding(InfoText, FMargin(0.0f, 8.0f, 16.0f, 8.0f));
+
+	ResetFiltersButton = NewObject<UButton>(UIWidget);
+	Content->AddChild(ResetFiltersButton);
+
+	UTextBlock* ResetText = CreateText(UIWidget, TEXT("Reset Filters"), 17, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	ResetFiltersButton->AddChild(ResetText);
+	if (auto* ButtonSlot = Cast<UButtonSlot>(ResetText->Slot))
+	{
+		ButtonSlot->SetPadding(FMargin(16.0f, 6.0f, 16.0f, 6.0f));
+	}
+
+	ResetFiltersButton->OnClicked.AddDynamic(this, &APCLController::OnResetFiltersClicked);
+	ResetFilterSelections(false);
+}
+
+void APCLController::ResetFilterSelections(bool bApplyFilters)
+{
+	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
+
+	if (ClassAllCheckBox)
+	{
+		ClassAllCheckBox->SetIsChecked(true);
+	}
+
+	for (TObjectPtr<UCheckBox> CheckBox : ClassFilterCheckBoxes)
+	{
+		if (CheckBox)
+		{
+			CheckBox->SetIsChecked(true);
+		}
+	}
+
+	if (ReturnsAllCheckBox)
+	{
+		ReturnsAllCheckBox->SetIsChecked(true);
+	}
+
+	for (TObjectPtr<UCheckBox> CheckBox : ReturnsFilterCheckBoxes)
+	{
+		if (CheckBox)
+		{
+			CheckBox->SetIsChecked(true);
+		}
+	}
+
+	if (bApplyFilters)
+	{
+		ApplyPointCloudFilters();
+	}
+}
+
+bool APCLController::AreAllClassOptionsSelected() const
+{
+	if (ClassFilterCheckBoxes.IsEmpty())
+	{
+		return false;
+	}
+
+	for (const TObjectPtr<UCheckBox>& CheckBox : ClassFilterCheckBoxes)
+	{
+		if (!CheckBox || !CheckBox->IsChecked())
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool APCLController::AreAnyClassOptionsSelected() const
+{
+	for (const TObjectPtr<UCheckBox>& CheckBox : ClassFilterCheckBoxes)
+	{
+		if (CheckBox && CheckBox->IsChecked())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool APCLController::AreAllReturnsOptionsSelected() const
+{
+	if (ReturnsFilterCheckBoxes.IsEmpty())
+	{
+		return false;
+	}
+
+	for (const TObjectPtr<UCheckBox>& CheckBox : ReturnsFilterCheckBoxes)
+	{
+		if (!CheckBox || !CheckBox->IsChecked())
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool APCLController::AreAnyReturnsOptionsSelected() const
+{
+	for (const TObjectPtr<UCheckBox>& CheckBox : ReturnsFilterCheckBoxes)
+	{
+		if (CheckBox && CheckBox->IsChecked())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void APCLController::ClearActiveFilters()
+{
+	if (PointCloudLayer && PointCloudLayer->APIObject)
+	{
+		if (auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject))
+		{
+			ActiveFilterCollection = MakeUnique<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter>>();
+			LayerAPI->SetFilters(*ActiveFilterCollection);
+		}
+	}
+
+	ActiveClassCodeValues.Reset();
+	ActiveReturnsValues.Reset();
+	ActiveClassCodeFilter.Reset();
+	ActiveReturnsFilter.Reset();
+}
+
+void APCLController::SetTabLayout(EPCLTabLayout Layout)
+{
+	float HeightOffset = 0.0f;
+	if (Layout == EPCLTabLayout::Visualize)
+	{
+		HeightOffset = VisualizeTabHeightOffset;
+	}
+	else if (Layout == EPCLTabLayout::Filter)
+	{
+		HeightOffset = FilterTabHeightOffset;
+	}
 
 	for (const FName& WidgetName : ExpandableTabWidgetNames)
 	{

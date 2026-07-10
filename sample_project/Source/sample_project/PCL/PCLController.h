@@ -3,6 +3,11 @@
 #pragma once
 
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudFilter.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudReturnFilter.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudReturnType.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudValueFilter.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISCollection.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
@@ -10,6 +15,7 @@
 #include "Components/Button.h"
 #include "Components/CheckBox.h"
 #include "Components/ComboBoxString.h"
+#include "Components/PanelWidget.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
 #include "CoreMinimal.h"
@@ -17,6 +23,7 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/GameFramework/PlayerController.h"
+#include "Templates/UniquePtr.h"
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -31,6 +38,14 @@ enum class EPCLRendererChoice : uint8
 	Class UMETA(DisplayName = "Class"),
 	Elevation UMETA(DisplayName = "Elevation"),
 	Intensity UMETA(DisplayName = "Intensity")
+};
+
+UENUM()
+enum class EPCLTabLayout : uint8
+{
+	Default,
+	Visualize,
+	Filter
 };
 
 UCLASS()
@@ -109,6 +124,24 @@ private:
 	UPROPERTY()
 	TObjectPtr<UButton> VisualizeTabButton;
 
+	UPROPERTY()
+	TObjectPtr<UPanelWidget> FilterPanel;
+
+	UPROPERTY()
+	TObjectPtr<UCheckBox> ClassAllCheckBox;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UCheckBox>> ClassFilterCheckBoxes;
+
+	UPROPERTY()
+	TObjectPtr<UCheckBox> ReturnsAllCheckBox;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UCheckBox>> ReturnsFilterCheckBoxes;
+
+	UPROPERTY()
+	TObjectPtr<UButton> ResetFiltersButton;
+
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<AArcGISMapActor> MapActor;
 
@@ -130,8 +163,18 @@ private:
 	FString ClassAttributeName;
 	FString ElevationAttributeName;
 	FString IntensityAttributeName;
+	FString ReturnsAttributeName;
 
 	TMap<FName, FVector2D> CachedTabWidgetSizes;
+	TArray<int32> ClassFilterValues;
+
+	TUniquePtr<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter>> ActiveFilterCollection;
+	TUniquePtr<Esri::Unreal::ArcGISCollection<double>> ActiveClassCodeValues;
+	TUniquePtr<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType>> ActiveReturnsValues;
+	TUniquePtr<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilter> ActiveClassCodeFilter;
+	TUniquePtr<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter> ActiveReturnsFilter;
+
+	bool bUpdatingFilterCheckBoxes = false;
 
 	UPROPERTY()
 	TObjectPtr<UArcGISSpatialReference> SpatialReference;
@@ -172,11 +215,31 @@ private:
 	UFUNCTION()
 	void OnVisualizeTabClicked();
 
+	UFUNCTION()
+	void OnFilterCheckStateChanged(bool bIsChecked);
+
+	UFUNCTION()
+	void OnClassAllFilterCheckStateChanged(bool bIsChecked);
+
+	UFUNCTION()
+	void OnReturnsAllFilterCheckStateChanged(bool bIsChecked);
+
+	UFUNCTION()
+	void OnResetFiltersClicked();
+
 	void CreatePointCloudLayer();
 	void ApplyPointCloudVisualization();
+	void ApplyPointCloudFilters();
 	void RefreshAvailablePointCloudAttributes();
 	void UpdateRendererCheckBoxes();
 	void UpdateSliderValueTexts() const;
-	void SetVisualizeTabExpanded(bool bExpanded);
+	void BuildFilterTabUI();
+	bool AreAllClassOptionsSelected() const;
+	bool AreAnyClassOptionsSelected() const;
+	bool AreAllReturnsOptionsSelected() const;
+	bool AreAnyReturnsOptionsSelected() const;
+	void ClearActiveFilters();
+	void ResetFilterSelections(bool bApplyFilters);
+	void SetTabLayout(EPCLTabLayout Layout);
 	void SetNamedWidgetHeightOffset(const FName& WidgetName, float HeightOffset);
 };
