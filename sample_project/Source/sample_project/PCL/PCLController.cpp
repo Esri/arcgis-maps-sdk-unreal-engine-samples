@@ -21,6 +21,7 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGISPointCloudLayer.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
+#include "Components/CanvasPanelSlot.h"
 #include "sample_project/InputManager.h"
 
 namespace
@@ -36,7 +37,15 @@ constexpr double ElevationHigh = 3.5;
 constexpr double IntensityLow = 10385.0;
 constexpr double IntensityMid = 38032.0;
 constexpr double IntensityHigh = 65680.0;
+constexpr float VisualizeTabHeightOffset = 150.0f;
 const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
+const FName ExpandableTabWidgetNames[] = {
+	TEXT("CanvasPanel_37"),
+	TEXT("Background"),
+	TEXT("Switcher_PCLTabs"),
+	TEXT("Panel_Visualize"),
+	TEXT("Panel_VisualizeContent")
+};
 
 FText FormatSliderValue(float Value)
 {
@@ -300,6 +309,9 @@ void APCLController::BeginPlay()
 		ClassRendererCheckBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("Checkbox_Renderer_Class")));
 		ElevationRendererCheckBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("Checkbox_Renderer_Elevation")));
 		IntensityRendererCheckBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("Checkbox_Renderer_Intensity")));
+		CustomizeTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_CustomizeTab")));
+		FilterTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_FilterTab")));
+		VisualizeTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_VisualizeTab")));
 
 		if (PointSizeSlider)
 		{
@@ -341,6 +353,21 @@ void APCLController::BeginPlay()
 		if (IntensityRendererCheckBox)
 		{
 			IntensityRendererCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnIntensityRendererCheckStateChanged);
+		}
+
+		if (CustomizeTabButton)
+		{
+			CustomizeTabButton->OnClicked.AddDynamic(this, &APCLController::OnCustomizeTabClicked);
+		}
+
+		if (FilterTabButton)
+		{
+			FilterTabButton->OnClicked.AddDynamic(this, &APCLController::OnFilterTabClicked);
+		}
+
+		if (VisualizeTabButton)
+		{
+			VisualizeTabButton->OnClicked.AddDynamic(this, &APCLController::OnVisualizeTabClicked);
 		}
 
 		UpdateSliderValueTexts();
@@ -470,6 +497,21 @@ void APCLController::OnIntensityRendererCheckStateChanged(bool bIsChecked)
 	{
 		SetPointCloudRenderer(EPCLRendererChoice::Intensity);
 	}
+}
+
+void APCLController::OnCustomizeTabClicked()
+{
+	SetVisualizeTabExpanded(false);
+}
+
+void APCLController::OnFilterTabClicked()
+{
+	SetVisualizeTabExpanded(false);
+}
+
+void APCLController::OnVisualizeTabClicked()
+{
+	SetVisualizeTabExpanded(true);
 }
 
 void APCLController::CreatePointCloudLayer()
@@ -723,4 +765,42 @@ void APCLController::UpdateSliderValueTexts() const
 	{
 		PointsPerInchValueText->SetText(FormatSliderValue(PointsPerInchSlider->GetValue()));
 	}
+}
+
+void APCLController::SetVisualizeTabExpanded(bool bExpanded)
+{
+	const float HeightOffset = bExpanded ? VisualizeTabHeightOffset : 0.0f;
+
+	for (const FName& WidgetName : ExpandableTabWidgetNames)
+	{
+		SetNamedWidgetHeightOffset(WidgetName, HeightOffset);
+	}
+}
+
+void APCLController::SetNamedWidgetHeightOffset(const FName& WidgetName, float HeightOffset)
+{
+	if (!UIWidget)
+	{
+		return;
+	}
+
+	UWidget* Widget = UIWidget->GetWidgetFromName(WidgetName);
+	if (!Widget)
+	{
+		return;
+	}
+
+	UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Widget->Slot);
+	if (!CanvasSlot)
+	{
+		return;
+	}
+
+	if (!CachedTabWidgetSizes.Contains(WidgetName))
+	{
+		CachedTabWidgetSizes.Add(WidgetName, CanvasSlot->GetSize());
+	}
+
+	const FVector2D OriginalSize = CachedTabWidgetSizes[WidgetName];
+	CanvasSlot->SetSize(FVector2D(OriginalSize.X, OriginalSize.Y + HeightOffset));
 }

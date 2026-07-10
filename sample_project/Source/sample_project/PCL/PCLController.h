@@ -7,6 +7,7 @@
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
 #include "Components/CheckBox.h"
 #include "Components/ComboBoxString.h"
 #include "Components/Slider.h"
@@ -99,6 +100,15 @@ private:
 	UPROPERTY()
 	TObjectPtr<UCheckBox> IntensityRendererCheckBox;
 
+	UPROPERTY()
+	TObjectPtr<UButton> CustomizeTabButton;
+
+	UPROPERTY()
+	TObjectPtr<UButton> FilterTabButton;
+
+	UPROPERTY()
+	TObjectPtr<UButton> VisualizeTabButton;
+
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<AArcGISMapActor> MapActor;
 
@@ -120,6 +130,8 @@ private:
 	FString ClassAttributeName;
 	FString ElevationAttributeName;
 	FString IntensityAttributeName;
+
+	TMap<FName, FVector2D> CachedTabWidgetSizes;
 
 	UPROPERTY()
 	TObjectPtr<UArcGISSpatialReference> SpatialReference;
@@ -151,9 +163,20 @@ private:
 	UFUNCTION()
 	void OnIntensityRendererCheckStateChanged(bool bIsChecked);
 
+	UFUNCTION()
+	void OnCustomizeTabClicked();
+
+	UFUNCTION()
+	void OnFilterTabClicked();
+
+	UFUNCTION()
+	void OnVisualizeTabClicked();
+
 	void CreatePointCloudLayer();
 	void ApplyPointCloudVisualization();
 	void RefreshAvailablePointCloudAttributes();
 	void UpdateRendererCheckBoxes();
 	void UpdateSliderValueTexts() const;
+	void SetVisualizeTabExpanded(bool bExpanded);
+	void SetNamedWidgetHeightOffset(const FName& WidgetName, float HeightOffset);
 };
