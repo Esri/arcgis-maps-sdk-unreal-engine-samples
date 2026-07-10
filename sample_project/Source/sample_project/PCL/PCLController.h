@@ -7,7 +7,9 @@
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/CheckBox.h"
 #include "Components/ComboBoxString.h"
+#include "Components/Slider.h"
 #include "Components/TextBlock.h"
 #include "CoreMinimal.h"
 #include "Engine/StaticMeshActor.h"
@@ -20,6 +22,15 @@
 #include "PCLController.generated.h"
 
 class AInputManager;
+
+UENUM(BlueprintType)
+enum class EPCLRendererChoice : uint8
+{
+	RGB UMETA(DisplayName = "RGB"),
+	Class UMETA(DisplayName = "Class"),
+	Elevation UMETA(DisplayName = "Elevation"),
+	Intensity UMETA(DisplayName = "Intensity")
+};
 
 UCLASS()
 class SAMPLE_PROJECT_API APCLController : public AActor
@@ -39,6 +50,15 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable, Category = "PCL|Visualize")
+	void SetColorModulationEnabled(bool bEnabled);
+
+	UFUNCTION(BlueprintCallable, Category = "PCL|Visualize")
+	void SetPointCloudRenderer(EPCLRendererChoice RendererChoice);
+
+	UFUNCTION(BlueprintCallable, Category = "PCL|Visualize")
+	bool IsPointCloudRendererAvailable(EPCLRendererChoice RendererChoice);
+
 private:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
 	TObjectPtr<AInputManager> InputManager;
@@ -52,11 +72,54 @@ private:
 	UPROPERTY()
 	TObjectPtr<UComboBoxString> UnitDropdown;
 
+	UPROPERTY()
+	TObjectPtr<USlider> PointSizeSlider;
+
+	UPROPERTY()
+	TObjectPtr<USlider> PointsPerInchSlider;
+
+	UPROPERTY()
+	TObjectPtr<UTextBlock> PointSizeValueText;
+
+	UPROPERTY()
+	TObjectPtr<UTextBlock> PointsPerInchValueText;
+
+	UPROPERTY()
+	TObjectPtr<UCheckBox> ColorModulationCheckBox;
+
+	UPROPERTY()
+	TObjectPtr<UCheckBox> RGBRendererCheckBox;
+
+	UPROPERTY()
+	TObjectPtr<UCheckBox> ClassRendererCheckBox;
+
+	UPROPERTY()
+	TObjectPtr<UCheckBox> ElevationRendererCheckBox;
+
+	UPROPERTY()
+	TObjectPtr<UCheckBox> IntensityRendererCheckBox;
+
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<AArcGISMapActor> MapActor;
 
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<UArcGISMapComponent> MapComponent;
+
+	UPROPERTY()
+	TObjectPtr<class UArcGISPointCloudLayer> PointCloudLayer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PCL|Visualize", meta = (AllowPrivateAccess))
+	EPCLRendererChoice CurrentRendererChoice = EPCLRendererChoice::RGB;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PCL|Visualize", meta = (AllowPrivateAccess))
+	bool bColorModulationEnabled = false;
+
+	bool bUpdatingRendererCheckBoxes = false;
+
+	FString RGBAttributeName;
+	FString ClassAttributeName;
+	FString ElevationAttributeName;
+	FString IntensityAttributeName;
 
 	UPROPERTY()
 	TObjectPtr<UArcGISSpatialReference> SpatialReference;
@@ -66,4 +129,31 @@ private:
 
 	UFUNCTION()
 	void OnInputEnded();
+
+	UFUNCTION()
+	void OnPointSizeChanged(float Value);
+
+	UFUNCTION()
+	void OnPointsPerInchChanged(float Value);
+
+	UFUNCTION()
+	void OnColorModulationCheckStateChanged(bool bIsChecked);
+
+	UFUNCTION()
+	void OnRGBRendererCheckStateChanged(bool bIsChecked);
+
+	UFUNCTION()
+	void OnClassRendererCheckStateChanged(bool bIsChecked);
+
+	UFUNCTION()
+	void OnElevationRendererCheckStateChanged(bool bIsChecked);
+
+	UFUNCTION()
+	void OnIntensityRendererCheckStateChanged(bool bIsChecked);
+
+	void CreatePointCloudLayer();
+	void ApplyPointCloudVisualization();
+	void RefreshAvailablePointCloudAttributes();
+	void UpdateRendererCheckBoxes();
+	void UpdateSliderValueTexts() const;
 };
