@@ -30,15 +30,18 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/ButtonSlot.h"
+#include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/Image.h"
 #include "Components/ScrollBox.h"
 #include "Components/ScrollBoxSlot.h"
 #include "Components/SizeBox.h"
 #include "Components/Spacer.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
+#include "Engine/Texture2D.h"
 #include "sample_project/InputManager.h"
 
 namespace
@@ -54,6 +57,10 @@ constexpr double ElevationHigh = 3.5;
 constexpr double IntensityLow = 10385.0;
 constexpr double IntensityMid = 38032.0;
 constexpr double IntensityHigh = 65680.0;
+constexpr float LegendCompactWidth = 345.0f;
+constexpr float LegendCompactHeight = 76.0f;
+constexpr float LegendExpandedWidth = 360.0f;
+constexpr float LegendExpandedHeight = 320.0f;
 constexpr float VisualizeTabHeightOffset = 150.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
 const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
@@ -295,6 +302,114 @@ UTextBlock* CreateText(UObject* Outer, const FString& Text, int32 FontSize, cons
 	return TextBlock;
 }
 
+UBorder* CreateColorBlock(UObject* Outer, const FLinearColor& Color)
+{
+	UBorder* ColorBlock = NewObject<UBorder>(Outer);
+	ColorBlock->SetBrushColor(Color);
+	return ColorBlock;
+}
+
+UHorizontalBox* AddLegendRow(UObject* Outer, UPanelWidget* Parent, const FString& Label, const FLinearColor& Color)
+{
+	UHorizontalBox* Row = NewObject<UHorizontalBox>(Outer);
+	Parent->AddChild(Row);
+	if (auto* VerticalSlot = Cast<UVerticalBoxSlot>(Row->Slot))
+	{
+		VerticalSlot->SetPadding(FMargin(0.0f, 1.0f, 0.0f, 1.0f));
+	}
+	else if (auto* ScrollSlot = Cast<UScrollBoxSlot>(Row->Slot))
+	{
+		ScrollSlot->SetPadding(FMargin(0.0f, 1.0f, 0.0f, 1.0f));
+	}
+
+	USizeBox* SwatchBox = NewObject<USizeBox>(Outer);
+	SwatchBox->SetWidthOverride(20.0f);
+	SwatchBox->SetHeightOverride(20.0f);
+	Row->AddChild(SwatchBox);
+	if (auto* SwatchSlot = Cast<UHorizontalBoxSlot>(SwatchBox->Slot))
+	{
+		SwatchSlot->SetPadding(FMargin(0.0f, 3.0f, 12.0f, 3.0f));
+		SwatchSlot->SetVerticalAlignment(VAlign_Center);
+		SwatchSlot->SetHorizontalAlignment(HAlign_Center);
+	}
+
+	UBorder* Swatch = CreateColorBlock(Outer, Color);
+	SwatchBox->AddChild(Swatch);
+
+	UTextBlock* LabelText = CreateText(Outer, Label, 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	Row->AddChild(LabelText);
+	if (auto* LabelSlot = Cast<UHorizontalBoxSlot>(LabelText->Slot))
+	{
+		LabelSlot->SetPadding(FMargin(0.0f));
+		LabelSlot->SetVerticalAlignment(VAlign_Center);
+	}
+
+	return Row;
+}
+
+void AddGradientStep(UObject* Outer, UVerticalBox* GradientBox, const FLinearColor& Color)
+{
+	UBorder* Step = CreateColorBlock(Outer, Color);
+	GradientBox->AddChild(Step);
+	if (auto* StepSlot = Cast<UVerticalBoxSlot>(Step->Slot))
+	{
+		StepSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+	}
+}
+
+FLinearColor EvaluateGradientColor(const TArray<FLinearColor>& Colors, float T)
+{
+	if (Colors.IsEmpty())
+	{
+		return FLinearColor::White;
+	}
+
+	if (Colors.Num() == 1)
+	{
+		return Colors[0];
+	}
+
+	const float Scaled = FMath::Clamp(T, 0.0f, 1.0f) * static_cast<float>(Colors.Num() - 1);
+	const int32 Index = FMath::Min(FMath::FloorToInt(Scaled), Colors.Num() - 2);
+	const float LocalT = Scaled - static_cast<float>(Index);
+	return FMath::Lerp(Colors[Index], Colors[Index + 1], LocalT);
+}
+
+UTexture2D* CreateLegendGradientTexture(UObject* Outer, const TArray<FLinearColor>& TopToBottomColors)
+{
+	constexpr int32 TextureWidth = 16;
+	constexpr int32 TextureHeight = 128;
+
+	UTexture2D* Texture = UTexture2D::CreateTransient(TextureWidth, TextureHeight, PF_B8G8R8A8);
+	if (!Texture)
+	{
+		return nullptr;
+	}
+
+	Texture->SRGB = true;
+	Texture->CompressionSettings = TC_VectorDisplacementmap;
+	Texture->MipGenSettings = TMGS_NoMipmaps;
+
+	FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
+	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+	FColor* Pixels = static_cast<FColor*>(Data);
+
+	for (int32 Y = 0; Y < TextureHeight; ++Y)
+	{
+		const float T = static_cast<float>(Y) / static_cast<float>(TextureHeight - 1);
+		const FColor Color = EvaluateGradientColor(TopToBottomColors, T).ToFColor(true);
+
+		for (int32 X = 0; X < TextureWidth; ++X)
+		{
+			Pixels[Y * TextureWidth + X] = Color;
+		}
+	}
+
+	Mip.BulkData.Unlock();
+	Texture->UpdateResource();
+	return Texture;
+}
+
 void SetVerticalSlotPadding(UWidget* Widget, const FMargin& Padding)
 {
 	if (auto* VerticalSlot = Cast<UVerticalBoxSlot>(Widget ? Widget->Slot : nullptr))
@@ -350,6 +465,18 @@ UScrollBox* AddFilterScrollSection(UObject* Outer, UVerticalBox* Parent, float H
 	SectionBox->AddChild(ScrollBox);
 
 	return ScrollBox;
+}
+
+template <typename WidgetType>
+WidgetType* FindNamedWidget(UUserWidget* Widget, const TCHAR* WidgetName, bool bWarnIfMissing = true)
+{
+	WidgetType* NamedWidget = Widget ? Cast<WidgetType>(Widget->GetWidgetFromName(WidgetName)) : nullptr;
+	if (!NamedWidget && bWarnIfMissing)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UI_PCL widget binding failed: %s"), WidgetName);
+	}
+
+	return NamedWidget;
 }
 } // namespace
 
@@ -418,20 +545,20 @@ void APCLController::BeginPlay()
 		}
 
 		UIWidget->AddToViewport();
-		UnitDropdown = Cast<UComboBoxString>(UIWidget->GetWidgetFromName(TEXT("UnitDropDown")));
-		PointSizeSlider = Cast<USlider>(UIWidget->GetWidgetFromName(TEXT("Slider_PointsPerInch_1")));
-		PointsPerInchSlider = Cast<USlider>(UIWidget->GetWidgetFromName(TEXT("Slider_PointsPerInch")));
-		PointSizeValueText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("Text_PointSizeValue")));
-		PointsPerInchValueText = Cast<UTextBlock>(UIWidget->GetWidgetFromName(TEXT("Text_PointsPerInchValue")));
-		ColorModulationCheckBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("Checkbox_ColorModulation")));
-		RGBRendererCheckBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("Checkbox_Renderer_RGB")));
-		ClassRendererCheckBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("Checkbox_Renderer_Class")));
-		ElevationRendererCheckBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("Checkbox_Renderer_Elevation")));
-		IntensityRendererCheckBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(TEXT("Checkbox_Renderer_Intensity")));
-		CustomizeTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_CustomizeTab")));
-		FilterTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_FilterTab")));
-		VisualizeTabButton = Cast<UButton>(UIWidget->GetWidgetFromName(TEXT("Button_VisualizeTab")));
-		FilterPanel = Cast<UPanelWidget>(UIWidget->GetWidgetFromName(TEXT("Panel_Filter")));
+		UnitDropdown = FindNamedWidget<UComboBoxString>(UIWidget, TEXT("UnitDropDown"), false);
+		PointSizeSlider = FindNamedWidget<USlider>(UIWidget, TEXT("Slider_PointsSize"));
+		PointsPerInchSlider = FindNamedWidget<USlider>(UIWidget, TEXT("Slider_PointsPerInch"));
+		PointSizeValueText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_PointSizeValue"));
+		PointsPerInchValueText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_PointsPerInchValue"));
+		ColorModulationCheckBox = FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_ColorModulation"));
+		RGBRendererCheckBox = FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_Renderer_RGB"));
+		ClassRendererCheckBox = FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_Renderer_Class"));
+		ElevationRendererCheckBox = FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_Renderer_Elevation"));
+		IntensityRendererCheckBox = FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_Renderer_Intensity"));
+		CustomizeTabButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_CustomizeTab"));
+		FilterTabButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_FilterTab"));
+		VisualizeTabButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_VisualizeTab"));
+		FilterPanel = FindNamedWidget<UPanelWidget>(UIWidget, TEXT("Panel_Filter"));
 
 		if (PointSizeSlider)
 		{
@@ -493,6 +620,7 @@ void APCLController::BeginPlay()
 		UpdateSliderValueTexts();
 		UpdateRendererCheckBoxes();
 		BuildFilterTabUI();
+		BuildLegendUI();
 		CreatePointCloudLayer();
 		ApplyPointCloudVisualization();
 		ApplyPointCloudFilters();
@@ -555,33 +683,29 @@ void APCLController::SetColorModulationEnabled(bool bEnabled)
 
 void APCLController::SetPointCloudRenderer(EPCLRendererChoice RendererChoice)
 {
+	RefreshAvailablePointCloudAttributes();
+	if (!IsRendererAvailableFromCachedAttributes(RendererChoice))
+	{
+		RendererChoice = GetFallbackRendererChoice();
+	}
+
 	if (CurrentRendererChoice == RendererChoice)
 	{
+		UpdateRendererCheckBoxes();
+		BuildLegendUI();
 		return;
 	}
 
 	CurrentRendererChoice = RendererChoice;
 	UpdateRendererCheckBoxes();
+	BuildLegendUI();
 	ApplyPointCloudVisualization();
 }
 
 bool APCLController::IsPointCloudRendererAvailable(EPCLRendererChoice RendererChoice)
 {
 	RefreshAvailablePointCloudAttributes();
-
-	switch (RendererChoice)
-	{
-	case EPCLRendererChoice::RGB:
-		return !RGBAttributeName.IsEmpty();
-	case EPCLRendererChoice::Class:
-		return !ClassAttributeName.IsEmpty();
-	case EPCLRendererChoice::Elevation:
-		return !ElevationAttributeName.IsEmpty();
-	case EPCLRendererChoice::Intensity:
-		return !IntensityAttributeName.IsEmpty();
-	default:
-		return false;
-	}
+	return IsRendererAvailableFromCachedAttributes(RendererChoice);
 }
 
 void APCLController::OnColorModulationCheckStateChanged(bool bIsChecked)
@@ -742,21 +866,26 @@ void APCLController::CreatePointCloudLayer()
 		}
 	}
 
-	PointCloudLayer = UArcGISPointCloudLayer::CreateArcGISPointCloudLayerWithProperties(
-		PointCloudLayerSource, TEXT("Point Cloud Scene Layer"), 1.0f, true, MapComponent->GetAPIKey());
+	PointCloudLayer = UArcGISPointCloudLayer::CreateArcGISPointCloudLayer(PointCloudLayerSource, MapComponent->GetAPIKey());
 
 	if (!PointCloudLayer || !PointCloudLayer->APIObject)
 	{
 		return;
 	}
 
+	PointCloudLayer->SetOpacity(1.0f);
+	PointCloudLayer->SetIsVisible(true);
+
 	TWeakObjectPtr<APCLController> WeakThis(this);
 	PointCloudLayer->APIObject->SetDoneLoading([WeakThis](auto& LoadError) {
 		AsyncTask(ENamedThreads::GameThread, [WeakThis]() {
 			if (auto* Controller = WeakThis.Get())
 			{
+				Controller->RefreshAvailablePointCloudAttributes();
+				Controller->UpdateRendererCheckBoxes();
 				Controller->ApplyPointCloudVisualization();
 				Controller->BuildFilterTabUI();
+				Controller->BuildLegendUI();
 				Controller->ApplyPointCloudFilters();
 			}
 		});
@@ -794,6 +923,8 @@ void APCLController::ApplyPointCloudVisualization()
 		FMath::Clamp(PointSizeSlider ? static_cast<double>(PointSizeSlider->GetValue()) : DefaultPointSize, MinPointSize, MaxPointSize);
 	const double PointsPerInch = FMath::Max(PointsPerInchSlider ? static_cast<double>(PointsPerInchSlider->GetValue()) : DefaultPointsPerInch,
 											MinPointsPerInch);
+
+	EnsureAvailableRendererSelected();
 
 	auto ConfigureRenderer = [this, PointSize, PointsPerInch](auto& Renderer) {
 		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm SizeAlgorithm(
@@ -1000,9 +1131,67 @@ void APCLController::RefreshAvailablePointCloudAttributes()
 	}
 }
 
+bool APCLController::IsRendererAvailableFromCachedAttributes(EPCLRendererChoice RendererChoice) const
+{
+	switch (RendererChoice)
+	{
+	case EPCLRendererChoice::RGB:
+		return !RGBAttributeName.IsEmpty();
+	case EPCLRendererChoice::Class:
+		return !ClassAttributeName.IsEmpty();
+	case EPCLRendererChoice::Elevation:
+		return !ElevationAttributeName.IsEmpty();
+	case EPCLRendererChoice::Intensity:
+		return !IntensityAttributeName.IsEmpty();
+	default:
+		return false;
+	}
+}
+
+EPCLRendererChoice APCLController::GetFallbackRendererChoice() const
+{
+	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::RGB))
+	{
+		return EPCLRendererChoice::RGB;
+	}
+	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Class))
+	{
+		return EPCLRendererChoice::Class;
+	}
+	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Elevation))
+	{
+		return EPCLRendererChoice::Elevation;
+	}
+	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Intensity))
+	{
+		return EPCLRendererChoice::Intensity;
+	}
+
+	return EPCLRendererChoice::RGB;
+}
+
+void APCLController::EnsureAvailableRendererSelected()
+{
+	if (!IsRendererAvailableFromCachedAttributes(CurrentRendererChoice))
+	{
+		CurrentRendererChoice = GetFallbackRendererChoice();
+	}
+}
+
 void APCLController::UpdateRendererCheckBoxes()
 {
 	TGuardValue<bool> UpdatingGuard(bUpdatingRendererCheckBoxes, true);
+	const bool bHasLoadedRendererAttributes =
+		!RGBAttributeName.IsEmpty() || !ClassAttributeName.IsEmpty() || !ElevationAttributeName.IsEmpty() || !IntensityAttributeName.IsEmpty();
+
+	if (bHasLoadedRendererAttributes)
+	{
+		EnsureAvailableRendererSelected();
+		SetRendererOptionVisibility(EPCLRendererChoice::RGB, IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::RGB));
+		SetRendererOptionVisibility(EPCLRendererChoice::Class, IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Class));
+		SetRendererOptionVisibility(EPCLRendererChoice::Elevation, IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Elevation));
+		SetRendererOptionVisibility(EPCLRendererChoice::Intensity, IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Intensity));
+	}
 
 	if (RGBRendererCheckBox)
 	{
@@ -1022,6 +1211,57 @@ void APCLController::UpdateRendererCheckBoxes()
 	if (IntensityRendererCheckBox)
 	{
 		IntensityRendererCheckBox->SetIsChecked(CurrentRendererChoice == EPCLRendererChoice::Intensity);
+	}
+}
+
+void APCLController::SetRendererOptionVisibility(EPCLRendererChoice RendererChoice, bool bVisible)
+{
+	const ESlateVisibility Visibility = bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed;
+	const TCHAR* RowName = nullptr;
+	const TCHAR* CheckBoxName = nullptr;
+	const TCHAR* TextName = nullptr;
+
+	switch (RendererChoice)
+	{
+	case EPCLRendererChoice::RGB:
+		RowName = TEXT("Row_Checkbox_Renderer_RGB");
+		CheckBoxName = TEXT("Checkbox_Renderer_RGB");
+		TextName = TEXT("Text_Renderer_RGB");
+		break;
+	case EPCLRendererChoice::Class:
+		RowName = TEXT("Row_Checkbox_Renderer_Class");
+		CheckBoxName = TEXT("Checkbox_Renderer_Class");
+		TextName = TEXT("Text_Renderer_Class");
+		break;
+	case EPCLRendererChoice::Elevation:
+		RowName = TEXT("Row_Checkbox_Renderer_Elevation");
+		CheckBoxName = TEXT("Checkbox_Renderer_Elevation");
+		TextName = TEXT("Text_Renderer_Elevation");
+		break;
+	case EPCLRendererChoice::Intensity:
+		RowName = TEXT("Row_Checkbox_Renderer_Intensity");
+		CheckBoxName = TEXT("Checkbox_Renderer_Intensity");
+		TextName = TEXT("Text_Renderer_Intensity");
+		break;
+	default:
+		return;
+	}
+
+	if (UWidget* Row = UIWidget ? UIWidget->GetWidgetFromName(RowName) : nullptr)
+	{
+		Row->SetVisibility(Visibility);
+		return;
+	}
+
+	if (UWidget* CheckBox = UIWidget ? UIWidget->GetWidgetFromName(CheckBoxName) : nullptr)
+	{
+		CheckBox->SetVisibility(Visibility);
+		CheckBox->SetIsEnabled(bVisible);
+	}
+	if (UWidget* Text = UIWidget ? UIWidget->GetWidgetFromName(TextName) : nullptr)
+	{
+		Text->SetVisibility(Visibility);
+		Text->SetIsEnabled(bVisible);
 	}
 }
 
@@ -1153,6 +1393,176 @@ void APCLController::BuildFilterTabUI()
 	ResetFilterSelections(false);
 }
 
+void APCLController::BuildLegendUI()
+{
+	if (!UIWidget || !UIWidget->WidgetTree)
+	{
+		return;
+	}
+
+	if (LegendPanel)
+	{
+		LegendPanel->RemoveFromParent();
+		LegendPanel = nullptr;
+	}
+	LegendTextures.Reset();
+
+	if (CurrentTabLayout != EPCLTabLayout::Visualize)
+	{
+		return;
+	}
+
+	UCanvasPanel* RootCanvas = Cast<UCanvasPanel>(UIWidget->WidgetTree->RootWidget);
+	if (!RootCanvas)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UI_PCL legend binding failed: root widget is not a canvas panel."));
+		return;
+	}
+
+	const bool bCompact = CurrentRendererChoice == EPCLRendererChoice::RGB;
+	const FVector2D LegendSize = bCompact ? FVector2D(LegendCompactWidth, LegendCompactHeight) : FVector2D(LegendExpandedWidth, LegendExpandedHeight);
+
+	LegendPanel = NewObject<UCanvasPanel>(UIWidget);
+	UCanvasPanelSlot* LegendSlot = RootCanvas->AddChildToCanvas(LegendPanel);
+	if (LegendSlot)
+	{
+		LegendSlot->SetAnchors(FAnchors(1.0f, 1.0f, 1.0f, 1.0f));
+		LegendSlot->SetAlignment(FVector2D(1.0f, 1.0f));
+		LegendSlot->SetPosition(FVector2D(-64.0f, -82.0f));
+		LegendSlot->SetSize(LegendSize);
+		LegendSlot->SetZOrder(30);
+	}
+
+	UBorder* Background = CreateColorBlock(UIWidget, FLinearColor(0.05f, 0.05f, 0.06f, 0.78f));
+	UCanvasPanelSlot* BackgroundSlot = LegendPanel->AddChildToCanvas(Background);
+	if (BackgroundSlot)
+	{
+		BackgroundSlot->SetPosition(FVector2D::ZeroVector);
+		BackgroundSlot->SetSize(LegendSize);
+	}
+
+	UBorder* Accent = CreateColorBlock(UIWidget, FLinearColor(0.58f, 0.23f, 1.0f, 1.0f));
+	UCanvasPanelSlot* AccentSlot = LegendPanel->AddChildToCanvas(Accent);
+	if (AccentSlot)
+	{
+		AccentSlot->SetPosition(FVector2D::ZeroVector);
+		AccentSlot->SetSize(FVector2D(8.0f, LegendSize.Y));
+	}
+
+	UVerticalBox* Content = NewObject<UVerticalBox>(UIWidget);
+	UCanvasPanelSlot* ContentSlot = LegendPanel->AddChildToCanvas(Content);
+	if (ContentSlot)
+	{
+		ContentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(56.0f, 28.0f));
+		ContentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(270.0f, 260.0f));
+	}
+
+	if (CurrentRendererChoice == EPCLRendererChoice::RGB)
+	{
+		Content->AddChild(CreateText(UIWidget, TEXT("No legend"), 26, MakeSlateColor(0.78f, 0.78f, 0.82f)));
+		return;
+	}
+
+	FString LegendTitle = PointCloudLayer ? PointCloudLayer->GetName() : FString();
+	if (LegendTitle.TrimStartAndEnd().IsEmpty())
+	{
+		LegendTitle = TEXT("Point cloud layer");
+	}
+
+	UTextBlock* Title = CreateText(UIWidget, LegendTitle, 25, MakeSlateColor(0.78f, 0.78f, 0.82f));
+	Content->AddChild(Title);
+	SetVerticalSlotPadding(Title, FMargin(0.0f, 0.0f, 0.0f, 34.0f));
+
+	if (CurrentRendererChoice == EPCLRendererChoice::Class)
+	{
+		UTextBlock* Heading = CreateText(UIWidget, TEXT("Class Code"), 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+		Content->AddChild(Heading);
+		SetVerticalSlotPadding(Heading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
+
+		UScrollBox* ClassList = NewObject<UScrollBox>(UIWidget);
+		ClassList->SetOrientation(EOrientation::Orient_Vertical);
+		ClassList->SetScrollBarVisibility(ESlateVisibility::Visible);
+		ClassList->SetAlwaysShowScrollbar(true);
+		ClassList->SetScrollbarThickness(FVector2D(8.0f, 8.0f));
+		Content->AddChild(ClassList);
+
+		const int32 VisibleClassCodes[] = {1, 2, 3, 5, 6, 7, 9};
+		for (int32 ClassCode : VisibleClassCodes)
+		{
+			FString Label;
+			uint8 Red = 0;
+			uint8 Green = 0;
+			uint8 Blue = 0;
+			GetStandardClassInfo(ClassCode, Label, Red, Green, Blue);
+			AddLegendRow(UIWidget, ClassList, Label, FLinearColor(Red / 255.0f, Green / 255.0f, Blue / 255.0f, 1.0f));
+		}
+
+		return;
+	}
+
+	const bool bElevationLegend = CurrentRendererChoice == EPCLRendererChoice::Elevation;
+	UTextBlock* Heading = CreateText(UIWidget, bElevationLegend ? TEXT("Elevation") : TEXT("Intensity"), 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	Content->AddChild(Heading);
+	SetVerticalSlotPadding(Heading, FMargin(0.0f, 0.0f, 0.0f, 26.0f));
+
+	UHorizontalBox* GradientRow = NewObject<UHorizontalBox>(UIWidget);
+	Content->AddChild(GradientRow);
+
+	USizeBox* GradientSizeBox = NewObject<USizeBox>(UIWidget);
+	GradientSizeBox->SetWidthOverride(36.0f);
+	GradientSizeBox->SetHeightOverride(122.0f);
+	GradientRow->AddChild(GradientSizeBox);
+	SetHorizontalSlotPadding(GradientSizeBox, FMargin(6.0f, 0.0f, 18.0f, 0.0f));
+
+	TArray<FLinearColor> GradientColors;
+	if (bElevationLegend)
+	{
+		GradientColors = {
+			FLinearColor(0.95f, 0.12f, 0.08f),
+			FLinearColor(1.0f, 0.9f, 0.2f),
+			FLinearColor(0.35f, 0.95f, 0.48f),
+			FLinearColor(0.25f, 0.82f, 1.0f),
+			FLinearColor(0.22f, 0.12f, 1.0f)
+		};
+	}
+	else
+	{
+		GradientColors = {
+			FLinearColor::White,
+			FLinearColor(0.65f, 0.65f, 0.65f),
+			FLinearColor(0.16f, 0.16f, 0.16f),
+			FLinearColor::Black
+		};
+	}
+
+	if (UTexture2D* GradientTexture = CreateLegendGradientTexture(UIWidget, GradientColors))
+	{
+		LegendTextures.Add(GradientTexture);
+
+		UImage* GradientImage = NewObject<UImage>(UIWidget);
+		GradientImage->SetBrushFromTexture(GradientTexture, true);
+		GradientSizeBox->AddChild(GradientImage);
+	}
+
+	UVerticalBox* LabelColumn = NewObject<UVerticalBox>(UIWidget);
+	GradientRow->AddChild(LabelColumn);
+	SetHorizontalSlotPadding(LabelColumn, FMargin(0.0f));
+
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("> 3.5") : TEXT("> 65,680"), 20, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+
+	USpacer* TopSpacer = NewObject<USpacer>(UIWidget);
+	TopSpacer->SetSize(FVector2D(1.0f, 31.0f));
+	LabelColumn->AddChild(TopSpacer);
+
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("1.5") : TEXT("38,032"), 20, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+
+	USpacer* BottomSpacer = NewObject<USpacer>(UIWidget);
+	BottomSpacer->SetSize(FVector2D(1.0f, 31.0f));
+	LabelColumn->AddChild(BottomSpacer);
+
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("< -1.5") : TEXT("< 10,385"), 20, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+}
+
 void APCLController::ResetFilterSelections(bool bApplyFilters)
 {
 	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
@@ -1270,6 +1680,8 @@ void APCLController::ClearActiveFilters()
 
 void APCLController::SetTabLayout(EPCLTabLayout Layout)
 {
+	CurrentTabLayout = Layout;
+
 	float HeightOffset = 0.0f;
 	if (Layout == EPCLTabLayout::Visualize)
 	{
@@ -1284,6 +1696,8 @@ void APCLController::SetTabLayout(EPCLTabLayout Layout)
 	{
 		SetNamedWidgetHeightOffset(WidgetName, HeightOffset);
 	}
+
+	BuildLegendUI();
 }
 
 void APCLController::SetNamedWidgetHeightOffset(const FName& WidgetName, float HeightOffset)

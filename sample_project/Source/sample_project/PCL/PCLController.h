@@ -13,6 +13,7 @@
 #include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
+#include "Components/CanvasPanel.h"
 #include "Components/CheckBox.h"
 #include "Components/ComboBoxString.h"
 #include "Components/PanelWidget.h"
@@ -30,6 +31,7 @@
 #include "PCLController.generated.h"
 
 class AInputManager;
+class UTexture2D;
 
 UENUM(BlueprintType)
 enum class EPCLRendererChoice : uint8
@@ -125,6 +127,12 @@ private:
 	TObjectPtr<UButton> VisualizeTabButton;
 
 	UPROPERTY()
+	TObjectPtr<UCanvasPanel> LegendPanel;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UTexture2D>> LegendTextures;
+
+	UPROPERTY()
 	TObjectPtr<UPanelWidget> FilterPanel;
 
 	UPROPERTY()
@@ -156,6 +164,8 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PCL|Visualize", meta = (AllowPrivateAccess))
 	bool bColorModulationEnabled = false;
+
+	EPCLTabLayout CurrentTabLayout = EPCLTabLayout::Default;
 
 	bool bUpdatingRendererCheckBoxes = false;
 
@@ -231,9 +241,14 @@ private:
 	void ApplyPointCloudVisualization();
 	void ApplyPointCloudFilters();
 	void RefreshAvailablePointCloudAttributes();
+	bool IsRendererAvailableFromCachedAttributes(EPCLRendererChoice RendererChoice) const;
+	EPCLRendererChoice GetFallbackRendererChoice() const;
+	void EnsureAvailableRendererSelected();
 	void UpdateRendererCheckBoxes();
+	void SetRendererOptionVisibility(EPCLRendererChoice RendererChoice, bool bVisible);
 	void UpdateSliderValueTexts() const;
 	void BuildFilterTabUI();
+	void BuildLegendUI();
 	bool AreAllClassOptionsSelected() const;
 	bool AreAnyClassOptionsSelected() const;
 	bool AreAllReturnsOptionsSelected() const;
