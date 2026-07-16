@@ -59,8 +59,8 @@ constexpr double IntensityMid = 38032.0;
 constexpr double IntensityHigh = 65680.0;
 constexpr float LegendCompactWidth = 345.0f;
 constexpr float LegendCompactHeight = 76.0f;
-constexpr float LegendExpandedWidth = 360.0f;
-constexpr float LegendExpandedHeight = 320.0f;
+constexpr float LegendExpandedWidth = 480.0f;
+constexpr float LegendExpandedHeight = 430.0f;
 constexpr float VisualizeTabHeightOffset = 150.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
 const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
@@ -309,34 +309,98 @@ UBorder* CreateColorBlock(UObject* Outer, const FLinearColor& Color)
 	return ColorBlock;
 }
 
-UHorizontalBox* AddLegendRow(UObject* Outer, UPanelWidget* Parent, const FString& Label, const FLinearColor& Color)
+UTexture2D* CreateLegendCircleTexture(UObject* Outer, const FLinearColor& Color)
+{
+	constexpr int32 TextureSize = 32;
+	constexpr float Center = (TextureSize - 1) * 0.5f;
+	constexpr float Radius = 10.5f;
+
+	UTexture2D* Texture = UTexture2D::CreateTransient(TextureSize, TextureSize, PF_B8G8R8A8);
+	if (!Texture)
+	{
+		return nullptr;
+	}
+
+	Texture->SRGB = true;
+	Texture->CompressionSettings = TC_VectorDisplacementmap;
+	Texture->MipGenSettings = TMGS_NoMipmaps;
+
+	FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
+	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+	FColor* Pixels = static_cast<FColor*>(Data);
+	const FColor FillColor = Color.ToFColor(true);
+
+	for (int32 Y = 0; Y < TextureSize; ++Y)
+	{
+		for (int32 X = 0; X < TextureSize; ++X)
+		{
+			const float DX = X - Center;
+			const float DY = Y - Center;
+			Pixels[Y * TextureSize + X] = (DX * DX + DY * DY) <= Radius * Radius ? FillColor : FColor(0, 0, 0, 0);
+		}
+	}
+
+	Mip.BulkData.Unlock();
+	Texture->UpdateResource();
+	return Texture;
+}
+
+void ApplyLegendTitleFont(UTextBlock* Title)
+{
+	if (!Title)
+	{
+		return;
+	}
+
+	UObject* FontObject = LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
+	if (!FontObject)
+	{
+		return;
+	}
+
+	FSlateFontInfo Font = Title->GetFont();
+	Font.FontObject = FontObject;
+	Font.Size = 30;
+	Title->SetFont(Font);
+}
+
+UHorizontalBox* AddLegendRow(UObject* Outer, UPanelWidget* Parent, const FString& Label, const FLinearColor& Color, UTexture2D* CircleTexture = nullptr)
 {
 	UHorizontalBox* Row = NewObject<UHorizontalBox>(Outer);
 	Parent->AddChild(Row);
 	if (auto* VerticalSlot = Cast<UVerticalBoxSlot>(Row->Slot))
 	{
-		VerticalSlot->SetPadding(FMargin(0.0f, 1.0f, 0.0f, 1.0f));
+		VerticalSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 1.0f));
 	}
 	else if (auto* ScrollSlot = Cast<UScrollBoxSlot>(Row->Slot))
 	{
-		ScrollSlot->SetPadding(FMargin(0.0f, 1.0f, 0.0f, 1.0f));
+		ScrollSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 1.0f));
 	}
 
 	USizeBox* SwatchBox = NewObject<USizeBox>(Outer);
-	SwatchBox->SetWidthOverride(20.0f);
-	SwatchBox->SetHeightOverride(20.0f);
+	SwatchBox->SetWidthOverride(26.0f);
+	SwatchBox->SetHeightOverride(24.0f);
 	Row->AddChild(SwatchBox);
 	if (auto* SwatchSlot = Cast<UHorizontalBoxSlot>(SwatchBox->Slot))
 	{
-		SwatchSlot->SetPadding(FMargin(0.0f, 3.0f, 12.0f, 3.0f));
+		SwatchSlot->SetPadding(FMargin(0.0f, 0.0f, 8.0f, 0.0f));
 		SwatchSlot->SetVerticalAlignment(VAlign_Center);
 		SwatchSlot->SetHorizontalAlignment(HAlign_Center);
 	}
 
-	UBorder* Swatch = CreateColorBlock(Outer, Color);
-	SwatchBox->AddChild(Swatch);
+	if (CircleTexture)
+	{
+		UImage* Swatch = NewObject<UImage>(Outer);
+		Swatch->SetBrushFromTexture(CircleTexture, true);
+		SwatchBox->AddChild(Swatch);
+	}
+	else
+	{
+		UBorder* Swatch = CreateColorBlock(Outer, Color);
+		SwatchBox->AddChild(Swatch);
+	}
 
-	UTextBlock* LabelText = CreateText(Outer, Label, 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	UTextBlock* LabelText = CreateText(Outer, Label, 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
 	Row->AddChild(LabelText);
 	if (auto* LabelSlot = Cast<UHorizontalBoxSlot>(LabelText->Slot))
 	{
@@ -1453,8 +1517,8 @@ void APCLController::BuildLegendUI()
 	UCanvasPanelSlot* ContentSlot = LegendPanel->AddChildToCanvas(Content);
 	if (ContentSlot)
 	{
-		ContentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(56.0f, 28.0f));
-		ContentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(270.0f, 260.0f));
+		ContentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(72.0f, 28.0f));
+		ContentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(378.0f, 360.0f));
 	}
 
 	if (CurrentRendererChoice == EPCLRendererChoice::RGB)
@@ -1469,22 +1533,30 @@ void APCLController::BuildLegendUI()
 		LegendTitle = TEXT("Point cloud layer");
 	}
 
-	UTextBlock* Title = CreateText(UIWidget, LegendTitle, 25, MakeSlateColor(0.78f, 0.78f, 0.82f));
+	UTextBlock* Title = CreateText(UIWidget, LegendTitle, 30, MakeSlateColor(0.78f, 0.78f, 0.82f));
+	ApplyLegendTitleFont(Title);
+	Title->SetRenderTranslation(FVector2D(-22.0f, 0.0f));
 	Content->AddChild(Title);
-	SetVerticalSlotPadding(Title, FMargin(0.0f, 0.0f, 0.0f, 34.0f));
+	SetVerticalSlotPadding(Title, FMargin(0.0f, 0.0f, 0.0f, 36.0f));
 
 	if (CurrentRendererChoice == EPCLRendererChoice::Class)
 	{
-		UTextBlock* Heading = CreateText(UIWidget, TEXT("Class Code"), 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+		UTextBlock* Heading = CreateText(UIWidget, TEXT("Class Code"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
 		Content->AddChild(Heading);
 		SetVerticalSlotPadding(Heading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
+
+		USizeBox* ClassListBox = NewObject<USizeBox>(UIWidget);
+		ClassListBox->SetWidthOverride(368.0f);
+		ClassListBox->SetHeightOverride(236.0f);
+		Content->AddChild(ClassListBox);
 
 		UScrollBox* ClassList = NewObject<UScrollBox>(UIWidget);
 		ClassList->SetOrientation(EOrientation::Orient_Vertical);
 		ClassList->SetScrollBarVisibility(ESlateVisibility::Visible);
 		ClassList->SetAlwaysShowScrollbar(true);
-		ClassList->SetScrollbarThickness(FVector2D(8.0f, 8.0f));
-		Content->AddChild(ClassList);
+		ClassList->SetAlwaysShowScrollbarTrack(true);
+		ClassList->SetScrollbarThickness(FVector2D(14.0f, 14.0f));
+		ClassListBox->AddChild(ClassList);
 
 		const int32 VisibleClassCodes[] = {1, 2, 3, 5, 6, 7, 9};
 		for (int32 ClassCode : VisibleClassCodes)
@@ -1494,14 +1566,20 @@ void APCLController::BuildLegendUI()
 			uint8 Green = 0;
 			uint8 Blue = 0;
 			GetStandardClassInfo(ClassCode, Label, Red, Green, Blue);
-			AddLegendRow(UIWidget, ClassList, Label, FLinearColor(Red / 255.0f, Green / 255.0f, Blue / 255.0f, 1.0f));
+			const FLinearColor ClassColor(Red / 255.0f, Green / 255.0f, Blue / 255.0f, 1.0f);
+			UTexture2D* CircleTexture = CreateLegendCircleTexture(UIWidget, ClassColor);
+			if (CircleTexture)
+			{
+				LegendTextures.Add(CircleTexture);
+			}
+			AddLegendRow(UIWidget, ClassList, Label, ClassColor, CircleTexture);
 		}
 
 		return;
 	}
 
 	const bool bElevationLegend = CurrentRendererChoice == EPCLRendererChoice::Elevation;
-	UTextBlock* Heading = CreateText(UIWidget, bElevationLegend ? TEXT("Elevation") : TEXT("Intensity"), 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	UTextBlock* Heading = CreateText(UIWidget, bElevationLegend ? TEXT("Elevation") : TEXT("Intensity"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
 	Content->AddChild(Heading);
 	SetVerticalSlotPadding(Heading, FMargin(0.0f, 0.0f, 0.0f, 26.0f));
 
@@ -1548,19 +1626,19 @@ void APCLController::BuildLegendUI()
 	GradientRow->AddChild(LabelColumn);
 	SetHorizontalSlotPadding(LabelColumn, FMargin(0.0f));
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("> 3.5") : TEXT("> 65,680"), 20, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("> 3.5") : TEXT("> 65,680"), 17, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 
 	USpacer* TopSpacer = NewObject<USpacer>(UIWidget);
 	TopSpacer->SetSize(FVector2D(1.0f, 31.0f));
 	LabelColumn->AddChild(TopSpacer);
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("1.5") : TEXT("38,032"), 20, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("1.5") : TEXT("38,032"), 17, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 
 	USpacer* BottomSpacer = NewObject<USpacer>(UIWidget);
 	BottomSpacer->SetSize(FVector2D(1.0f, 31.0f));
 	LabelColumn->AddChild(BottomSpacer);
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("< -1.5") : TEXT("< 10,385"), 20, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("< -1.5") : TEXT("< 10,385"), 17, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 }
 
 void APCLController::ResetFilterSelections(bool bApplyFilters)
