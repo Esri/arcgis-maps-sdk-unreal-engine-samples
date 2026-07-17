@@ -16,6 +16,7 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CheckBox.h"
 #include "Components/ComboBoxString.h"
+#include "Components/EditableTextBox.h"
 #include "Components/PanelWidget.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
@@ -150,6 +151,18 @@ private:
 	UPROPERTY()
 	TObjectPtr<UButton> ResetFiltersButton;
 
+	UPROPERTY()
+	TObjectPtr<UEditableTextBox> SourceUrlTextBox;
+
+	UPROPERTY()
+	TObjectPtr<UButton> LoadLayerButton;
+
+	UPROPERTY()
+	TObjectPtr<UTextBlock> LayerLoadStatusText;
+
+	UPROPERTY()
+	TObjectPtr<UTextBlock> LoadLayerButtonText;
+
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<AArcGISMapActor> MapActor;
 
@@ -158,6 +171,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<class UArcGISPointCloudLayer> PointCloudLayer;
+
+	UPROPERTY()
+	TObjectPtr<class UArcGISPointCloudLayer> PendingPointCloudLayer;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PCL|Visualize", meta = (AllowPrivateAccess))
 	EPCLRendererChoice CurrentRendererChoice = EPCLRendererChoice::RGB;
@@ -185,6 +201,11 @@ private:
 	TUniquePtr<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter> ActiveReturnsFilter;
 
 	bool bUpdatingFilterCheckBoxes = false;
+	uint64 LayerLoadRequestId = 0;
+	FString DeferredPointCloudLayerSource;
+	float DeferredPointCloudLayerRetrySeconds = 0.0f;
+	int32 PointCloudLayerLoadRetryCount = 0;
+	bool bDeferredZoomWhenLoaded = false;
 
 	UPROPERTY()
 	TObjectPtr<UArcGISSpatialReference> SpatialReference;
@@ -237,7 +258,13 @@ private:
 	UFUNCTION()
 	void OnResetFiltersClicked();
 
-	void CreatePointCloudLayer();
+	UFUNCTION()
+	void OnLoadPointCloudLayerClicked();
+
+	void CreatePointCloudLayer(const FString& Source, bool bZoomWhenLoaded);
+	void BuildDataLoaderUI();
+	void DeferPointCloudLayerLoad(const FString& Source, bool bZoomWhenLoaded);
+	void SetLayerLoadStatus(bool bSucceeded) const;
 	void ApplyPointCloudVisualization();
 	bool UpdateCurrentRendererSettings();
 	void ApplyPointCloudFilters();

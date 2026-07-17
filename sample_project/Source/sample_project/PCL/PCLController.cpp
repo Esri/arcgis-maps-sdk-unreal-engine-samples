@@ -19,10 +19,13 @@
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudUniqueValueRenderer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudValueFilter.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudValueFilterMode.h"
+#include "ArcGISMapsSDK/API/GameEngine/Map/ArcGISMap.h"
 #include "ArcGISMapsSDK/API/GameEngine/Map/Symbology/ArcGISSymbolSizeUnits.h"
 #include "ArcGISMapsSDK/API/Standard/ArcGISRGBColor.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISCollection.h"
+#include "ArcGISMapsSDK/API/Unreal/ArcGISException.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISImmutableCollection.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Extent/ArcGISExtentRectangle.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGISPointCloudLayer.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
@@ -65,6 +68,8 @@ constexpr float LegendExpandedWidth = 390.0f;
 constexpr float LegendExpandedHeight = 382.0f;
 constexpr float VisualizeTabHeightOffset = 150.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
+constexpr float PointCloudLayerLoadRetryInterval = 0.25f;
+constexpr int32 MaxPointCloudLayerLoadRetries = 40;
 const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
 const FName ExpandableTabWidgetNames[] = {
 	TEXT("CanvasPanel_37"),
@@ -85,6 +90,12 @@ const TCHAR* FilterReturnLabels[] = {TEXT("First of many"), TEXT("Last"), TEXT("
 FText FormatSliderValue(float Value)
 {
 	return FText::FromString(FString::Printf(TEXT("%.0f"), Value));
+}
+
+bool IsValidPointCloudSource(const FString& Source)
+{
+	return !Source.IsEmpty() && (Source.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase) ||
+								 Source.StartsWith(TEXT("http://"), ESearchCase::IgnoreCase));
 }
 
 FString NormalizeAttributeName(FString Name)
@@ -407,6 +418,25 @@ void ApplyChakraPetchSemiBoldFont(UTextBlock* TextBlock, int32 FontSize)
 	TextBlock->SetFont(Font);
 }
 
+void ApplyChakraPetchRegularFont(UTextBlock* TextBlock, int32 FontSize)
+{
+	if (!TextBlock)
+	{
+		return;
+	}
+
+	UObject* FontObject = LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font"));
+	if (!FontObject)
+	{
+		return;
+	}
+
+	FSlateFontInfo Font = TextBlock->GetFont();
+	Font.FontObject = FontObject;
+	Font.Size = FontSize;
+	TextBlock->SetFont(Font);
+}
+
 UHorizontalBox* AddLegendRow(UObject* Outer, UPanelWidget* Parent, const FString& Label, const FLinearColor& Color, UTexture2D* CircleTexture = nullptr)
 {
 	UHorizontalBox* Row = NewObject<UHorizontalBox>(Outer);
@@ -688,6 +718,20 @@ void APCLController::BeginPlay()
 		VisualizeTabButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_VisualizeTab"));
 		FilterPanel = FindNamedWidget<UPanelWidget>(UIWidget, TEXT("Panel_FilterDynamicContent"));
 		ResetFiltersButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_ResetFilters"));
+		SourceUrlTextBox = FindNamedWidget<UEditableTextBox>(UIWidget, TEXT("EditableTextBox_0"));
+		LoadLayerButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Load"));
+		LayerLoadStatusText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"), false);
+		BuildDataLoaderUI();
+
+		if (SourceUrlTextBox)
+		{
+			SourceUrlTextBox->SetText(FText::FromString(PointCloudLayerSource));
+		}
+
+		if (LayerLoadStatusText)
+		{
+			LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
+		}
 
 		if (PointSizeSlider)
 		{
@@ -751,11 +795,16 @@ void APCLController::BeginPlay()
 			ResetFiltersButton->OnClicked.AddDynamic(this, &APCLController::OnResetFiltersClicked);
 		}
 
+		if (LoadLayerButton)
+		{
+			LoadLayerButton->OnClicked.AddDynamic(this, &APCLController::OnLoadPointCloudLayerClicked);
+		}
+
 		UpdateSliderValueTexts();
 		UpdateRendererCheckBoxes();
 		BuildFilterTabUI();
 		BuildLegendUI();
-		CreatePointCloudLayer();
+		CreatePointCloudLayer(PointCloudLayerSource, false);
 		ApplyPointCloudVisualization();
 		ApplyPointCloudFilters();
 
@@ -782,6 +831,17 @@ void APCLController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!DeferredPointCloudLayerSource.IsEmpty())
+	{
+		DeferredPointCloudLayerRetrySeconds -= DeltaTime;
+		if (DeferredPointCloudLayerRetrySeconds <= 0.0f)
+		{
+			const FString Source = DeferredPointCloudLayerSource;
+			const bool bZoomWhenLoaded = bDeferredZoomWhenLoaded;
+			DeferredPointCloudLayerSource.Reset();
+			CreatePointCloudLayer(Source, bZoomWhenLoaded);
+		}
+	}
 }
 
 void APCLController::OnInputTriggered()
@@ -971,68 +1031,328 @@ void APCLController::OnResetFiltersClicked()
 	ResetFilterSelections(true);
 }
 
-void APCLController::CreatePointCloudLayer()
+void APCLController::OnLoadPointCloudLayerClicked()
 {
-	PointCloudLayer = nullptr;
+	FString Source = SourceUrlTextBox ? SourceUrlTextBox->GetText().ToString() : FString();
+	Source.TrimStartAndEndInline();
+
+	if (SourceUrlTextBox)
+	{
+		SourceUrlTextBox->SetText(FText::FromString(Source));
+	}
+
+	if (!IsValidPointCloudSource(Source))
+	{
+		SetLayerLoadStatus(false);
+		return;
+	}
+
+	DeferredPointCloudLayerSource.Reset();
+	PointCloudLayerLoadRetryCount = 0;
+	CreatePointCloudLayer(Source, true);
+}
+
+void APCLController::BuildDataLoaderUI()
+{
+	if (!UIWidget || !UIWidget->WidgetTree)
+	{
+		return;
+	}
+
+	UCanvasPanel* RootCanvas = FindNamedWidget<UCanvasPanel>(UIWidget, TEXT("CanvasPanel_37"));
+	if (!RootCanvas)
+	{
+		return;
+	}
+
+	if (!LayerLoadStatusText)
+	{
+		LayerLoadStatusText = NewObject<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"));
+	}
+
+	LayerLoadStatusText->SetText(FText::GetEmpty());
+	LayerLoadStatusText->SetColorAndOpacity(MakeSlateColor(0.42f, 0.78f, 0.04f));
+	ApplyChakraPetchRegularFont(LayerLoadStatusText, 16);
+	LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
+	LayerLoadStatusText->SetIsEnabled(true);
+
+	if (!LayerLoadStatusText->GetParent())
+	{
+		if (UCanvasPanelSlot* StatusSlot = RootCanvas->AddChildToCanvas(LayerLoadStatusText))
+		{
+			StatusSlot->SetAnchors(FAnchors(1.0f, 0.0f, 1.0f, 0.0f));
+			StatusSlot->SetAlignment(FVector2D::ZeroVector);
+			StatusSlot->SetPosition(FVector2D(-829.921875f, 264.0f));
+			StatusSlot->SetSize(FVector2D(560.0f, 30.0f));
+			StatusSlot->SetZOrder(10);
+		}
+	}
+
+	if (LoadLayerButton)
+	{
+		LoadLayerButtonText = Cast<UTextBlock>(LoadLayerButton->GetContent());
+		if (!LoadLayerButtonText)
+		{
+			LoadLayerButtonText = NewObject<UTextBlock>(UIWidget, TEXT("Text_LoadLayer"));
+			LoadLayerButton->AddChild(LoadLayerButtonText);
+		}
+
+		LoadLayerButtonText->SetText(FText::FromString(TEXT("Load")));
+		LoadLayerButtonText->SetColorAndOpacity(MakeSlateColor(1.0f, 1.0f, 1.0f));
+		ApplyChakraPetchSemiBoldFont(LoadLayerButtonText, 20);
+		if (auto* ButtonSlot = Cast<UButtonSlot>(LoadLayerButtonText->Slot))
+		{
+			ButtonSlot->SetHorizontalAlignment(HAlign_Center);
+			ButtonSlot->SetVerticalAlignment(VAlign_Center);
+		}
+
+		const FSlateRoundedBoxBrush NormalBrush(FLinearColor(0.58f, 0.22f, 1.0f), 6.0f);
+		const FSlateRoundedBoxBrush HoveredBrush(FLinearColor(0.66f, 0.34f, 1.0f), 6.0f);
+		const FSlateRoundedBoxBrush PressedBrush(FLinearColor(0.48f, 0.15f, 0.88f), 6.0f);
+		FButtonStyle ButtonStyle = LoadLayerButton->GetStyle();
+		ButtonStyle.SetNormal(NormalBrush);
+		ButtonStyle.SetHovered(HoveredBrush);
+		ButtonStyle.SetPressed(PressedBrush);
+		LoadLayerButton->SetStyle(ButtonStyle);
+		LoadLayerButton->SetBackgroundColor(FLinearColor::White);
+	}
+}
+
+void APCLController::DeferPointCloudLayerLoad(const FString& Source, bool bZoomWhenLoaded)
+{
+	++PointCloudLayerLoadRetryCount;
+	if (PointCloudLayerLoadRetryCount > MaxPointCloudLayerLoadRetries)
+	{
+		DeferredPointCloudLayerSource.Reset();
+		SetLayerLoadStatus(false);
+		if (LoadLayerButton)
+		{
+			LoadLayerButton->SetIsEnabled(true);
+		}
+		UE_LOG(LogTemp, Warning, TEXT("ArcGIS Map was not ready after %.1f seconds; point cloud layer load was cancelled."),
+			MaxPointCloudLayerLoadRetries * PointCloudLayerLoadRetryInterval);
+		return;
+	}
+
+	DeferredPointCloudLayerSource = Source;
+	bDeferredZoomWhenLoaded = bZoomWhenLoaded;
+	DeferredPointCloudLayerRetrySeconds = PointCloudLayerLoadRetryInterval;
+	if (LoadLayerButton)
+	{
+		LoadLayerButton->SetIsEnabled(false);
+	}
+	if (LayerLoadStatusText)
+	{
+		LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void APCLController::SetLayerLoadStatus(bool bSucceeded) const
+{
+	if (!LayerLoadStatusText)
+	{
+		return;
+	}
+
+	LayerLoadStatusText->SetText(FText::FromString(
+		bSucceeded ? TEXT("Layer loaded successfully...") : TEXT("Failed to load point scene layer!")));
+	LayerLoadStatusText->SetColorAndOpacity(
+		FSlateColor(bSucceeded ? FLinearColor(0.42f, 0.78f, 0.04f) : FLinearColor(0.93f, 0.31f, 0.43f)));
+	LayerLoadStatusText->SetVisibility(ESlateVisibility::Visible);
+	if (!bSucceeded && LoadLayerButton)
+	{
+		LoadLayerButton->SetIsEnabled(true);
+	}
+}
+
+void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhenLoaded)
+{
+	if (!IsValidPointCloudSource(Source))
+	{
+		SetLayerLoadStatus(false);
+		return;
+	}
 
 	if (!MapComponent)
 	{
+		SetLayerLoadStatus(false);
 		return;
 	}
 
 	auto* Map = MapComponent->GetMap();
-	if (!Map)
+	if (!Map || !Map->APIObject || !static_cast<bool>(*Map->APIObject))
 	{
+		DeferPointCloudLayerLoad(Source, bZoomWhenLoaded);
 		return;
 	}
 
-	auto* MapLayers = Map->GetLayers();
+	UArcGISLayerCollection* MapLayers = nullptr;
+	try
+	{
+		MapLayers = Map->GetLayers();
+	}
+	catch (const Esri::Unreal::ArcGISException& LoadError)
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("ArcGIS Map is not ready for point cloud layers: %s"), *LoadError.GetMessage());
+		DeferPointCloudLayerLoad(Source, bZoomWhenLoaded);
+		return;
+	}
+
 	if (!MapLayers)
 	{
+		DeferPointCloudLayerLoad(Source, bZoomWhenLoaded);
 		return;
 	}
 
-	for (int64 Index = MapLayers->GetSize() - 1; Index >= 0; --Index)
+	DeferredPointCloudLayerSource.Reset();
+	PointCloudLayerLoadRetryCount = 0;
+
+	++LayerLoadRequestId;
+	const uint64 RequestId = LayerLoadRequestId;
+
+	if (PendingPointCloudLayer)
 	{
-		if (Cast<UArcGISPointCloudLayer>(MapLayers->At(Index)))
+		const int64 PendingLayerId = PendingPointCloudLayer->GetInstanceId();
+		for (int64 Index = MapLayers->GetSize() - 1; Index >= 0; --Index)
 		{
-			MapLayers->Remove(Index);
+			if (UArcGISLayer* ExistingLayer = MapLayers->At(Index);
+				ExistingLayer && ExistingLayer->GetInstanceId() == PendingLayerId)
+			{
+				MapLayers->Remove(Index);
+				break;
+			}
 		}
+		PendingPointCloudLayer = nullptr;
 	}
 
-	PointCloudLayer = UArcGISPointCloudLayer::CreateArcGISPointCloudLayer(PointCloudLayerSource, MapComponent->GetAPIKey());
-
-	if (!PointCloudLayer || !PointCloudLayer->APIObject)
+	UArcGISPointCloudLayer* CandidateLayer = nullptr;
+	try
 	{
+		CandidateLayer = UArcGISPointCloudLayer::CreateArcGISPointCloudLayer(Source, MapComponent->GetAPIKey());
+	}
+	catch (const Esri::Unreal::ArcGISException& LoadError)
+	{
+		SetLayerLoadStatus(false);
+		UE_LOG(LogTemp, Warning, TEXT("Invalid point cloud layer source '%s': %s"), *Source, *LoadError.GetMessage());
+		return;
+	}
+	if (!CandidateLayer || !CandidateLayer->APIObject)
+	{
+		SetLayerLoadStatus(false);
 		return;
 	}
 
-	PointCloudLayer->SetOpacity(1.0f);
-	PointCloudLayer->SetIsVisible(true);
+	PendingPointCloudLayer = CandidateLayer;
+	CandidateLayer->SetOpacity(1.0f);
+	CandidateLayer->SetIsVisible(true);
+
+	if (LoadLayerButton)
+	{
+		LoadLayerButton->SetIsEnabled(false);
+	}
+	if (LayerLoadStatusText)
+	{
+		LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
+	}
 
 	TWeakObjectPtr<APCLController> WeakThis(this);
-	PointCloudLayer->APIObject->SetDoneLoading([WeakThis](auto& LoadError) {
-		AsyncTask(ENamedThreads::GameThread, [WeakThis]() {
-			if (auto* Controller = WeakThis.Get())
+	TWeakObjectPtr<UArcGISPointCloudLayer> WeakCandidate(CandidateLayer);
+	CandidateLayer->APIObject->SetDoneLoading([WeakThis, WeakCandidate, RequestId, bZoomWhenLoaded, Source](Esri::Unreal::ArcGISException& LoadError) {
+		const bool bHadLoadError = static_cast<bool>(LoadError);
+		const FString LoadErrorMessage = bHadLoadError ? LoadError.GetMessage() : FString();
+
+		AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakCandidate, RequestId, bZoomWhenLoaded, bHadLoadError, LoadErrorMessage, Source]() {
+			auto* Controller = WeakThis.Get();
+			auto* LoadedLayer = WeakCandidate.Get();
+			if (!Controller || !LoadedLayer || Controller->LayerLoadRequestId != RequestId ||
+				Controller->PendingPointCloudLayer != LoadedLayer)
 			{
-				Controller->RefreshAvailablePointCloudAttributes();
-				Controller->UpdateRendererCheckBoxes();
-				Controller->ApplyPointCloudVisualization();
-				Controller->BuildFilterTabUI();
-				Controller->BuildLegendUI();
-				Controller->ApplyPointCloudFilters();
+				return;
+			}
+
+			Controller->PendingPointCloudLayer = nullptr;
+			if (Controller->LoadLayerButton)
+			{
+				Controller->LoadLayerButton->SetIsEnabled(true);
+			}
+
+			auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(LoadedLayer->APIObject);
+			const bool bLoaded = !bHadLoadError && LayerAPI &&
+				LayerAPI->GetLoadStatus() == Esri::GameEngine::ArcGISLoadStatus::Loaded;
+
+			auto* CurrentMap = Controller->MapComponent ? Controller->MapComponent->GetMap() : nullptr;
+			auto* CurrentLayers = CurrentMap ? CurrentMap->GetLayers() : nullptr;
+
+			if (!bLoaded)
+			{
+				if (CurrentLayers)
+				{
+					const int64 LoadedLayerId = LoadedLayer->GetInstanceId();
+					for (int64 Index = CurrentLayers->GetSize() - 1; Index >= 0; --Index)
+					{
+						if (UArcGISLayer* ExistingLayer = CurrentLayers->At(Index);
+							ExistingLayer && ExistingLayer->GetInstanceId() == LoadedLayerId)
+						{
+							CurrentLayers->Remove(Index);
+							break;
+						}
+					}
+				}
+
+				Controller->SetLayerLoadStatus(false);
+				UE_LOG(LogTemp, Warning, TEXT("Failed to load point cloud layer from '%s': %s"),
+					*Source, LoadErrorMessage.IsEmpty() ? TEXT("Unknown load error") : *LoadErrorMessage);
+				return;
+			}
+
+			if (CurrentLayers)
+			{
+				const int64 LoadedLayerId = LoadedLayer->GetInstanceId();
+				for (int64 Index = CurrentLayers->GetSize() - 1; Index >= 0; --Index)
+				{
+					if (auto* ExistingPointCloudLayer = Cast<UArcGISPointCloudLayer>(CurrentLayers->At(Index));
+						ExistingPointCloudLayer && ExistingPointCloudLayer->GetInstanceId() != LoadedLayerId)
+					{
+						CurrentLayers->Remove(Index);
+					}
+				}
+			}
+
+			Controller->PointCloudLayer = LoadedLayer;
+			Controller->SetLayerLoadStatus(true);
+			UE_LOG(LogTemp, Display, TEXT("Loaded point cloud layer from '%s'."), *Source);
+			Controller->RefreshAvailablePointCloudAttributes();
+			Controller->UpdateRendererCheckBoxes();
+			Controller->ApplyPointCloudVisualization();
+			Controller->BuildFilterTabUI();
+			Controller->BuildLegendUI();
+			Controller->ApplyPointCloudFilters();
+
+			if (bZoomWhenLoaded && Controller->MapComponent)
+			{
+				APlayerController* PlayerController = UGameplayStatics::GetPlayerController(Controller->GetWorld(), 0);
+				AActor* ViewActor = PlayerController ? PlayerController->GetPawn() : nullptr;
+				if (!ViewActor && PlayerController)
+				{
+					ViewActor = PlayerController->GetViewTarget();
+				}
+
+				if (!ViewActor || !Controller->MapComponent->ZoomToExtent(ViewActor, LoadedLayer->GetExtent()))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Point cloud layer loaded, but zoom to layer failed."));
+				}
 			}
 		});
 	});
 
-	MapLayers->Add(PointCloudLayer);
+	MapLayers->Add(CandidateLayer);
 }
 
 void APCLController::ApplyPointCloudVisualization()
 {
 	if (!PointCloudLayer)
 	{
-		CreatePointCloudLayer();
+		return;
 	}
 
 	if (!PointCloudLayer || !PointCloudLayer->APIObject)
