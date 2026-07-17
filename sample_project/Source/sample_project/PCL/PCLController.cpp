@@ -28,6 +28,8 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
 #include "Async/Async.h"
 #include "Blueprint/WidgetTree.h"
+#include "Brushes/SlateColorBrush.h"
+#include "Brushes/SlateRoundedBoxBrush.h"
 #include "Components/Border.h"
 #include "Components/ButtonSlot.h"
 #include "Components/CanvasPanel.h"
@@ -60,7 +62,7 @@ constexpr double IntensityHigh = 65680.0;
 constexpr float LegendCompactWidth = 345.0f;
 constexpr float LegendCompactHeight = 76.0f;
 constexpr float LegendExpandedWidth = 390.0f;
-constexpr float LegendExpandedHeight = 373.0f;
+constexpr float LegendExpandedHeight = 382.0f;
 constexpr float VisualizeTabHeightOffset = 150.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
 const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
@@ -382,8 +384,27 @@ void ApplyLegendTitleFont(UTextBlock* Title)
 
 	FSlateFontInfo Font = Title->GetFont();
 	Font.FontObject = FontObject;
-	Font.Size = 30;
+	Font.Size = 28;
 	Title->SetFont(Font);
+}
+
+void ApplyChakraPetchSemiBoldFont(UTextBlock* TextBlock, int32 FontSize)
+{
+	if (!TextBlock)
+	{
+		return;
+	}
+
+	UObject* FontObject = LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
+	if (!FontObject)
+	{
+		return;
+	}
+
+	FSlateFontInfo Font = TextBlock->GetFont();
+	Font.FontObject = FontObject;
+	Font.Size = FontSize;
+	TextBlock->SetFont(Font);
 }
 
 UHorizontalBox* AddLegendRow(UObject* Outer, UPanelWidget* Parent, const FString& Label, const FLinearColor& Color, UTexture2D* CircleTexture = nullptr)
@@ -423,6 +444,7 @@ UHorizontalBox* AddLegendRow(UObject* Outer, UPanelWidget* Parent, const FString
 	}
 
 	UTextBlock* LabelText = CreateText(Outer, Label, 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	ApplyChakraPetchSemiBoldFont(LabelText, 18);
 	Row->AddChild(LabelText);
 	if (auto* LabelSlot = Cast<UHorizontalBoxSlot>(LabelText->Slot))
 	{
@@ -524,11 +546,31 @@ UCheckBox* AddCheckBoxRow(UObject* Outer, UPanelWidget* Parent, const FString& L
 	SetVerticalSlotPadding(Row, FMargin(0.0f, 1.0f, 0.0f, 1.0f));
 
 	UCheckBox* CheckBox = NewObject<UCheckBox>(Outer);
+	FCheckBoxStyle CheckBoxStyle = CheckBox->GetWidgetStyle();
+	FSlateColorBrush UncheckedBrush(FLinearColor(0.82f, 0.82f, 0.84f, 1.0f));
+	FSlateColorBrush UncheckedHoveredBrush(FLinearColor(0.92f, 0.92f, 0.94f, 1.0f));
+	FSlateRoundedBoxBrush CheckedBrush(FLinearColor(0.61f, 0.24f, 1.0f, 1.0f), 0.0f, FLinearColor::White, 2.0f, FVector2D(22.0f, 22.0f));
+	FSlateRoundedBoxBrush CheckedHoveredBrush(FLinearColor(0.69f, 0.36f, 1.0f, 1.0f), 0.0f, FLinearColor::White, 2.0f, FVector2D(22.0f, 22.0f));
+	UncheckedBrush.ImageSize = FVector2D(22.0f, 22.0f);
+	UncheckedHoveredBrush.ImageSize = FVector2D(22.0f, 22.0f);
+	CheckedBrush.ImageSize = FVector2D(22.0f, 22.0f);
+	CheckedHoveredBrush.ImageSize = FVector2D(22.0f, 22.0f);
+	CheckBoxStyle.SetUncheckedImage(UncheckedBrush);
+	CheckBoxStyle.SetUncheckedHoveredImage(UncheckedHoveredBrush);
+	CheckBoxStyle.SetUncheckedPressedImage(UncheckedHoveredBrush);
+	CheckBoxStyle.SetCheckedImage(CheckedBrush);
+	CheckBoxStyle.SetCheckedHoveredImage(CheckedHoveredBrush);
+	CheckBoxStyle.SetCheckedPressedImage(CheckedHoveredBrush);
+	CheckBoxStyle.SetUndeterminedImage(CheckedBrush);
+	CheckBoxStyle.SetUndeterminedHoveredImage(CheckedHoveredBrush);
+	CheckBoxStyle.SetUndeterminedPressedImage(CheckedHoveredBrush);
+	CheckBox->SetWidgetStyle(CheckBoxStyle);
 	CheckBox->SetIsChecked(bChecked);
 	Row->AddChild(CheckBox);
 	SetHorizontalSlotPadding(CheckBox, FMargin(0.0f, 0.0f, 10.0f, 0.0f));
 
 	UTextBlock* LabelText = CreateText(Outer, Label, 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	ApplyChakraPetchSemiBoldFont(LabelText, 22);
 	Row->AddChild(LabelText);
 	SetHorizontalSlotPadding(LabelText, FMargin(0.0f));
 
@@ -547,7 +589,7 @@ UScrollBox* AddFilterScrollSection(UObject* Outer, UVerticalBox* Parent, float H
 	ScrollBox->SetScrollBarVisibility(ESlateVisibility::Visible);
 	ScrollBox->SetAlwaysShowScrollbar(true);
 	ScrollBox->SetAlwaysShowScrollbarTrack(true);
-	ScrollBox->SetScrollbarThickness(FVector2D(8.0f, 8.0f));
+	ScrollBox->SetScrollbarThickness(FVector2D(18.0f, 18.0f));
 	SectionBox->AddChild(ScrollBox);
 
 	return ScrollBox;
@@ -644,7 +686,8 @@ void APCLController::BeginPlay()
 		CustomizeTabButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_CustomizeTab"));
 		FilterTabButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_FilterTab"));
 		VisualizeTabButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_VisualizeTab"));
-		FilterPanel = FindNamedWidget<UPanelWidget>(UIWidget, TEXT("Panel_Filter"));
+		FilterPanel = FindNamedWidget<UPanelWidget>(UIWidget, TEXT("Panel_FilterDynamicContent"));
+		ResetFiltersButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_ResetFilters"));
 
 		if (PointSizeSlider)
 		{
@@ -701,6 +744,11 @@ void APCLController::BeginPlay()
 		if (VisualizeTabButton)
 		{
 			VisualizeTabButton->OnClicked.AddDynamic(this, &APCLController::OnVisualizeTabClicked);
+		}
+
+		if (ResetFiltersButton)
+		{
+			ResetFiltersButton->OnClicked.AddDynamic(this, &APCLController::OnResetFiltersClicked);
 		}
 
 		UpdateSliderValueTexts();
@@ -1392,7 +1440,6 @@ void APCLController::BuildFilterTabUI()
 	ReturnsFilterCheckBoxes.Reset();
 	ClassAllCheckBox = nullptr;
 	ReturnsAllCheckBox = nullptr;
-	ResetFiltersButton = nullptr;
 
 	RefreshAvailablePointCloudAttributes();
 	const bool bHasClassCodeFilter = !ClassAttributeName.IsEmpty();
@@ -1409,17 +1456,18 @@ void APCLController::BuildFilterTabUI()
 
 	if (auto* CanvasSlot = Cast<UCanvasPanelSlot>(Content->Slot))
 	{
-		CanvasSlot->SetPosition(FVector2D(0.0f, 0.0f));
-		CanvasSlot->SetSize(FVector2D(430.0f, 660.0f));
+		CanvasSlot->SetAnchors(FAnchors(0.0f, 0.0f, 1.0f, 0.0f));
+		CanvasSlot->SetOffsets(FMargin(0.0f, 0.0f, 0.0f, 492.0f));
 	}
 
 	if (bHasClassCodeFilter)
 	{
-		UTextBlock* ClassHeading = CreateText(UIWidget, TEXT("Class Code"), 24, MakeSlateColor(0.78f, 0.78f, 0.82f));
+		UTextBlock* ClassHeading = CreateText(UIWidget, TEXT("Class Code"), 24, MakeSlateColor(0.68f, 0.68f, 0.72f));
+		ApplyChakraPetchSemiBoldFont(ClassHeading, 24);
 		Content->AddChild(ClassHeading);
 		SetVerticalSlotPadding(ClassHeading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
 
-		UScrollBox* ClassScrollBox = AddFilterScrollSection(UIWidget, Content, 206.0f);
+		UScrollBox* ClassScrollBox = AddFilterScrollSection(UIWidget, Content, 235.0f);
 
 		ClassAllCheckBox = AddCheckBoxRow(UIWidget, ClassScrollBox, TEXT("<all>"), true);
 		ClassAllCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnClassAllFilterCheckStateChanged);
@@ -1442,11 +1490,12 @@ void APCLController::BuildFilterTabUI()
 
 	if (bHasReturnsFilter)
 	{
-		UTextBlock* ReturnsHeading = CreateText(UIWidget, TEXT("Returns"), 24, MakeSlateColor(0.78f, 0.78f, 0.82f));
+		UTextBlock* ReturnsHeading = CreateText(UIWidget, TEXT("Returns"), 24, MakeSlateColor(0.68f, 0.68f, 0.72f));
+		ApplyChakraPetchSemiBoldFont(ReturnsHeading, 24);
 		Content->AddChild(ReturnsHeading);
 		SetVerticalSlotPadding(ReturnsHeading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
 
-		UScrollBox* ReturnsScrollBox = AddFilterScrollSection(UIWidget, Content, 148.0f);
+		UScrollBox* ReturnsScrollBox = AddFilterScrollSection(UIWidget, Content, 161.0f);
 
 		ReturnsAllCheckBox = AddCheckBoxRow(UIWidget, ReturnsScrollBox, TEXT("<all>"), true);
 		ReturnsAllCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnReturnsAllFilterCheckStateChanged);
@@ -1459,38 +1508,6 @@ void APCLController::BuildFilterTabUI()
 		}
 	}
 
-	USpacer* InfoSpacer = NewObject<USpacer>(UIWidget);
-	InfoSpacer->SetSize(FVector2D(1.0f, 10.0f));
-	Content->AddChild(InfoSpacer);
-
-	UBorder* InfoBorder = NewObject<UBorder>(UIWidget);
-	InfoBorder->SetBrushColor(FLinearColor(0.05f, 0.05f, 0.06f, 0.58f));
-	Content->AddChild(InfoBorder);
-	SetVerticalSlotPadding(InfoBorder, FMargin(0.0f, 0.0f, 0.0f, 22.0f));
-
-	UHorizontalBox* InfoRow = NewObject<UHorizontalBox>(UIWidget);
-	InfoBorder->SetContent(InfoRow);
-
-	UTextBlock* InfoIcon = CreateText(UIWidget, TEXT("i"), 24, MakeSlateColor(0.67f, 0.27f, 1.0f));
-	InfoRow->AddChild(InfoIcon);
-	SetHorizontalSlotPadding(InfoIcon, FMargin(16.0f, 8.0f, 14.0f, 8.0f));
-
-	UTextBlock* InfoText = CreateText(UIWidget, TEXT("Filtering allows you to include or exclude points\nbased on classification codes, returns and etc."),
-									  14, MakeSlateColor(0.78f, 0.78f, 0.82f));
-	InfoRow->AddChild(InfoText);
-	SetHorizontalSlotPadding(InfoText, FMargin(0.0f, 8.0f, 16.0f, 8.0f));
-
-	ResetFiltersButton = NewObject<UButton>(UIWidget);
-	Content->AddChild(ResetFiltersButton);
-
-	UTextBlock* ResetText = CreateText(UIWidget, TEXT("Reset Filters"), 17, MakeSlateColor(1.0f, 1.0f, 1.0f));
-	ResetFiltersButton->AddChild(ResetText);
-	if (auto* ButtonSlot = Cast<UButtonSlot>(ResetText->Slot))
-	{
-		ButtonSlot->SetPadding(FMargin(16.0f, 6.0f, 16.0f, 6.0f));
-	}
-
-	ResetFiltersButton->OnClicked.AddDynamic(this, &APCLController::OnResetFiltersClicked);
 	ResetFilterSelections(false);
 }
 
@@ -1555,12 +1572,12 @@ void APCLController::BuildLegendUI()
 	if (ContentSlot)
 	{
 		ContentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(59.0f, 24.0f));
-		ContentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(308.0f, 312.0f));
+		ContentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(308.0f, 321.0f));
 	}
 
 	if (CurrentRendererChoice == EPCLRendererChoice::RGB)
 	{
-		Content->AddChild(CreateText(UIWidget, TEXT("No legend"), 26, MakeSlateColor(0.78f, 0.78f, 0.82f)));
+		Content->AddChild(CreateText(UIWidget, TEXT("No legend"), 28, MakeSlateColor(0.78f, 0.78f, 0.82f)));
 		return;
 	}
 
@@ -1570,7 +1587,7 @@ void APCLController::BuildLegendUI()
 		LegendTitle = TEXT("Point cloud layer");
 	}
 
-	UTextBlock* Title = CreateText(UIWidget, LegendTitle, 30, MakeSlateColor(0.78f, 0.78f, 0.82f));
+	UTextBlock* Title = CreateText(UIWidget, LegendTitle, 28, MakeSlateColor(0.62f, 0.62f, 0.66f));
 	ApplyLegendTitleFont(Title);
 	Title->SetRenderTranslation(FVector2D(-22.0f, 0.0f));
 	Content->AddChild(Title);
@@ -1584,7 +1601,7 @@ void APCLController::BuildLegendUI()
 
 		USizeBox* ClassListBox = NewObject<USizeBox>(UIWidget);
 		ClassListBox->SetWidthOverride(299.0f);
-		ClassListBox->SetHeightOverride(147.0f);
+		ClassListBox->SetHeightOverride(156.0f);
 		Content->AddChild(ClassListBox);
 
 		UScrollBox* ClassList = NewObject<UScrollBox>(UIWidget);
@@ -1663,19 +1680,19 @@ void APCLController::BuildLegendUI()
 	GradientRow->AddChild(LabelColumn);
 	SetHorizontalSlotPadding(LabelColumn, FMargin(0.0f));
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("> 3.5") : TEXT("> 65,680"), 17, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("> 3.5") : TEXT("> 65,680"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 
 	USpacer* TopSpacer = NewObject<USpacer>(UIWidget);
 	TopSpacer->SetSize(FVector2D(1.0f, 31.0f));
 	LabelColumn->AddChild(TopSpacer);
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("1.5") : TEXT("38,032"), 17, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("1.5") : TEXT("38,032"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 
 	USpacer* BottomSpacer = NewObject<USpacer>(UIWidget);
 	BottomSpacer->SetSize(FVector2D(1.0f, 31.0f));
 	LabelColumn->AddChild(BottomSpacer);
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("< -1.5") : TEXT("< 10,385"), 17, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("< -1.5") : TEXT("< 10,385"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 }
 
 void APCLController::ResetFilterSelections(bool bApplyFilters)
