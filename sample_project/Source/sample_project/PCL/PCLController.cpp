@@ -59,8 +59,8 @@ constexpr double IntensityMid = 38032.0;
 constexpr double IntensityHigh = 65680.0;
 constexpr float LegendCompactWidth = 345.0f;
 constexpr float LegendCompactHeight = 76.0f;
-constexpr float LegendExpandedWidth = 480.0f;
-constexpr float LegendExpandedHeight = 430.0f;
+constexpr float LegendExpandedWidth = 390.0f;
+constexpr float LegendExpandedHeight = 373.0f;
 constexpr float VisualizeTabHeightOffset = 150.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
 const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
@@ -108,6 +108,28 @@ bool IsRGBAttribute(const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloud
 Esri::Standard::ArcGISRGBColor MakeColor(uint8 Red, uint8 Green, uint8 Blue)
 {
 	return Esri::Standard::ArcGISRGBColor(Red, Green, Blue, 255);
+}
+
+void ConfigurePointCloudRendererSettings(Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer& Renderer,
+										 double PointSize,
+										 double PointsPerInch,
+										 bool bColorModulationEnabled,
+										 const FString& IntensityAttributeName)
+{
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm SizeAlgorithm(
+		PointSize, Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
+	Renderer.SetSizeAlgorithm(SizeAlgorithm);
+	Renderer.SetPointsPerInch(PointsPerInch);
+
+	if (bColorModulationEnabled && !IntensityAttributeName.IsEmpty())
+	{
+		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation ColorModulation(IntensityAttributeName, 0.0, 65535.0);
+		Renderer.SetColorModulation(ColorModulation);
+	}
+	else
+	{
+		Renderer.SetColorModulation(Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation());
+	}
 }
 
 void AddColorStop(Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop>& Stops,
@@ -725,13 +747,13 @@ void APCLController::OnInputEnded()
 void APCLController::OnPointSizeChanged(float Value)
 {
 	UpdateSliderValueTexts();
-	ApplyPointCloudVisualization();
+	UpdateCurrentRendererSettings();
 }
 
 void APCLController::OnPointsPerInchChanged(float Value)
 {
 	UpdateSliderValueTexts();
-	ApplyPointCloudVisualization();
+	UpdateCurrentRendererSettings();
 }
 
 void APCLController::SetColorModulationEnabled(bool bEnabled)
@@ -742,7 +764,7 @@ void APCLController::SetColorModulationEnabled(bool bEnabled)
 	}
 
 	bColorModulationEnabled = bEnabled;
-	ApplyPointCloudVisualization();
+	UpdateCurrentRendererSettings();
 }
 
 void APCLController::SetPointCloudRenderer(EPCLRendererChoice RendererChoice)
@@ -990,23 +1012,10 @@ void APCLController::ApplyPointCloudVisualization()
 
 	EnsureAvailableRendererSelected();
 
-	auto ConfigureRenderer = [this, PointSize, PointsPerInch](auto& Renderer) {
-		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm SizeAlgorithm(
-			PointSize, Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
-		Renderer.SetSizeAlgorithm(SizeAlgorithm);
-		Renderer.SetPointsPerInch(PointsPerInch);
-
-		if (bColorModulationEnabled && !IntensityAttributeName.IsEmpty())
-		{
-			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation ColorModulation(IntensityAttributeName, 0.0, 65535.0);
-			Renderer.SetColorModulation(ColorModulation);
-		}
-	};
-
 	auto ApplyRGBRenderer = [&]() {
 		const FString AttributeName = RGBAttributeName.IsEmpty() ? TEXT("RGB") : RGBAttributeName;
 		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRGBRenderer Renderer(AttributeName);
-		ConfigureRenderer(Renderer);
+		ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
 		LayerAPI->SetRenderer(Renderer);
 	};
 
@@ -1022,7 +1031,7 @@ void APCLController::ApplyPointCloudVisualization()
 			}
 
 			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudUniqueValueRenderer Renderer(ClassAttributeName, UniqueValues);
-			ConfigureRenderer(Renderer);
+			ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
 			LayerAPI->SetRenderer(Renderer);
 			return;
 		}
@@ -1038,7 +1047,7 @@ void APCLController::ApplyPointCloudVisualization()
 			AddColorStop(Stops, ElevationHigh, MakeColor(255, 59, 22), TEXT("> 3.5"));
 
 			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(ElevationAttributeName, Stops);
-			ConfigureRenderer(Renderer);
+			ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
 			LayerAPI->SetRenderer(Renderer);
 			return;
 		}
@@ -1052,7 +1061,7 @@ void APCLController::ApplyPointCloudVisualization()
 			AddColorStop(Stops, IntensityHigh, MakeColor(255, 255, 255), TEXT("> 65,680"));
 
 			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(IntensityAttributeName, Stops);
-			ConfigureRenderer(Renderer);
+			ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
 			LayerAPI->SetRenderer(Renderer);
 			return;
 		}
@@ -1064,6 +1073,34 @@ void APCLController::ApplyPointCloudVisualization()
 	}
 
 	ApplyRGBRenderer();
+}
+
+bool APCLController::UpdateCurrentRendererSettings()
+{
+	if (!PointCloudLayer || !PointCloudLayer->APIObject)
+	{
+		return false;
+	}
+
+	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
+	if (!LayerAPI || LayerAPI->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
+	{
+		return false;
+	}
+
+	auto Renderer = LayerAPI->GetRenderer();
+	if (!Renderer)
+	{
+		return false;
+	}
+
+	const double PointSize =
+		FMath::Clamp(PointSizeSlider ? static_cast<double>(PointSizeSlider->GetValue()) : DefaultPointSize, MinPointSize, MaxPointSize);
+	const double PointsPerInch = FMath::Max(PointsPerInchSlider ? static_cast<double>(PointsPerInchSlider->GetValue()) : DefaultPointsPerInch,
+											MinPointsPerInch);
+
+	ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
+	return true;
 }
 
 void APCLController::ApplyPointCloudFilters()
@@ -1497,7 +1534,7 @@ void APCLController::BuildLegendUI()
 		LegendSlot->SetZOrder(30);
 	}
 
-	UBorder* Background = CreateColorBlock(UIWidget, FLinearColor(0.05f, 0.05f, 0.06f, 0.78f));
+	UBorder* Background = CreateColorBlock(UIWidget, FLinearColor(0.03f, 0.03f, 0.035f, 0.88f));
 	UCanvasPanelSlot* BackgroundSlot = LegendPanel->AddChildToCanvas(Background);
 	if (BackgroundSlot)
 	{
@@ -1517,8 +1554,8 @@ void APCLController::BuildLegendUI()
 	UCanvasPanelSlot* ContentSlot = LegendPanel->AddChildToCanvas(Content);
 	if (ContentSlot)
 	{
-		ContentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(72.0f, 28.0f));
-		ContentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(378.0f, 360.0f));
+		ContentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(59.0f, 24.0f));
+		ContentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(308.0f, 312.0f));
 	}
 
 	if (CurrentRendererChoice == EPCLRendererChoice::RGB)
@@ -1543,11 +1580,11 @@ void APCLController::BuildLegendUI()
 	{
 		UTextBlock* Heading = CreateText(UIWidget, TEXT("Class Code"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
 		Content->AddChild(Heading);
-		SetVerticalSlotPadding(Heading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
+		SetVerticalSlotPadding(Heading, FMargin(0.0f, 0.0f, 0.0f, 8.0f));
 
 		USizeBox* ClassListBox = NewObject<USizeBox>(UIWidget);
-		ClassListBox->SetWidthOverride(368.0f);
-		ClassListBox->SetHeightOverride(236.0f);
+		ClassListBox->SetWidthOverride(299.0f);
+		ClassListBox->SetHeightOverride(147.0f);
 		Content->AddChild(ClassListBox);
 
 		UScrollBox* ClassList = NewObject<UScrollBox>(UIWidget);
@@ -1555,7 +1592,7 @@ void APCLController::BuildLegendUI()
 		ClassList->SetScrollBarVisibility(ESlateVisibility::Visible);
 		ClassList->SetAlwaysShowScrollbar(true);
 		ClassList->SetAlwaysShowScrollbarTrack(true);
-		ClassList->SetScrollbarThickness(FVector2D(14.0f, 14.0f));
+		ClassList->SetScrollbarThickness(FVector2D(18.0f, 18.0f));
 		ClassListBox->AddChild(ClassList);
 
 		const int32 VisibleClassCodes[] = {1, 2, 3, 5, 6, 7, 9};

@@ -239,6 +239,7 @@ private:
 
 	void CreatePointCloudLayer();
 	void ApplyPointCloudVisualization();
+	bool UpdateCurrentRendererSettings();
 	void ApplyPointCloudFilters();
 	void RefreshAvailablePointCloudAttributes();
 	bool IsRendererAvailableFromCachedAttributes(EPCLRendererChoice RendererChoice) const;
