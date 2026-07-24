@@ -163,6 +163,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<UTextBlock> LoadLayerButtonText;
 
+	UPROPERTY()
+	TObjectPtr<UWidget> UIInteractionPanel;
+
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<AArcGISMapActor> MapActor;
 
@@ -201,6 +204,7 @@ private:
 	TUniquePtr<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter> ActiveReturnsFilter;
 
 	bool bUpdatingFilterCheckBoxes = false;
+	bool bMapInputBlockedByUI = false;
 	uint64 LayerLoadRequestId = 0;
 	FString DeferredPointCloudLayerSource;
 	float DeferredPointCloudLayerRetrySeconds = 0.0f;
@@ -265,8 +269,9 @@ private:
 	void BuildDataLoaderUI();
 	void DeferPointCloudLayerLoad(const FString& Source, bool bZoomWhenLoaded);
 	void SetLayerLoadStatus(bool bSucceeded) const;
+	void UpdateMapInputForUIHover();
+	void SetMapInputBlockedByUI(bool bBlocked);
 	void ApplyPointCloudVisualization();
-	bool UpdateCurrentRendererSettings();
 	void ApplyPointCloudFilters();
 	void RefreshAvailablePointCloudAttributes();
 	bool IsRendererAvailableFromCachedAttributes(EPCLRendererChoice RendererChoice) const;

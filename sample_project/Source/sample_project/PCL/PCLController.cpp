@@ -47,6 +47,7 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Texture2D.h"
+#include "Framework/Application/SlateApplication.h"
 #include "sample_project/InputManager.h"
 
 namespace
@@ -66,7 +67,8 @@ constexpr float LegendCompactWidth = 345.0f;
 constexpr float LegendCompactHeight = 76.0f;
 constexpr float LegendExpandedWidth = 390.0f;
 constexpr float LegendExpandedHeight = 382.0f;
-constexpr float VisualizeTabHeightOffset = 150.0f;
+constexpr float CustomizeTabHeightOffset = 88.0f;
+constexpr float VisualizeTabHeightOffset = 194.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
 constexpr float PointCloudLayerLoadRetryInterval = 0.25f;
 constexpr int32 MaxPointCloudLayerLoadRetries = 40;
@@ -75,6 +77,7 @@ const FName ExpandableTabWidgetNames[] = {
 	TEXT("CanvasPanel_37"),
 	TEXT("Background"),
 	TEXT("Switcher_PCLTabs"),
+	TEXT("Panel_Customize"),
 	TEXT("Panel_Visualize"),
 	TEXT("Panel_VisualizeContent"),
 	TEXT("Panel_Filter")
@@ -118,6 +121,22 @@ bool IsRGBAttribute(const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloud
 		   NormalizedName == TEXT("COLORRGB") || Attribute.GetValuesPerElement() >= 3;
 }
 
+Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer GetLoadedRenderer(UArcGISPointCloudLayer* PointCloudLayer)
+{
+	if (!PointCloudLayer || !PointCloudLayer->APIObject)
+	{
+		return Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer(nullptr);
+	}
+
+	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
+	if (!LayerAPI || LayerAPI->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
+	{
+		return Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer(nullptr);
+	}
+
+	return LayerAPI->GetRenderer();
+}
+
 Esri::Standard::ArcGISRGBColor MakeColor(uint8 Red, uint8 Green, uint8 Blue)
 {
 	return Esri::Standard::ArcGISRGBColor(Red, Green, Blue, 255);
@@ -125,14 +144,12 @@ Esri::Standard::ArcGISRGBColor MakeColor(uint8 Red, uint8 Green, uint8 Blue)
 
 void ConfigurePointCloudRendererSettings(Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer& Renderer,
 										 double PointSize,
-										 double PointsPerInch,
 										 bool bColorModulationEnabled,
 										 const FString& IntensityAttributeName)
 {
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm SizeAlgorithm(
 		PointSize, Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
 	Renderer.SetSizeAlgorithm(SizeAlgorithm);
-	Renderer.SetPointsPerInch(PointsPerInch);
 
 	if (bColorModulationEnabled && !IntensityAttributeName.IsEmpty())
 	{
@@ -395,7 +412,7 @@ void ApplyLegendTitleFont(UTextBlock* Title)
 
 	FSlateFontInfo Font = Title->GetFont();
 	Font.FontObject = FontObject;
-	Font.Size = 28;
+	Font.Size = 27;
 	Title->SetFont(Font);
 }
 
@@ -692,6 +709,11 @@ void APCLController::BeginPlay()
 	{
 		playerController->bShowMouseCursor = true;
 		playerController->bEnableClickEvents = true;
+
+		FInputModeGameAndUI InputMode;
+		InputMode.SetHideCursorDuringCapture(false);
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		playerController->SetInputMode(InputMode);
 	}
 
 	if (UIWidgetClass)
@@ -721,6 +743,7 @@ void APCLController::BeginPlay()
 		SourceUrlTextBox = FindNamedWidget<UEditableTextBox>(UIWidget, TEXT("EditableTextBox_0"));
 		LoadLayerButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Load"));
 		LayerLoadStatusText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"), false);
+		UIInteractionPanel = FindNamedWidget<UWidget>(UIWidget, TEXT("Background"));
 		BuildDataLoaderUI();
 
 		if (SourceUrlTextBox)
@@ -803,7 +826,7 @@ void APCLController::BeginPlay()
 		UpdateSliderValueTexts();
 		UpdateRendererCheckBoxes();
 		BuildFilterTabUI();
-		BuildLegendUI();
+		SetTabLayout(EPCLTabLayout::Default);
 		CreatePointCloudLayer(PointCloudLayerSource, false);
 		ApplyPointCloudVisualization();
 		ApplyPointCloudFilters();
@@ -817,6 +840,8 @@ void APCLController::BeginPlay()
 
 void APCLController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	SetMapInputBlockedByUI(false);
+
 	if (InputManager)
 	{
 		InputManager->OnInputTrigger.RemoveDynamic(this, &APCLController::OnInputTriggered);
@@ -830,6 +855,7 @@ void APCLController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void APCLController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UpdateMapInputForUIHover();
 
 	if (!DeferredPointCloudLayerSource.IsEmpty())
 	{
@@ -844,6 +870,59 @@ void APCLController::Tick(float DeltaTime)
 	}
 }
 
+void APCLController::UpdateMapInputForUIHover()
+{
+	bool bShouldBlockMapInput = false;
+	if (UIInteractionPanel && UIInteractionPanel->IsVisible() && FSlateApplication::IsInitialized())
+	{
+		const FGeometry& PanelGeometry = UIInteractionPanel->GetCachedGeometry();
+		if (!PanelGeometry.GetLocalSize().IsNearlyZero())
+		{
+			bShouldBlockMapInput = PanelGeometry.IsUnderLocation(FSlateApplication::Get().GetCursorPos());
+		}
+	}
+
+	SetMapInputBlockedByUI(bShouldBlockMapInput);
+}
+
+void APCLController::SetMapInputBlockedByUI(bool bBlocked)
+{
+	if (bMapInputBlockedByUI == bBlocked)
+	{
+		return;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	if (bBlocked)
+	{
+		PlayerController->FlushPressedKeys();
+		PlayerController->SetIgnoreLookInput(true);
+		PlayerController->SetIgnoreMoveInput(true);
+
+		FInputModeUIOnly InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PlayerController->SetInputMode(InputMode);
+	}
+	else
+	{
+		PlayerController->SetIgnoreLookInput(false);
+		PlayerController->SetIgnoreMoveInput(false);
+
+		FInputModeGameAndUI InputMode;
+		InputMode.SetHideCursorDuringCapture(false);
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PlayerController->SetInputMode(InputMode);
+	}
+
+	PlayerController->bShowMouseCursor = true;
+	bMapInputBlockedByUI = bBlocked;
+}
+
 void APCLController::OnInputTriggered()
 {
 }
@@ -855,13 +934,26 @@ void APCLController::OnInputEnded()
 void APCLController::OnPointSizeChanged(float Value)
 {
 	UpdateSliderValueTexts();
-	UpdateCurrentRendererSettings();
+
+	auto Renderer = GetLoadedRenderer(PointCloudLayer);
+	if (Renderer)
+	{
+		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm SizeAlgorithm(
+			FMath::Clamp(static_cast<double>(Value), MinPointSize, MaxPointSize),
+			Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
+		Renderer.SetSizeAlgorithm(SizeAlgorithm);
+	}
 }
 
 void APCLController::OnPointsPerInchChanged(float Value)
 {
 	UpdateSliderValueTexts();
-	UpdateCurrentRendererSettings();
+
+	auto Renderer = GetLoadedRenderer(PointCloudLayer);
+	if (Renderer)
+	{
+		Renderer.SetPointsPerInch(FMath::Max(static_cast<double>(Value), MinPointsPerInch));
+	}
 }
 
 void APCLController::SetColorModulationEnabled(bool bEnabled)
@@ -872,7 +964,15 @@ void APCLController::SetColorModulationEnabled(bool bEnabled)
 	}
 
 	bColorModulationEnabled = bEnabled;
-	UpdateCurrentRendererSettings();
+
+	auto Renderer = GetLoadedRenderer(PointCloudLayer);
+	if (Renderer)
+	{
+		Renderer.SetColorModulation(
+			bColorModulationEnabled && !IntensityAttributeName.IsEmpty() ?
+				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation(IntensityAttributeName, 0.0, 65535.0) :
+				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation());
+	}
 }
 
 void APCLController::SetPointCloudRenderer(EPCLRendererChoice RendererChoice)
@@ -1106,15 +1206,6 @@ void APCLController::BuildDataLoaderUI()
 			ButtonSlot->SetVerticalAlignment(VAlign_Center);
 		}
 
-		const FSlateRoundedBoxBrush NormalBrush(FLinearColor(0.58f, 0.22f, 1.0f), 6.0f);
-		const FSlateRoundedBoxBrush HoveredBrush(FLinearColor(0.66f, 0.34f, 1.0f), 6.0f);
-		const FSlateRoundedBoxBrush PressedBrush(FLinearColor(0.48f, 0.15f, 0.88f), 6.0f);
-		FButtonStyle ButtonStyle = LoadLayerButton->GetStyle();
-		ButtonStyle.SetNormal(NormalBrush);
-		ButtonStyle.SetHovered(HoveredBrush);
-		ButtonStyle.SetPressed(PressedBrush);
-		LoadLayerButton->SetStyle(ButtonStyle);
-		LoadLayerButton->SetBackgroundColor(FLinearColor::White);
 	}
 }
 
@@ -1380,11 +1471,21 @@ void APCLController::ApplyPointCloudVisualization()
 
 	EnsureAvailableRendererSelected();
 
+	auto ApplyRenderer = [&](auto& Renderer) {
+		ConfigurePointCloudRendererSettings(Renderer, PointSize, bColorModulationEnabled, IntensityAttributeName);
+		LayerAPI->SetRenderer(Renderer);
+
+		auto AttachedRenderer = LayerAPI->GetRenderer();
+		if (AttachedRenderer)
+		{
+			AttachedRenderer.SetPointsPerInch(PointsPerInch);
+		}
+	};
+
 	auto ApplyRGBRenderer = [&]() {
 		const FString AttributeName = RGBAttributeName.IsEmpty() ? TEXT("RGB") : RGBAttributeName;
 		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRGBRenderer Renderer(AttributeName);
-		ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
-		LayerAPI->SetRenderer(Renderer);
+		ApplyRenderer(Renderer);
 	};
 
 	switch (CurrentRendererChoice)
@@ -1399,8 +1500,7 @@ void APCLController::ApplyPointCloudVisualization()
 			}
 
 			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudUniqueValueRenderer Renderer(ClassAttributeName, UniqueValues);
-			ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
-			LayerAPI->SetRenderer(Renderer);
+			ApplyRenderer(Renderer);
 			return;
 		}
 		break;
@@ -1415,8 +1515,7 @@ void APCLController::ApplyPointCloudVisualization()
 			AddColorStop(Stops, ElevationHigh, MakeColor(255, 59, 22), TEXT("> 3.5"));
 
 			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(ElevationAttributeName, Stops);
-			ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
-			LayerAPI->SetRenderer(Renderer);
+			ApplyRenderer(Renderer);
 			return;
 		}
 		break;
@@ -1429,8 +1528,7 @@ void APCLController::ApplyPointCloudVisualization()
 			AddColorStop(Stops, IntensityHigh, MakeColor(255, 255, 255), TEXT("> 65,680"));
 
 			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(IntensityAttributeName, Stops);
-			ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
-			LayerAPI->SetRenderer(Renderer);
+			ApplyRenderer(Renderer);
 			return;
 		}
 		break;
@@ -1441,34 +1539,6 @@ void APCLController::ApplyPointCloudVisualization()
 	}
 
 	ApplyRGBRenderer();
-}
-
-bool APCLController::UpdateCurrentRendererSettings()
-{
-	if (!PointCloudLayer || !PointCloudLayer->APIObject)
-	{
-		return false;
-	}
-
-	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
-	if (!LayerAPI || LayerAPI->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
-	{
-		return false;
-	}
-
-	auto Renderer = LayerAPI->GetRenderer();
-	if (!Renderer)
-	{
-		return false;
-	}
-
-	const double PointSize =
-		FMath::Clamp(PointSizeSlider ? static_cast<double>(PointSizeSlider->GetValue()) : DefaultPointSize, MinPointSize, MaxPointSize);
-	const double PointsPerInch = FMath::Max(PointsPerInchSlider ? static_cast<double>(PointsPerInchSlider->GetValue()) : DefaultPointsPerInch,
-											MinPointsPerInch);
-
-	ConfigurePointCloudRendererSettings(Renderer, PointSize, PointsPerInch, bColorModulationEnabled, IntensityAttributeName);
-	return true;
 }
 
 void APCLController::ApplyPointCloudFilters()
@@ -1866,7 +1936,7 @@ void APCLController::BuildLegendUI()
 	{
 		LegendSlot->SetAnchors(FAnchors(1.0f, 1.0f, 1.0f, 1.0f));
 		LegendSlot->SetAlignment(FVector2D(1.0f, 1.0f));
-		LegendSlot->SetPosition(FVector2D(-64.0f, -82.0f));
+		LegendSlot->SetPosition(FVector2D(50.0f, -34.0f));
 		LegendSlot->SetSize(LegendSize);
 		LegendSlot->SetZOrder(30);
 	}
@@ -1907,7 +1977,7 @@ void APCLController::BuildLegendUI()
 		LegendTitle = TEXT("Point cloud layer");
 	}
 
-	UTextBlock* Title = CreateText(UIWidget, LegendTitle, 28, MakeSlateColor(0.62f, 0.62f, 0.66f));
+	UTextBlock* Title = CreateText(UIWidget, LegendTitle, 27, MakeSlateColor(0.62f, 0.62f, 0.66f));
 	ApplyLegendTitleFont(Title);
 	Title->SetRenderTranslation(FVector2D(-22.0f, 0.0f));
 	Content->AddChild(Title);
@@ -1921,7 +1991,7 @@ void APCLController::BuildLegendUI()
 
 		USizeBox* ClassListBox = NewObject<USizeBox>(UIWidget);
 		ClassListBox->SetWidthOverride(299.0f);
-		ClassListBox->SetHeightOverride(156.0f);
+		ClassListBox->SetHeightOverride(158.0f);
 		Content->AddChild(ClassListBox);
 
 		UScrollBox* ClassList = NewObject<UScrollBox>(UIWidget);
@@ -2134,7 +2204,7 @@ void APCLController::SetTabLayout(EPCLTabLayout Layout)
 {
 	CurrentTabLayout = Layout;
 
-	float HeightOffset = 0.0f;
+	float HeightOffset = CustomizeTabHeightOffset;
 	if (Layout == EPCLTabLayout::Visualize)
 	{
 		HeightOffset = VisualizeTabHeightOffset;
