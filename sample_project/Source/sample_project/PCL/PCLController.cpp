@@ -1002,7 +1002,10 @@ void APCLController::BeginPlay()
 		BuildFilterTabUI();
 		SetTabLayout(EPCLTabLayout::Default);
 		ConfigurePCLCollapseInitialState();
-		CreatePointCloudLayer(PointCloudLayerSource, false);
+		DeferredPointCloudLayerSource = PointCloudLayerSource;
+		bDeferredZoomWhenLoaded = false;
+		DeferredPointCloudLayerRetrySeconds = PointCloudLayerLoadRetryInterval;
+		PointCloudLayerLoadRetryCount = 0;
 		ApplyPointCloudVisualization();
 		ApplyPointCloudFilters();
 
