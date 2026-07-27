@@ -96,6 +96,7 @@ const FName PCLCollapseButtonWidgetName(TEXT("Button_Collapse"));
 const FName PCLCollapseIconWidgetName(TEXT("Collapse"));
 const FName PCLGearIconWidgetName(TEXT("Button_Gear"));
 const FName PCLGearRuntimeIconWidgetName(TEXT("PCL_GearIcon_Runtime"));
+const FName PCLInfoWidgetName(TEXT("wbp_Info"));
 const FVector2D PCLGearButtonSize(48.0f, 48.0f);
 const FVector2D PCLGearIconSize(34.0f, 34.0f);
 const FLinearColor PCLGearPurple(0.309f, 0.063f, 1.0f, 1.0f);
@@ -652,6 +653,22 @@ UScrollBox* AddFilterScrollSection(UObject* Outer, UVerticalBox* Parent, float H
 	return ScrollBox;
 }
 
+void AddFilterSectionDivider(UObject* Outer, UVerticalBox* Parent)
+{
+	USizeBox* DividerBox = NewObject<USizeBox>(Outer);
+	DividerBox->SetWidthOverride(253.0f);
+	DividerBox->SetHeightOverride(3.0f);
+	Parent->AddChild(DividerBox);
+	if (auto* DividerSlot = Cast<UVerticalBoxSlot>(DividerBox->Slot))
+	{
+		DividerSlot->SetHorizontalAlignment(HAlign_Center);
+		DividerSlot->SetPadding(FMargin(0.0f, 3.0f, 0.0f, 9.0f));
+	}
+
+	UBorder* Divider = CreateColorBlock(Outer, FLinearColor(0.74f, 0.74f, 0.74f, 1.0f));
+	DividerBox->AddChild(Divider);
+}
+
 template <typename WidgetType>
 WidgetType* FindNamedWidget(UUserWidget* Widget, const TCHAR* WidgetName, bool bWarnIfMissing = true)
 {
@@ -669,7 +686,7 @@ UWidget* FindPCLNamedWidget(UUserWidget* Widget, const FName& WidgetName)
 	return Widget ? Widget->GetWidgetFromName(WidgetName) : nullptr;
 }
 
-bool IsPCLCollapseToggleWidget(const UWidget* Widget)
+bool IsPCLCollapsePersistentWidget(const UWidget* Widget)
 {
 	if (!Widget)
 	{
@@ -677,7 +694,9 @@ bool IsPCLCollapseToggleWidget(const UWidget* Widget)
 	}
 
 	const FName WidgetName = Widget->GetFName();
-	return WidgetName == PCLCollapseButtonWidgetName || WidgetName == PCLGearIconWidgetName;
+	return WidgetName == PCLCollapseButtonWidgetName ||
+		   WidgetName == PCLGearIconWidgetName ||
+		   WidgetName == PCLInfoWidgetName;
 }
 
 bool IsWidgetUnderCursor(const UWidget* Widget)
@@ -1383,7 +1402,7 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 		for (int32 ChildIndex = 0; ChildIndex < RootCanvas->GetChildrenCount(); ++ChildIndex)
 		{
 			UWidget* Child = RootCanvas->GetChildAt(ChildIndex);
-			if (!Child || IsPCLCollapseToggleWidget(Child))
+			if (!Child || IsPCLCollapsePersistentWidget(Child))
 			{
 				continue;
 			}
@@ -1397,7 +1416,7 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 		for (int32 ChildIndex = 0; ChildIndex < RootCanvas->GetChildrenCount(); ++ChildIndex)
 		{
 			UWidget* Child = RootCanvas->GetChildAt(ChildIndex);
-			if (!Child || IsPCLCollapseToggleWidget(Child))
+			if (!Child || IsPCLCollapsePersistentWidget(Child))
 			{
 				continue;
 			}
@@ -2144,7 +2163,7 @@ void APCLController::BuildFilterTabUI()
 		Content->AddChild(ClassHeading);
 		SetVerticalSlotPadding(ClassHeading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
 
-		UScrollBox* ClassScrollBox = AddFilterScrollSection(UIWidget, Content, 235.0f);
+		UScrollBox* ClassScrollBox = AddFilterScrollSection(UIWidget, Content, 242.0f);
 
 		ClassAllCheckBox = AddCheckBoxRow(UIWidget, ClassScrollBox, TEXT("<all>"), true);
 		ClassAllCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnClassAllFilterCheckStateChanged);
@@ -2160,9 +2179,7 @@ void APCLController::BuildFilterTabUI()
 
 	if (bHasClassCodeFilter && bHasReturnsFilter)
 	{
-		USpacer* SectionSpacer = NewObject<USpacer>(UIWidget);
-		SectionSpacer->SetSize(FVector2D(1.0f, 4.0f));
-		Content->AddChild(SectionSpacer);
+		AddFilterSectionDivider(UIWidget, Content);
 	}
 
 	if (bHasReturnsFilter)
@@ -2172,7 +2189,7 @@ void APCLController::BuildFilterTabUI()
 		Content->AddChild(ReturnsHeading);
 		SetVerticalSlotPadding(ReturnsHeading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
 
-		UScrollBox* ReturnsScrollBox = AddFilterScrollSection(UIWidget, Content, 161.0f);
+		UScrollBox* ReturnsScrollBox = AddFilterScrollSection(UIWidget, Content, 167.0f);
 
 		ReturnsAllCheckBox = AddCheckBoxRow(UIWidget, ReturnsScrollBox, TEXT("<all>"), true);
 		ReturnsAllCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnReturnsAllFilterCheckStateChanged);
