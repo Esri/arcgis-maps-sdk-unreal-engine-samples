@@ -17,9 +17,9 @@
 
 #include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISGeometryEngine.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPoint.h"
 #include "Blueprint/UserWidget.h"
 #include "Json.h"
-#include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Geometry/ArcGISPoint.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "sample_project/InputManager.h"
@@ -73,7 +73,6 @@ void AArcGISRaycast::CreateProperties()
 	}
 }
 
-
 void AArcGISRaycast::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
@@ -96,7 +95,7 @@ void AArcGISRaycast::GetHit()
 												  EDrawDebugTrace::None, HitResult, true))
 		{
 			GetMapComponent();
-			
+
 			if (!MapComponent)
 			{
 				UE_LOG(LogTemp, Error, TEXT("Could not find map component."));
@@ -110,7 +109,7 @@ void AArcGISRaycast::GetHit()
 				HitLocation->SetActorLocation(HitResult.ImpactPoint);
 				featureID = result.FeatureId;
 				auto geoPosition = MapComponent->TransformEnginePositionToPoint(HitResult.ImpactPoint);
-				
+
 				if (geoPosition)
 				{
 					position = "- Lat: " + FString::SanitizeFloat(geoPosition->GetY()) + ", Long: " + FString::SanitizeFloat(geoPosition->GetX());

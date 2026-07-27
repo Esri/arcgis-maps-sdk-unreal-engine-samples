@@ -62,9 +62,9 @@ void AArcGISFeatureLayerQuery::OnResponseReceived(FHttpRequestPtr Request, FHttp
 			Features = ResponseObj->GetArrayField(TEXT("features"));
 
 			auto properties = Features[0]->AsObject()->GetObjectField(TEXT("properties"));
-			auto propertyFields = properties->Values;
+			const auto& propertyFields = properties->Values;
 
-			for (auto key : propertyFields)
+			for (const auto& key : propertyFields)
 			{
 				WebLink.OutFields.Add(FString(key.Key));
 			}
