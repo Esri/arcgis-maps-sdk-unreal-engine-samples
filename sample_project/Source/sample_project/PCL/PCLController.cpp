@@ -1,6 +1,5 @@
 // /* Copyright 2023 Esri* * Licensed under the Apache License Version 2.0 (the "License"); * you may not use this file except in compliance with the License. * You may obtain a copy of the License at * *     http://www.apache.org/licenses/LICENSE-2.0 * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. */
 
-
 #include "PCLController.h"
 
 #include "ArcGISMapsSDK/API/GameEngine/ArcGISLoadStatus.h"
@@ -11,17 +10,16 @@
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudColorUniqueValue.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudFilter.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudFixedSizeAlgorithm.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudRGBRenderer.h"
+#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudRenderer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudReturnFilter.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudReturnType.h"
-#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudRenderer.h"
-#include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudRGBRenderer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudStretchRenderer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudUniqueValueRenderer.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudValueFilter.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/PointCloud/ArcGISPointCloudValueFilterMode.h"
 #include "ArcGISMapsSDK/API/GameEngine/Map/ArcGISMap.h"
 #include "ArcGISMapsSDK/API/GameEngine/Map/Symbology/ArcGISSymbolSizeUnits.h"
-#include "ArcGISMapsSDK/API/Standard/ArcGISRGBColor.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISCollection.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISException.h"
 #include "ArcGISMapsSDK/API/Unreal/ArcGISImmutableCollection.h"
@@ -75,21 +73,14 @@ constexpr float FilterTabHeightOffset = 430.0f;
 constexpr float PointCloudLayerLoadRetryInterval = 0.25f;
 constexpr int32 MaxPointCloudLayerLoadRetries = 40;
 const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
-const FName ExpandableTabWidgetNames[] = {
-	TEXT("CanvasPanel_37"),
-	TEXT("Background"),
-	TEXT("Switcher_PCLTabs"),
-	TEXT("Panel_Customize"),
-	TEXT("Panel_Visualize"),
-	TEXT("Panel_VisualizeContent"),
-	TEXT("Panel_Filter")
-};
+const FName ExpandableTabWidgetNames[] = {TEXT("CanvasPanel_37"),  TEXT("Background"),		TEXT("Switcher_PCLTabs"),
+										  TEXT("Panel_Customize"), TEXT("Panel_Visualize"), TEXT("Panel_VisualizeContent"),
+										  TEXT("Panel_Filter")};
 const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType FilterReturnValues[] = {
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::FirstOfMany,
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::Last,
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::LastOfMany,
-	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::Single
-};
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::Single};
 const TCHAR* FilterReturnLabels[] = {TEXT("First of many"), TEXT("Last"), TEXT("Last of many"), TEXT("Single")};
 const FName PCLRootCanvasWidgetName(TEXT("CanvasPanel_37"));
 const FName PCLCollapseButtonWidgetName(TEXT("Button_Collapse"));
@@ -108,8 +99,8 @@ FText FormatSliderValue(float Value)
 
 bool IsValidPointCloudSource(const FString& Source)
 {
-	return !Source.IsEmpty() && (Source.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase) ||
-								 Source.StartsWith(TEXT("http://"), ESearchCase::IgnoreCase));
+	return !Source.IsEmpty() &&
+		   (Source.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase) || Source.StartsWith(TEXT("http://"), ESearchCase::IgnoreCase));
 }
 
 FString NormalizeAttributeName(FString Name)
@@ -128,8 +119,8 @@ bool MatchesAttributeName(const FString& NormalizedName, const TCHAR* Candidate)
 
 bool IsRGBAttribute(const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudAttribute& Attribute, const FString& NormalizedName)
 {
-	return NormalizedName == TEXT("RGB") || NormalizedName == TEXT("RGBA") || NormalizedName == TEXT("COLOR") ||
-		   NormalizedName == TEXT("COLORRGB") || Attribute.GetValuesPerElement() >= 3;
+	return NormalizedName == TEXT("RGB") || NormalizedName == TEXT("RGBA") || NormalizedName == TEXT("COLOR") || NormalizedName == TEXT("COLORRGB") ||
+		   Attribute.GetValuesPerElement() >= 3;
 }
 
 Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer GetLoadedRenderer(UArcGISPointCloudLayer* PointCloudLayer)
@@ -148,9 +139,9 @@ Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer GetLoadedRenderer
 	return LayerAPI->GetRenderer();
 }
 
-Esri::Standard::ArcGISRGBColor MakeColor(uint8 Red, uint8 Green, uint8 Blue)
+FColor MakeColor(uint8 Red, uint8 Green, uint8 Blue)
 {
-	return Esri::Standard::ArcGISRGBColor(Red, Green, Blue, 255);
+	return FColor(Red, Green, Blue, 255);
 }
 
 void ConfigurePointCloudRendererSettings(Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer& Renderer,
@@ -175,7 +166,7 @@ void ConfigurePointCloudRendererSettings(Esri::GameEngine::Layers::PointCloud::A
 
 void AddColorStop(Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop>& Stops,
 				  double Value,
-				  Esri::Standard::ArcGISRGBColor&& Color,
+				  FColor&& Color,
 				  const FString& Label)
 {
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop Stop(Color, Value);
@@ -187,126 +178,126 @@ void GetStandardClassInfo(int32 ClassValue, FString& Label, uint8& Red, uint8& G
 {
 	switch (ClassValue)
 	{
-	case 0:
-		Label = TEXT("Created, never classified");
-		Red = 128;
-		Green = 128;
-		Blue = 128;
-		return;
-	case 1:
-		Label = TEXT("Unclassified");
-		Red = 190;
-		Green = 137;
-		Blue = 12;
-		return;
-	case 2:
-		Label = TEXT("Ground");
-		Red = 219;
-		Green = 255;
-		Blue = 104;
-		return;
-	case 3:
-		Label = TEXT("Low vegetation");
-		Red = 246;
-		Green = 44;
-		Blue = 28;
-		return;
-	case 4:
-		Label = TEXT("Medium vegetation");
-		Red = 244;
-		Green = 102;
-		Blue = 32;
-		return;
-	case 5:
-		Label = TEXT("High vegetation");
-		Red = 199;
-		Green = 24;
-		Blue = 255;
-		return;
-	case 6:
-		Label = TEXT("Building");
-		Red = 255;
-		Green = 255;
-		Blue = 112;
-		return;
-	case 7:
-		Label = TEXT("Low point (noise)");
-		Red = 152;
-		Green = 152;
-		Blue = 152;
-		return;
-	case 8:
-		Label = TEXT("Model key-point");
-		Red = 255;
-		Green = 186;
-		Blue = 87;
-		return;
-	case 9:
-		Label = TEXT("Water");
-		Red = 246;
-		Green = 244;
-		Blue = 22;
-		return;
-	case 10:
-		Label = TEXT("Rail");
-		Red = 209;
-		Green = 98;
-		Blue = 224;
-		return;
-	case 11:
-		Label = TEXT("Road surface");
-		Red = 218;
-		Green = 218;
-		Blue = 218;
-		return;
-	case 12:
-		Label = TEXT("Overlap points");
-		Red = 84;
-		Green = 167;
-		Blue = 255;
-		return;
-	case 13:
-		Label = TEXT("Wire guard");
-		Red = 255;
-		Green = 121;
-		Blue = 198;
-		return;
-	case 14:
-		Label = TEXT("Wire conductor");
-		Red = 255;
-		Green = 160;
-		Blue = 67;
-		return;
-	case 15:
-		Label = TEXT("Transmission tower");
-		Red = 255;
-		Green = 92;
-		Blue = 92;
-		return;
-	case 16:
-		Label = TEXT("Wire connector");
-		Red = 136;
-		Green = 255;
-		Blue = 218;
-		return;
-	case 17:
-		Label = TEXT("Bridge deck");
-		Red = 141;
-		Green = 108;
-		Blue = 255;
-		return;
-	case 18:
-		Label = TEXT("High noise");
-		Red = 80;
-		Green = 80;
-		Blue = 80;
-		return;
-	default:
-		Label = FString::Printf(TEXT("Class %d"), ClassValue);
-		Red = 128;
-		Green = 128;
-		Blue = 128;
-		return;
+		case 0:
+			Label = TEXT("Created, never classified");
+			Red = 128;
+			Green = 128;
+			Blue = 128;
+			return;
+		case 1:
+			Label = TEXT("Unclassified");
+			Red = 190;
+			Green = 137;
+			Blue = 12;
+			return;
+		case 2:
+			Label = TEXT("Ground");
+			Red = 219;
+			Green = 255;
+			Blue = 104;
+			return;
+		case 3:
+			Label = TEXT("Low vegetation");
+			Red = 246;
+			Green = 44;
+			Blue = 28;
+			return;
+		case 4:
+			Label = TEXT("Medium vegetation");
+			Red = 244;
+			Green = 102;
+			Blue = 32;
+			return;
+		case 5:
+			Label = TEXT("High vegetation");
+			Red = 199;
+			Green = 24;
+			Blue = 255;
+			return;
+		case 6:
+			Label = TEXT("Building");
+			Red = 255;
+			Green = 255;
+			Blue = 112;
+			return;
+		case 7:
+			Label = TEXT("Low point (noise)");
+			Red = 152;
+			Green = 152;
+			Blue = 152;
+			return;
+		case 8:
+			Label = TEXT("Model key-point");
+			Red = 255;
+			Green = 186;
+			Blue = 87;
+			return;
+		case 9:
+			Label = TEXT("Water");
+			Red = 246;
+			Green = 244;
+			Blue = 22;
+			return;
+		case 10:
+			Label = TEXT("Rail");
+			Red = 209;
+			Green = 98;
+			Blue = 224;
+			return;
+		case 11:
+			Label = TEXT("Road surface");
+			Red = 218;
+			Green = 218;
+			Blue = 218;
+			return;
+		case 12:
+			Label = TEXT("Overlap points");
+			Red = 84;
+			Green = 167;
+			Blue = 255;
+			return;
+		case 13:
+			Label = TEXT("Wire guard");
+			Red = 255;
+			Green = 121;
+			Blue = 198;
+			return;
+		case 14:
+			Label = TEXT("Wire conductor");
+			Red = 255;
+			Green = 160;
+			Blue = 67;
+			return;
+		case 15:
+			Label = TEXT("Transmission tower");
+			Red = 255;
+			Green = 92;
+			Blue = 92;
+			return;
+		case 16:
+			Label = TEXT("Wire connector");
+			Red = 136;
+			Green = 255;
+			Blue = 218;
+			return;
+		case 17:
+			Label = TEXT("Bridge deck");
+			Red = 141;
+			Green = 108;
+			Blue = 255;
+			return;
+		case 18:
+			Label = TEXT("High noise");
+			Red = 80;
+			Green = 80;
+			Blue = 80;
+			return;
+		default:
+			Label = FString::Printf(TEXT("Class %d"), ClassValue);
+			Red = 128;
+			Green = 128;
+			Blue = 128;
+			return;
 	}
 }
 
@@ -415,7 +406,8 @@ void ApplyLegendTitleFont(UTextBlock* Title)
 		return;
 	}
 
-	UObject* FontObject = LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
+	UObject* FontObject =
+		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
 	if (!FontObject)
 	{
 		return;
@@ -434,7 +426,8 @@ void ApplyChakraPetchSemiBoldFont(UTextBlock* TextBlock, int32 FontSize)
 		return;
 	}
 
-	UObject* FontObject = LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
+	UObject* FontObject =
+		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
 	if (!FontObject)
 	{
 		return;
@@ -453,7 +446,8 @@ void ApplyChakraPetchRegularFont(UTextBlock* TextBlock, int32 FontSize)
 		return;
 	}
 
-	UObject* FontObject = LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font"));
+	UObject* FontObject =
+		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font"));
 	if (!FontObject)
 	{
 		return;
@@ -465,7 +459,11 @@ void ApplyChakraPetchRegularFont(UTextBlock* TextBlock, int32 FontSize)
 	TextBlock->SetFont(Font);
 }
 
-UHorizontalBox* AddLegendRow(UObject* Outer, UPanelWidget* Parent, const FString& Label, const FLinearColor& Color, UTexture2D* CircleTexture = nullptr)
+UHorizontalBox* AddLegendRow(UObject* Outer,
+							 UPanelWidget* Parent,
+							 const FString& Label,
+							 const FLinearColor& Color,
+							 UTexture2D* CircleTexture = nullptr)
 {
 	UHorizontalBox* Row = NewObject<UHorizontalBox>(Outer);
 	Parent->AddChild(Row);
@@ -694,9 +692,7 @@ bool IsPCLCollapsePersistentWidget(const UWidget* Widget)
 	}
 
 	const FName WidgetName = Widget->GetFName();
-	return WidgetName == PCLCollapseButtonWidgetName ||
-		   WidgetName == PCLGearIconWidgetName ||
-		   WidgetName == PCLInfoWidgetName;
+	return WidgetName == PCLCollapseButtonWidgetName || WidgetName == PCLGearIconWidgetName || WidgetName == PCLInfoWidgetName;
 }
 
 bool IsWidgetUnderCursor(const UWidget* Widget)
@@ -724,9 +720,9 @@ void DisablePCLButtonFocus(UButton* Button)
 		return;
 	}
 
-PRAGMA_DISABLE_DEPRECATION_WARNINGS
+	PRAGMA_DISABLE_DEPRECATION_WARNINGS
 	Button->IsFocusable = false;
-PRAGMA_ENABLE_DEPRECATION_WARNINGS
+	PRAGMA_ENABLE_DEPRECATION_WARNINGS
 }
 
 void ConfigurePCLCollapseButton(UButton* Button)
@@ -816,9 +812,8 @@ void ApplyPCLCollapseToggleVisibility(UUserWidget* UIWidget, bool bCollapsed)
 // Sets default values
 APCLController::APCLController()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -903,8 +898,8 @@ void APCLController::BeginPlay()
 		CollapseButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Collapse"), false);
 		GearButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Gear"), false);
 		UE_LOG(LogTemp, Display, TEXT("UI_PCL collapse widgets: Button_Collapse=%s Button_Gear=%s"),
-			CollapseButton ? *CollapseButton->GetClass()->GetName() : TEXT("missing"),
-			GearButton ? *GearButton->GetClass()->GetName() : TEXT("missing"));
+			   CollapseButton ? *CollapseButton->GetClass()->GetName() : TEXT("missing"),
+			   GearButton ? *GearButton->GetClass()->GetName() : TEXT("missing"));
 		ConfigurePCLCollapseToggleAppearance(UIWidget, CollapseButton, GearButton);
 		LayerLoadStatusText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"), false);
 		UIInteractionPanel = FindNamedWidget<UWidget>(UIWidget, TEXT("Background"));
@@ -1134,8 +1129,7 @@ void APCLController::OnPointSizeChanged(float Value)
 	if (Renderer)
 	{
 		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm SizeAlgorithm(
-			FMath::Clamp(static_cast<double>(Value), MinPointSize, MaxPointSize),
-			Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
+			FMath::Clamp(static_cast<double>(Value), MinPointSize, MaxPointSize), Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
 		Renderer.SetSizeAlgorithm(SizeAlgorithm);
 	}
 }
@@ -1163,10 +1157,9 @@ void APCLController::SetColorModulationEnabled(bool bEnabled)
 	auto Renderer = GetLoadedRenderer(PointCloudLayer);
 	if (Renderer)
 	{
-		Renderer.SetColorModulation(
-			bColorModulationEnabled && !IntensityAttributeName.IsEmpty() ?
-				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation(IntensityAttributeName, 0.0, 65535.0) :
-				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation());
+		Renderer.SetColorModulation(bColorModulationEnabled && !IntensityAttributeName.IsEmpty() ?
+										Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation(IntensityAttributeName, 0.0, 65535.0) :
+										Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation());
 	}
 }
 
@@ -1514,7 +1507,6 @@ void APCLController::BuildDataLoaderUI()
 			ButtonSlot->SetHorizontalAlignment(HAlign_Center);
 			ButtonSlot->SetVerticalAlignment(VAlign_Center);
 		}
-
 	}
 }
 
@@ -1530,7 +1522,7 @@ void APCLController::DeferPointCloudLayerLoad(const FString& Source, bool bZoomW
 			LoadLayerButton->SetIsEnabled(true);
 		}
 		UE_LOG(LogTemp, Warning, TEXT("ArcGIS Map was not ready after %.1f seconds; point cloud layer load was cancelled."),
-			MaxPointCloudLayerLoadRetries * PointCloudLayerLoadRetryInterval);
+			   MaxPointCloudLayerLoadRetries * PointCloudLayerLoadRetryInterval);
 		return;
 	}
 
@@ -1554,10 +1546,8 @@ void APCLController::SetLayerLoadStatus(bool bSucceeded) const
 		return;
 	}
 
-	LayerLoadStatusText->SetText(FText::FromString(
-		bSucceeded ? TEXT("Layer loaded successfully...") : TEXT("Failed to load point scene layer!")));
-	LayerLoadStatusText->SetColorAndOpacity(
-		FSlateColor(bSucceeded ? FLinearColor(0.42f, 0.78f, 0.04f) : FLinearColor(0.93f, 0.31f, 0.43f)));
+	LayerLoadStatusText->SetText(FText::FromString(bSucceeded ? TEXT("Layer loaded successfully...") : TEXT("Failed to load point scene layer!")));
+	LayerLoadStatusText->SetColorAndOpacity(FSlateColor(bSucceeded ? FLinearColor(0.42f, 0.78f, 0.04f) : FLinearColor(0.93f, 0.31f, 0.43f)));
 	LayerLoadStatusText->SetVisibility(ESlateVisibility::Visible);
 	if (!bSucceeded && LoadLayerButton)
 	{
@@ -1615,8 +1605,7 @@ void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhen
 		const int64 PendingLayerId = PendingPointCloudLayer->GetInstanceId();
 		for (int64 Index = MapLayers->GetSize() - 1; Index >= 0; --Index)
 		{
-			if (UArcGISLayer* ExistingLayer = MapLayers->At(Index);
-				ExistingLayer && ExistingLayer->GetInstanceId() == PendingLayerId)
+			if (UArcGISLayer* ExistingLayer = MapLayers->At(Index); ExistingLayer && ExistingLayer->GetInstanceId() == PendingLayerId)
 			{
 				MapLayers->Remove(Index);
 				break;
@@ -1657,15 +1646,15 @@ void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhen
 
 	TWeakObjectPtr<APCLController> WeakThis(this);
 	TWeakObjectPtr<UArcGISPointCloudLayer> WeakCandidate(CandidateLayer);
-	CandidateLayer->APIObject->SetDoneLoading([WeakThis, WeakCandidate, RequestId, bZoomWhenLoaded, Source](Esri::Unreal::ArcGISException& LoadError) {
+	CandidateLayer->APIObject->SetDoneLoading([WeakThis, WeakCandidate, RequestId, bZoomWhenLoaded,
+											   Source](Esri::Unreal::ArcGISException& LoadError) {
 		const bool bHadLoadError = static_cast<bool>(LoadError);
 		const FString LoadErrorMessage = bHadLoadError ? LoadError.GetMessage() : FString();
 
 		AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakCandidate, RequestId, bZoomWhenLoaded, bHadLoadError, LoadErrorMessage, Source]() {
 			auto* Controller = WeakThis.Get();
 			auto* LoadedLayer = WeakCandidate.Get();
-			if (!Controller || !LoadedLayer || Controller->LayerLoadRequestId != RequestId ||
-				Controller->PendingPointCloudLayer != LoadedLayer)
+			if (!Controller || !LoadedLayer || Controller->LayerLoadRequestId != RequestId || Controller->PendingPointCloudLayer != LoadedLayer)
 			{
 				return;
 			}
@@ -1677,8 +1666,7 @@ void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhen
 			}
 
 			auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(LoadedLayer->APIObject);
-			const bool bLoaded = !bHadLoadError && LayerAPI &&
-				LayerAPI->GetLoadStatus() == Esri::GameEngine::ArcGISLoadStatus::Loaded;
+			const bool bLoaded = !bHadLoadError && LayerAPI && LayerAPI->GetLoadStatus() == Esri::GameEngine::ArcGISLoadStatus::Loaded;
 
 			auto* CurrentMap = Controller->MapComponent ? Controller->MapComponent->GetMap() : nullptr;
 			auto* CurrentLayers = CurrentMap ? CurrentMap->GetLayers() : nullptr;
@@ -1690,8 +1678,7 @@ void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhen
 					const int64 LoadedLayerId = LoadedLayer->GetInstanceId();
 					for (int64 Index = CurrentLayers->GetSize() - 1; Index >= 0; --Index)
 					{
-						if (UArcGISLayer* ExistingLayer = CurrentLayers->At(Index);
-							ExistingLayer && ExistingLayer->GetInstanceId() == LoadedLayerId)
+						if (UArcGISLayer* ExistingLayer = CurrentLayers->At(Index); ExistingLayer && ExistingLayer->GetInstanceId() == LoadedLayerId)
 						{
 							CurrentLayers->Remove(Index);
 							break;
@@ -1700,8 +1687,8 @@ void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhen
 				}
 
 				Controller->SetLayerLoadStatus(false);
-				UE_LOG(LogTemp, Warning, TEXT("Failed to load point cloud layer from '%s': %s"),
-					*Source, LoadErrorMessage.IsEmpty() ? TEXT("Unknown load error") : *LoadErrorMessage);
+				UE_LOG(LogTemp, Warning, TEXT("Failed to load point cloud layer from '%s': %s"), *Source,
+					   LoadErrorMessage.IsEmpty() ? TEXT("Unknown load error") : *LoadErrorMessage);
 				return;
 			}
 
@@ -1775,8 +1762,8 @@ void APCLController::ApplyPointCloudVisualization()
 
 	const double PointSize =
 		FMath::Clamp(PointSizeSlider ? static_cast<double>(PointSizeSlider->GetValue()) : DefaultPointSize, MinPointSize, MaxPointSize);
-	const double PointsPerInch = FMath::Max(PointsPerInchSlider ? static_cast<double>(PointsPerInchSlider->GetValue()) : DefaultPointsPerInch,
-											MinPointsPerInch);
+	const double PointsPerInch =
+		FMath::Max(PointsPerInchSlider ? static_cast<double>(PointsPerInchSlider->GetValue()) : DefaultPointsPerInch, MinPointsPerInch);
 
 	EnsureAvailableRendererSelected();
 
@@ -1799,52 +1786,52 @@ void APCLController::ApplyPointCloudVisualization()
 
 	switch (CurrentRendererChoice)
 	{
-	case EPCLRendererChoice::Class:
-		if (!ClassAttributeName.IsEmpty())
-		{
-			Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorUniqueValue> UniqueValues;
-			for (int32 ClassValue = 0; ClassValue <= 18; ++ClassValue)
+		case EPCLRendererChoice::Class:
+			if (!ClassAttributeName.IsEmpty())
 			{
-				AddClassValue(UniqueValues, ClassValue);
+				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorUniqueValue> UniqueValues;
+				for (int32 ClassValue = 0; ClassValue <= 18; ++ClassValue)
+				{
+					AddClassValue(UniqueValues, ClassValue);
+				}
+
+				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudUniqueValueRenderer Renderer(ClassAttributeName, UniqueValues);
+				ApplyRenderer(Renderer);
+				return;
 			}
+			break;
+		case EPCLRendererChoice::Elevation:
+			if (!ElevationAttributeName.IsEmpty())
+			{
+				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop> Stops;
+				AddColorStop(Stops, ElevationLow, MakeColor(42, 43, 238), TEXT("< -1.5"));
+				AddColorStop(Stops, 0.0, MakeColor(40, 210, 246), TEXT(""));
+				AddColorStop(Stops, ElevationMid, MakeColor(91, 248, 134), TEXT("1.5"));
+				AddColorStop(Stops, 2.5, MakeColor(250, 244, 73), TEXT(""));
+				AddColorStop(Stops, ElevationHigh, MakeColor(255, 59, 22), TEXT("> 3.5"));
 
-			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudUniqueValueRenderer Renderer(ClassAttributeName, UniqueValues);
-			ApplyRenderer(Renderer);
-			return;
-		}
-		break;
-	case EPCLRendererChoice::Elevation:
-		if (!ElevationAttributeName.IsEmpty())
-		{
-			Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop> Stops;
-			AddColorStop(Stops, ElevationLow, MakeColor(42, 43, 238), TEXT("< -1.5"));
-			AddColorStop(Stops, 0.0, MakeColor(40, 210, 246), TEXT(""));
-			AddColorStop(Stops, ElevationMid, MakeColor(91, 248, 134), TEXT("1.5"));
-			AddColorStop(Stops, 2.5, MakeColor(250, 244, 73), TEXT(""));
-			AddColorStop(Stops, ElevationHigh, MakeColor(255, 59, 22), TEXT("> 3.5"));
+				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(ElevationAttributeName, Stops);
+				ApplyRenderer(Renderer);
+				return;
+			}
+			break;
+		case EPCLRendererChoice::Intensity:
+			if (!IntensityAttributeName.IsEmpty())
+			{
+				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop> Stops;
+				AddColorStop(Stops, IntensityLow, MakeColor(0, 0, 0), TEXT("< 10,385"));
+				AddColorStop(Stops, IntensityMid, MakeColor(128, 128, 128), TEXT("38,032"));
+				AddColorStop(Stops, IntensityHigh, MakeColor(255, 255, 255), TEXT("> 65,680"));
 
-			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(ElevationAttributeName, Stops);
-			ApplyRenderer(Renderer);
+				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(IntensityAttributeName, Stops);
+				ApplyRenderer(Renderer);
+				return;
+			}
+			break;
+		case EPCLRendererChoice::RGB:
+		default:
+			ApplyRGBRenderer();
 			return;
-		}
-		break;
-	case EPCLRendererChoice::Intensity:
-		if (!IntensityAttributeName.IsEmpty())
-		{
-			Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop> Stops;
-			AddColorStop(Stops, IntensityLow, MakeColor(0, 0, 0), TEXT("< 10,385"));
-			AddColorStop(Stops, IntensityMid, MakeColor(128, 128, 128), TEXT("38,032"));
-			AddColorStop(Stops, IntensityHigh, MakeColor(255, 255, 255), TEXT("> 65,680"));
-
-			Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(IntensityAttributeName, Stops);
-			ApplyRenderer(Renderer);
-			return;
-		}
-		break;
-	case EPCLRendererChoice::RGB:
-	default:
-		ApplyRGBRenderer();
-		return;
 	}
 
 	ApplyRGBRenderer();
@@ -1953,16 +1940,15 @@ void APCLController::RefreshAvailablePointCloudAttributes()
 			RGBAttributeName = Name;
 		}
 
-		if (ClassAttributeName.IsEmpty() && (MatchesAttributeName(NormalizedName, TEXT("CLASSCODE")) ||
-											 MatchesAttributeName(NormalizedName, TEXT("CLASSIFICATION")) ||
-											 MatchesAttributeName(NormalizedName, TEXT("CLASS"))))
+		if (ClassAttributeName.IsEmpty() &&
+			(MatchesAttributeName(NormalizedName, TEXT("CLASSCODE")) || MatchesAttributeName(NormalizedName, TEXT("CLASSIFICATION")) ||
+			 MatchesAttributeName(NormalizedName, TEXT("CLASS"))))
 		{
 			ClassAttributeName = Name;
 		}
 
-		if (ElevationAttributeName.IsEmpty() &&
-			(MatchesAttributeName(NormalizedName, TEXT("ELEVATION")) || MatchesAttributeName(NormalizedName, TEXT("HEIGHT")) ||
-			 NormalizedName == TEXT("Z")))
+		if (ElevationAttributeName.IsEmpty() && (MatchesAttributeName(NormalizedName, TEXT("ELEVATION")) ||
+												 MatchesAttributeName(NormalizedName, TEXT("HEIGHT")) || NormalizedName == TEXT("Z")))
 		{
 			ElevationAttributeName = Name;
 		}
@@ -1983,16 +1969,16 @@ bool APCLController::IsRendererAvailableFromCachedAttributes(EPCLRendererChoice 
 {
 	switch (RendererChoice)
 	{
-	case EPCLRendererChoice::RGB:
-		return !RGBAttributeName.IsEmpty();
-	case EPCLRendererChoice::Class:
-		return !ClassAttributeName.IsEmpty();
-	case EPCLRendererChoice::Elevation:
-		return !ElevationAttributeName.IsEmpty();
-	case EPCLRendererChoice::Intensity:
-		return !IntensityAttributeName.IsEmpty();
-	default:
-		return false;
+		case EPCLRendererChoice::RGB:
+			return !RGBAttributeName.IsEmpty();
+		case EPCLRendererChoice::Class:
+			return !ClassAttributeName.IsEmpty();
+		case EPCLRendererChoice::Elevation:
+			return !ElevationAttributeName.IsEmpty();
+		case EPCLRendererChoice::Intensity:
+			return !IntensityAttributeName.IsEmpty();
+		default:
+			return false;
 	}
 }
 
@@ -2071,28 +2057,28 @@ void APCLController::SetRendererOptionVisibility(EPCLRendererChoice RendererChoi
 
 	switch (RendererChoice)
 	{
-	case EPCLRendererChoice::RGB:
-		RowName = TEXT("Row_Checkbox_Renderer_RGB");
-		CheckBoxName = TEXT("Checkbox_Renderer_RGB");
-		TextName = TEXT("Text_Renderer_RGB");
-		break;
-	case EPCLRendererChoice::Class:
-		RowName = TEXT("Row_Checkbox_Renderer_Class");
-		CheckBoxName = TEXT("Checkbox_Renderer_Class");
-		TextName = TEXT("Text_Renderer_Class");
-		break;
-	case EPCLRendererChoice::Elevation:
-		RowName = TEXT("Row_Checkbox_Renderer_Elevation");
-		CheckBoxName = TEXT("Checkbox_Renderer_Elevation");
-		TextName = TEXT("Text_Renderer_Elevation");
-		break;
-	case EPCLRendererChoice::Intensity:
-		RowName = TEXT("Row_Checkbox_Renderer_Intensity");
-		CheckBoxName = TEXT("Checkbox_Renderer_Intensity");
-		TextName = TEXT("Text_Renderer_Intensity");
-		break;
-	default:
-		return;
+		case EPCLRendererChoice::RGB:
+			RowName = TEXT("Row_Checkbox_Renderer_RGB");
+			CheckBoxName = TEXT("Checkbox_Renderer_RGB");
+			TextName = TEXT("Text_Renderer_RGB");
+			break;
+		case EPCLRendererChoice::Class:
+			RowName = TEXT("Row_Checkbox_Renderer_Class");
+			CheckBoxName = TEXT("Checkbox_Renderer_Class");
+			TextName = TEXT("Text_Renderer_Class");
+			break;
+		case EPCLRendererChoice::Elevation:
+			RowName = TEXT("Row_Checkbox_Renderer_Elevation");
+			CheckBoxName = TEXT("Checkbox_Renderer_Elevation");
+			TextName = TEXT("Text_Renderer_Elevation");
+			break;
+		case EPCLRendererChoice::Intensity:
+			RowName = TEXT("Row_Checkbox_Renderer_Intensity");
+			CheckBoxName = TEXT("Checkbox_Renderer_Intensity");
+			TextName = TEXT("Text_Renderer_Intensity");
+			break;
+		default:
+			return;
 	}
 
 	if (UWidget* Row = UIWidget ? UIWidget->GetWidgetFromName(RowName) : nullptr)
@@ -2346,22 +2332,12 @@ void APCLController::BuildLegendUI()
 	TArray<FLinearColor> GradientColors;
 	if (bElevationLegend)
 	{
-		GradientColors = {
-			FLinearColor(0.95f, 0.12f, 0.08f),
-			FLinearColor(1.0f, 0.9f, 0.2f),
-			FLinearColor(0.35f, 0.95f, 0.48f),
-			FLinearColor(0.25f, 0.82f, 1.0f),
-			FLinearColor(0.22f, 0.12f, 1.0f)
-		};
+		GradientColors = {FLinearColor(0.95f, 0.12f, 0.08f), FLinearColor(1.0f, 0.9f, 0.2f), FLinearColor(0.35f, 0.95f, 0.48f),
+						  FLinearColor(0.25f, 0.82f, 1.0f), FLinearColor(0.22f, 0.12f, 1.0f)};
 	}
 	else
 	{
-		GradientColors = {
-			FLinearColor::White,
-			FLinearColor(0.65f, 0.65f, 0.65f),
-			FLinearColor(0.16f, 0.16f, 0.16f),
-			FLinearColor::Black
-		};
+		GradientColors = {FLinearColor::White, FLinearColor(0.65f, 0.65f, 0.65f), FLinearColor(0.16f, 0.16f, 0.16f), FLinearColor::Black};
 	}
 
 	if (UTexture2D* GradientTexture = CreateLegendGradientTexture(UIWidget, GradientColors))
