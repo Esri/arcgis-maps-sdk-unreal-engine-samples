@@ -174,11 +174,11 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* Item)
 	{
 		for (auto property : properties->Values)
 		{
-			auto key = property.Key;
+			FString key = FString(property.Key);
 			auto value = property.Value->AsString();
 			Item->PropertiesNames.Add(key);
 			Item->Properties.Add(value);
-			resultProperties.Add(key + ": " + value);
+			resultProperties.Add(key + TEXT(": ") + value);
 		}
 
 		FString output = "Properties: \n";

@@ -134,8 +134,8 @@ void AGeocoder::ProcessAddressQueryResponse(FHttpRequestPtr Request, FHttpRespon
 				}
 				if ((location = jsonObj->TryGetField(TEXT("location")))) {
 					jsonObj = location->AsObject();
-					jsonObj->TryGetNumberField("x", pointX);
-					jsonObj->TryGetNumberField("y", pointY);
+					jsonObj->TryGetNumberField(TEXT("x"), pointX);
+					jsonObj->TryGetNumberField(TEXT("y"), pointY);
 
 					// Spawn a QueryLocation actor if not already created
 					if (QueryLocation == nullptr) {

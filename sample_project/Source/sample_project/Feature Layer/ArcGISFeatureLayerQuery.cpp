@@ -66,7 +66,7 @@ void AArcGISFeatureLayerQuery::OnResponseReceived(FHttpRequestPtr Request, FHttp
 
 			for (auto key : propertyFields)
 			{
-				WebLink.OutFields.Add(key.Key);
+				WebLink.OutFields.Add(FString(key.Key));
 			}
 			//parse through the features in order to get individual properties associated with the features
 			for (int i = 0; i != Features.Num(); i++)
