@@ -13,14 +13,16 @@
  * limitations under the License.
  */
 
+
 #include "WeatherQuery.h"
 
 #include "Blueprint/UserWidget.h"
 
+
 // Sets default values
 AWeatherQuery::AWeatherQuery()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -52,11 +54,11 @@ void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 						//if it does exist, it will return the result of the outfield associated with this feature
 						//if it does not exist, it will return and error message in the scene
 						WeatherData.StationName = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("STATION_NAME"));
-						WeatherData.Country = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("COUNTRY"));
+						WeatherData.Country = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("COUNTRY"));	
 						WeatherData.SkyCondition = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("SKY_CONDTN"));
 						WeatherData.Tempurature = feature->GetObjectField(TEXT("properties"))->GetNumberField(TEXT("TEMP"));
 						WeatherData.Weather = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("WEATHER"));
-
+						
 						//this will get the geometry or coordinates of the feature
 						auto coordinates = feature->GetObjectField(TEXT("geometry"))->GetArrayField(TEXT("coordinates"));
 						//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
@@ -91,7 +93,7 @@ void AWeatherQuery::SendCityQuery(float X, float Y)
 	FString APIToken = MapComponent ? MapComponent->GetAPIKey() : "";
 	FString Query;
 
-	// Set up the query
+	// Set up the query 
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
 	Request->OnProcessRequestComplete().BindUObject(this, &AWeatherQuery::ProcessCityQueryResponse);
 	FString latLong = FString::SanitizeFloat(X) + "," + FString::SanitizeFloat(Y);
@@ -115,7 +117,7 @@ void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpRespo
 		auto address = ResponseObj->GetObjectField(TEXT("address"));
 		if (address->GetStringField(TEXT("City")).Len() > 0)
 		{
-			CityName = address->GetStringField(TEXT("City")) + TEXT(", ") + address->GetStringField(TEXT("RegionAbbr"));
+			CityName = address->GetStringField(TEXT("City")) + TEXT(", ") + address->GetStringField(TEXT("RegionAbbr"));	
 		}
 	}
 }
@@ -124,11 +126,8 @@ void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpRespo
 void AWeatherQuery::BeginPlay()
 {
 	Super::BeginPlay();
-	WebLink.Link =
-		"https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0//"
-		"query?where=COUNTRY+LIKE+%27%25United+States+of+America%27+AND+WEATHER+NOT+IN(%27%2CAutomated+observation+with+no+human+augmentation%3B+"
-		"there+may+or+may+not+be+significant+weather+present+at+this+time.%27)&outFields=*&f=pgeojson&orderByFields=STATION_NAME";
-
+	WebLink.Link = "https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0//query?where=COUNTRY+LIKE+%27%25United+States+of+America%27+AND+WEATHER+NOT+IN(%27%2CAutomated+observation+with+no+human+augmentation%3B+there+may+or+may+not+be+significant+weather+present+at+this+time.%27)&outFields=*&f=pgeojson&orderByFields=STATION_NAME";
+	
 	ProcessWebRequest();
 
 	// Create the UI and add it to the viewport
@@ -138,7 +137,7 @@ void AWeatherQuery::BeginPlay()
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
-			APlayerController* const PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+			APlayerController* const PlayerController = UGameplayStatics::GetPlayerController(this,0);
 			PlayerController->SetInputMode(FInputModeGameAndUI());
 			PlayerController->SetShowMouseCursor(true);
 		}

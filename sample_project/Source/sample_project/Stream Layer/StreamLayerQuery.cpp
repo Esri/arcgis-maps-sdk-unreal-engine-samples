@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
+
 #include "StreamLayerQuery.h"
-#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISSpatialReference.h"
-#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
 #include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
+#include "ArcGISMapsSDK/API/GameEngine/View/ArcGISView.h"
+#include "ArcGISMapsSDK/API/GameEngine/Geometry/ArcGISSpatialReference.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "WebSocketsModule.h"
@@ -60,21 +61,20 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString Data)
 		auto name = attributes->GetStringField(TEXT("ACID"));
 		auto heading = attributes->GetNumberField(TEXT("Heading"));
 		auto speed = attributes->GetNumberField(TEXT("GroundSpeedKnots"));
-		const auto timestampMilliseconds = attributes->GetNumberField(TEXT("DateTimeStamp"));
-		const auto timestampSeconds = static_cast<int64>(timestampMilliseconds / 1000.0);
-		auto datetimeOffset = FDateTime::FromUnixTimestamp(timestampSeconds);
+		auto timestampMS = attributes->GetNumberField(TEXT("DateTimeStamp"));
+		auto datetimeOffset = FDateTime::FromUnixTimestamp(timestampMS);
 		auto dateTimeStamp = datetimeOffset.GetDate();
 		auto planeFeature = FPlaneFeature::Create(name, x, y, z, heading, speed, dateTimeStamp);
-
+		
 		if (planeData.Contains(name))
 		{
 			planeData[name]->FeatureData = planeFeature;
 		}
 		else
 		{
-			if (planeData.Num() < PlaneCountThreshold)
+			if(planeData.Num() < PlaneCountThreshold)
 			{
-				SpawnPlane(planeFeature);
+				SpawnPlane(planeFeature);	
 			}
 		}
 	}
@@ -83,15 +83,21 @@ void AStreamLayerQuery::TryParseAndUpdatePlane(FString Data)
 void AStreamLayerQuery::SpawnPlane(FPlaneFeature PlaneFeature)
 {
 	FActorSpawnParameters spawnInfo;
-	auto planeActor = GetWorld()->SpawnActor<APlaneController>(APlaneController::StaticClass(), GetActorLocation(), GetActorRotation(), spawnInfo);
+	auto planeActor = GetWorld()->SpawnActor<APlaneController>
+		(
+			APlaneController::StaticClass(),
+			GetActorLocation(),
+			GetActorRotation(),
+			spawnInfo
+			);
 	planeActor->FeatureData = PlaneFeature;
 #if WITH_EDITOR
 	planeActor->SetActorLabel(*PlaneFeature.Attributes.Name);
 #endif
 
-	auto predictedPoint =
-		Esri::GameEngine::Geometry::ArcGISPoint(PlaneFeature.PredictedPoint.X, PlaneFeature.PredictedPoint.Y, PlaneFeature.PredictedPoint.Z,
-												Esri::GameEngine::Geometry::ArcGISSpatialReference(4326));
+	auto predictedPoint = Esri::GameEngine::Geometry::ArcGISPoint(PlaneFeature.PredictedPoint.X,
+		PlaneFeature.PredictedPoint.Y, PlaneFeature.PredictedPoint.Z,
+		Esri::GameEngine::Geometry::ArcGISSpatialReference(4326));
 	planeActor->SetActorLocation(MapComponent->ToEnginePosition(MapComponent->GetView()->APIObject->GeographicToWorld(predictedPoint)));
 	planeActor->SetActorRotation(FRotator(0, PlaneFeature.Attributes.Heading - 90, 0));
 	planeData.Add(planeActor->FeatureData.Attributes.Name, planeActor);
@@ -104,7 +110,7 @@ void AStreamLayerQuery::BeginPlay()
 
 	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
 	MapComponent = Cast<AArcGISMapActor>(mapComponentActor)->GetMapComponent();
-
+	
 	// Make sure mouse cursor remains visible
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (PC)
@@ -119,6 +125,7 @@ void AStreamLayerQuery::BeginPlay()
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
+			
 		}
 	}
 }
