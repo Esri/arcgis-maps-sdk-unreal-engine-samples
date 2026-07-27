@@ -158,6 +158,12 @@ private:
 	TObjectPtr<UButton> LoadLayerButton;
 
 	UPROPERTY()
+	TObjectPtr<UButton> CollapseButton;
+
+	UPROPERTY()
+	TObjectPtr<UButton> GearButton;
+
+	UPROPERTY()
 	TObjectPtr<UTextBlock> LayerLoadStatusText;
 
 	UPROPERTY()
@@ -205,11 +211,15 @@ private:
 
 	bool bUpdatingFilterCheckBoxes = false;
 	bool bMapInputBlockedByUI = false;
+	bool bPCLUICollapsed = false;
+	bool bPointerDownOverPCLCollapseToggle = false;
+	double LastPCLCollapseToggleTimeSeconds = -1.0;
 	uint64 LayerLoadRequestId = 0;
 	FString DeferredPointCloudLayerSource;
 	float DeferredPointCloudLayerRetrySeconds = 0.0f;
 	int32 PointCloudLayerLoadRetryCount = 0;
 	bool bDeferredZoomWhenLoaded = false;
+	TMap<FName, ESlateVisibility> CachedPCLRootChildVisibilities;
 
 	UPROPERTY()
 	TObjectPtr<UArcGISSpatialReference> SpatialReference;
@@ -265,6 +275,9 @@ private:
 	UFUNCTION()
 	void OnLoadPointCloudLayerClicked();
 
+	UFUNCTION()
+	void OnCollapseButtonClicked();
+
 	void CreatePointCloudLayer(const FString& Source, bool bZoomWhenLoaded);
 	void BuildDataLoaderUI();
 	void DeferPointCloudLayerLoad(const FString& Source, bool bZoomWhenLoaded);
@@ -282,6 +295,11 @@ private:
 	void UpdateSliderValueTexts() const;
 	void BuildFilterTabUI();
 	void BuildLegendUI();
+	void ConfigurePCLCollapseInitialState();
+	void HandlePCLCollapseInput();
+	void TogglePCLUICollapse();
+	void SetPCLUICollapsed(bool bCollapsed);
+	bool IsPCLCollapseToggleUnderCursor() const;
 	bool AreAllClassOptionsSelected() const;
 	bool AreAnyClassOptionsSelected() const;
 	bool AreAllReturnsOptionsSelected() const;

@@ -48,6 +48,8 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Texture2D.h"
 #include "Framework/Application/SlateApplication.h"
+#include "InputCoreTypes.h"
+#include "Slate/WidgetTransform.h"
 #include "sample_project/InputManager.h"
 
 namespace
@@ -89,6 +91,14 @@ const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType FilterRet
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::Single
 };
 const TCHAR* FilterReturnLabels[] = {TEXT("First of many"), TEXT("Last"), TEXT("Last of many"), TEXT("Single")};
+const FName PCLRootCanvasWidgetName(TEXT("CanvasPanel_37"));
+const FName PCLCollapseButtonWidgetName(TEXT("Button_Collapse"));
+const FName PCLCollapseIconWidgetName(TEXT("Collapse"));
+const FName PCLGearIconWidgetName(TEXT("Button_Gear"));
+const FName PCLGearRuntimeIconWidgetName(TEXT("PCL_GearIcon_Runtime"));
+const FVector2D PCLGearButtonSize(48.0f, 48.0f);
+const FVector2D PCLGearIconSize(34.0f, 34.0f);
+const FLinearColor PCLGearPurple(0.309f, 0.063f, 1.0f, 1.0f);
 
 FText FormatSliderValue(float Value)
 {
@@ -653,6 +663,135 @@ WidgetType* FindNamedWidget(UUserWidget* Widget, const TCHAR* WidgetName, bool b
 
 	return NamedWidget;
 }
+
+UWidget* FindPCLNamedWidget(UUserWidget* Widget, const FName& WidgetName)
+{
+	return Widget ? Widget->GetWidgetFromName(WidgetName) : nullptr;
+}
+
+bool IsPCLCollapseToggleWidget(const UWidget* Widget)
+{
+	if (!Widget)
+	{
+		return false;
+	}
+
+	const FName WidgetName = Widget->GetFName();
+	return WidgetName == PCLCollapseButtonWidgetName || WidgetName == PCLGearIconWidgetName;
+}
+
+bool IsWidgetUnderCursor(const UWidget* Widget)
+{
+	if (!Widget || !Widget->IsVisible() || !FSlateApplication::IsInitialized())
+	{
+		return false;
+	}
+
+	const FGeometry& Geometry = Widget->GetCachedGeometry();
+	return !Geometry.GetLocalSize().IsNearlyZero() && Geometry.IsUnderLocation(FSlateApplication::Get().GetCursorPos());
+}
+
+FSlateRoundedBoxBrush MakePCLGearButtonBrush()
+{
+	FSlateRoundedBoxBrush Brush(PCLGearPurple, 0.0f);
+	Brush.ImageSize = PCLGearButtonSize;
+	return Brush;
+}
+
+void DisablePCLButtonFocus(UButton* Button)
+{
+	if (!Button)
+	{
+		return;
+	}
+
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
+	Button->IsFocusable = false;
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
+}
+
+void ConfigurePCLCollapseButton(UButton* Button)
+{
+	if (!Button)
+	{
+		return;
+	}
+
+	FButtonStyle CollapseStyle = Button->GetStyle();
+	CollapseStyle.SetHovered(CollapseStyle.Normal);
+	CollapseStyle.SetPressed(CollapseStyle.Normal);
+	CollapseStyle.SetDisabled(CollapseStyle.Normal);
+	CollapseStyle.SetNormalPadding(FMargin(0.0f));
+	CollapseStyle.SetPressedPadding(FMargin(0.0f));
+	Button->SetStyle(CollapseStyle);
+	DisablePCLButtonFocus(Button);
+	Button->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
+	Button->SetRenderTransform(FWidgetTransform(FVector2D::ZeroVector, FVector2D(1.0f, 1.0f), FVector2D::ZeroVector, 180.0f));
+}
+
+void ConfigurePCLGearButton(UUserWidget* UIWidget, UButton* Button)
+{
+	if (!UIWidget || !UIWidget->WidgetTree || !Button)
+	{
+		return;
+	}
+
+	FSlateRoundedBoxBrush GearBrush = MakePCLGearButtonBrush();
+	FButtonStyle GearStyle = Button->GetStyle();
+	GearStyle.SetNormal(GearBrush);
+	GearStyle.SetHovered(GearBrush);
+	GearStyle.SetPressed(GearBrush);
+	GearStyle.SetDisabled(GearBrush);
+	GearStyle.SetNormalPadding(FMargin(0.0f));
+	GearStyle.SetPressedPadding(FMargin(0.0f));
+	Button->SetStyle(GearStyle);
+	Button->SetBackgroundColor(FLinearColor::White);
+	Button->SetColorAndOpacity(FLinearColor::White);
+	DisablePCLButtonFocus(Button);
+
+	UImage* GearIcon = Cast<UImage>(UIWidget->WidgetTree->FindWidget(PCLGearRuntimeIconWidgetName));
+	if (!GearIcon)
+	{
+		GearIcon = UIWidget->WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), PCLGearRuntimeIconWidgetName);
+	}
+
+	if (GearIcon)
+	{
+		if (UTexture2D* GearTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/SampleViewer/User-Interface/gear_icon.gear_icon")))
+		{
+			GearIcon->SetBrushFromTexture(GearTexture, true);
+		}
+		GearIcon->SetDesiredSizeOverride(PCLGearIconSize);
+		GearIcon->SetColorAndOpacity(FLinearColor::White);
+		GearIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
+		Button->SetContent(GearIcon);
+	}
+}
+
+void ConfigurePCLCollapseToggleAppearance(UUserWidget* UIWidget, UButton* CollapseButton, UButton* GearButton)
+{
+	ConfigurePCLCollapseButton(CollapseButton);
+	ConfigurePCLGearButton(UIWidget, GearButton);
+}
+
+void ApplyPCLCollapseToggleVisibility(UUserWidget* UIWidget, bool bCollapsed)
+{
+	if (UWidget* CollapseButton = FindPCLNamedWidget(UIWidget, PCLCollapseButtonWidgetName))
+	{
+		CollapseButton->SetVisibility(bCollapsed ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+	}
+
+	if (UWidget* GearButton = FindPCLNamedWidget(UIWidget, PCLGearIconWidgetName))
+	{
+		GearButton->SetVisibility(bCollapsed ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+
+	if (UWidget* CollapseIcon = FindPCLNamedWidget(UIWidget, PCLCollapseIconWidgetName))
+	{
+		CollapseIcon->SetVisibility(bCollapsed ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+	}
+}
+
 } // namespace
 
 // Sets default values
@@ -742,6 +881,12 @@ void APCLController::BeginPlay()
 		ResetFiltersButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_ResetFilters"));
 		SourceUrlTextBox = FindNamedWidget<UEditableTextBox>(UIWidget, TEXT("EditableTextBox_0"));
 		LoadLayerButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Load"));
+		CollapseButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Collapse"), false);
+		GearButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Gear"), false);
+		UE_LOG(LogTemp, Display, TEXT("UI_PCL collapse widgets: Button_Collapse=%s Button_Gear=%s"),
+			CollapseButton ? *CollapseButton->GetClass()->GetName() : TEXT("missing"),
+			GearButton ? *GearButton->GetClass()->GetName() : TEXT("missing"));
+		ConfigurePCLCollapseToggleAppearance(UIWidget, CollapseButton, GearButton);
 		LayerLoadStatusText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"), false);
 		UIInteractionPanel = FindNamedWidget<UWidget>(UIWidget, TEXT("Background"));
 		BuildDataLoaderUI();
@@ -823,10 +968,21 @@ void APCLController::BeginPlay()
 			LoadLayerButton->OnClicked.AddDynamic(this, &APCLController::OnLoadPointCloudLayerClicked);
 		}
 
+		if (CollapseButton)
+		{
+			CollapseButton->OnClicked.AddDynamic(this, &APCLController::OnCollapseButtonClicked);
+		}
+
+		if (GearButton)
+		{
+			GearButton->OnClicked.AddDynamic(this, &APCLController::OnCollapseButtonClicked);
+		}
+
 		UpdateSliderValueTexts();
 		UpdateRendererCheckBoxes();
 		BuildFilterTabUI();
 		SetTabLayout(EPCLTabLayout::Default);
+		ConfigurePCLCollapseInitialState();
 		CreatePointCloudLayer(PointCloudLayerSource, false);
 		ApplyPointCloudVisualization();
 		ApplyPointCloudFilters();
@@ -855,6 +1011,7 @@ void APCLController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void APCLController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	HandlePCLCollapseInput();
 	UpdateMapInputForUIHover();
 
 	if (!DeferredPointCloudLayerSource.IsEmpty())
@@ -880,6 +1037,11 @@ void APCLController::UpdateMapInputForUIHover()
 		{
 			bShouldBlockMapInput = PanelGeometry.IsUnderLocation(FSlateApplication::Get().GetCursorPos());
 		}
+	}
+
+	if (!bShouldBlockMapInput && UIWidget && FSlateApplication::IsInitialized())
+	{
+		bShouldBlockMapInput = IsPCLCollapseToggleUnderCursor();
 	}
 
 	SetMapInputBlockedByUI(bShouldBlockMapInput);
@@ -925,10 +1087,21 @@ void APCLController::SetMapInputBlockedByUI(bool bBlocked)
 
 void APCLController::OnInputTriggered()
 {
+	bPointerDownOverPCLCollapseToggle = IsPCLCollapseToggleUnderCursor();
+	if (bPointerDownOverPCLCollapseToggle)
+	{
+		SetMapInputBlockedByUI(true);
+	}
 }
 
 void APCLController::OnInputEnded()
 {
+	if (bPointerDownOverPCLCollapseToggle && IsPCLCollapseToggleUnderCursor())
+	{
+		TogglePCLUICollapse();
+	}
+
+	bPointerDownOverPCLCollapseToggle = false;
 }
 
 void APCLController::OnPointSizeChanged(float Value)
@@ -1150,6 +1323,120 @@ void APCLController::OnLoadPointCloudLayerClicked()
 	DeferredPointCloudLayerSource.Reset();
 	PointCloudLayerLoadRetryCount = 0;
 	CreatePointCloudLayer(Source, true);
+}
+
+void APCLController::OnCollapseButtonClicked()
+{
+	TogglePCLUICollapse();
+}
+
+void APCLController::ConfigurePCLCollapseInitialState()
+{
+	bPCLUICollapsed = false;
+	bPointerDownOverPCLCollapseToggle = false;
+	LastPCLCollapseToggleTimeSeconds = -1.0;
+	CachedPCLRootChildVisibilities.Reset();
+	ApplyPCLCollapseToggleVisibility(UIWidget, false);
+}
+
+void APCLController::HandlePCLCollapseInput()
+{
+	if (!UIWidget || !FSlateApplication::IsInitialized())
+	{
+		bPointerDownOverPCLCollapseToggle = false;
+		return;
+	}
+
+	const bool bPointerDown = FSlateApplication::Get().GetPressedMouseButtons().Contains(EKeys::LeftMouseButton);
+	const bool bPointerOverToggle = IsPCLCollapseToggleUnderCursor();
+
+	if (bPointerDown)
+	{
+		bPointerDownOverPCLCollapseToggle = bPointerDownOverPCLCollapseToggle || bPointerOverToggle;
+		return;
+	}
+
+	if (bPointerDownOverPCLCollapseToggle && bPointerOverToggle)
+	{
+		TogglePCLUICollapse();
+	}
+
+	bPointerDownOverPCLCollapseToggle = false;
+}
+
+void APCLController::SetPCLUICollapsed(bool bCollapsed)
+{
+	if (!UIWidget)
+	{
+		return;
+	}
+
+	UCanvasPanel* RootCanvas = Cast<UCanvasPanel>(FindPCLNamedWidget(UIWidget, PCLRootCanvasWidgetName));
+	if (!RootCanvas)
+	{
+		return;
+	}
+
+	if (bCollapsed)
+	{
+		CachedPCLRootChildVisibilities.Reset();
+		for (int32 ChildIndex = 0; ChildIndex < RootCanvas->GetChildrenCount(); ++ChildIndex)
+		{
+			UWidget* Child = RootCanvas->GetChildAt(ChildIndex);
+			if (!Child || IsPCLCollapseToggleWidget(Child))
+			{
+				continue;
+			}
+
+			CachedPCLRootChildVisibilities.Add(Child->GetFName(), Child->GetVisibility());
+			Child->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
+	else
+	{
+		for (int32 ChildIndex = 0; ChildIndex < RootCanvas->GetChildrenCount(); ++ChildIndex)
+		{
+			UWidget* Child = RootCanvas->GetChildAt(ChildIndex);
+			if (!Child || IsPCLCollapseToggleWidget(Child))
+			{
+				continue;
+			}
+
+			if (const ESlateVisibility* CachedVisibility = CachedPCLRootChildVisibilities.Find(Child->GetFName()))
+			{
+				Child->SetVisibility(*CachedVisibility);
+			}
+		}
+
+		CachedPCLRootChildVisibilities.Reset();
+	}
+
+	bPCLUICollapsed = bCollapsed;
+	ApplyPCLCollapseToggleVisibility(UIWidget, bPCLUICollapsed);
+	UE_LOG(LogTemp, Display, TEXT("UI_PCL collapse state changed: %s"), bPCLUICollapsed ? TEXT("collapsed") : TEXT("expanded"));
+}
+
+void APCLController::TogglePCLUICollapse()
+{
+	const double CurrentTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+	if (LastPCLCollapseToggleTimeSeconds >= 0.0 && CurrentTimeSeconds - LastPCLCollapseToggleTimeSeconds < 0.05)
+	{
+		return;
+	}
+
+	LastPCLCollapseToggleTimeSeconds = CurrentTimeSeconds;
+	SetPCLUICollapsed(!bPCLUICollapsed);
+
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().ClearKeyboardFocus(EFocusCause::Cleared);
+	}
+}
+
+bool APCLController::IsPCLCollapseToggleUnderCursor() const
+{
+	return IsWidgetUnderCursor(FindPCLNamedWidget(UIWidget, PCLCollapseButtonWidgetName)) ||
+		   IsWidgetUnderCursor(FindPCLNamedWidget(UIWidget, PCLGearIconWidgetName));
 }
 
 void APCLController::BuildDataLoaderUI()
