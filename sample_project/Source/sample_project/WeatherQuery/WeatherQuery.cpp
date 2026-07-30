@@ -47,7 +47,7 @@ void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 					//create a new feature object to store the data received associated with this feature iteration
 					FWeatherData WeatherData;
 					auto feature = WeatherStat->AsObject();
-					if (feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("COUNTRY")).Contains("United States Of America"))
+					if (feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("COUNTRY")).Contains(TEXT("United States Of America")))
 					{
 						//outfield can be set in the scene on bp_feature
 						//this loop will take each outfield set in the scene and check to see if the outfield exists
@@ -117,7 +117,7 @@ void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpRespo
 		auto address = ResponseObj->GetObjectField(TEXT("address"));
 		if (address->GetStringField(TEXT("City")).Len() > 0)
 		{
-			CityName = address->GetStringField(TEXT("City")) + ", " + address->GetStringField(TEXT("RegionAbbr"));	
+			CityName = address->GetStringField(TEXT("City")) + TEXT(", ") + address->GetStringField(TEXT("RegionAbbr"));	
 		}
 	}
 }
