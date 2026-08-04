@@ -67,6 +67,7 @@ constexpr float LegendCompactWidth = 345.0f;
 constexpr float LegendCompactHeight = 76.0f;
 constexpr float LegendExpandedWidth = 390.0f;
 constexpr float LegendExpandedHeight = 382.0f;
+constexpr float CustomizeTabUIScale = 2.0f / 3.0f;
 constexpr float CustomizeTabHeightOffset = 88.0f;
 constexpr float VisualizeTabHeightOffset = 194.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
@@ -83,6 +84,7 @@ const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType FilterRet
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::Single};
 const TCHAR* FilterReturnLabels[] = {TEXT("First of many"), TEXT("Last"), TEXT("Last of many"), TEXT("Single")};
 const FName PCLRootCanvasWidgetName(TEXT("CanvasPanel_37"));
+const FName PCLMainPanelWidgetName(TEXT("Panel_PCLMain"));
 const FName PCLCollapseButtonWidgetName(TEXT("Button_Collapse"));
 const FName PCLCollapseIconWidgetName(TEXT("Collapse"));
 const FName PCLGearIconWidgetName(TEXT("Button_Gear"));
@@ -1392,12 +1394,30 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 		return;
 	}
 
+	TArray<UWidget*> CollapsibleWidgets;
+	for (int32 ChildIndex = 0; ChildIndex < RootCanvas->GetChildrenCount(); ++ChildIndex)
+	{
+		UWidget* Child = RootCanvas->GetChildAt(ChildIndex);
+		if (Child && Child->GetFName() == PCLMainPanelWidgetName)
+		{
+			if (const UPanelWidget* MainPanel = Cast<UPanelWidget>(Child))
+			{
+				for (int32 MainChildIndex = 0; MainChildIndex < MainPanel->GetChildrenCount(); ++MainChildIndex)
+				{
+					CollapsibleWidgets.Add(MainPanel->GetChildAt(MainChildIndex));
+				}
+			}
+			continue;
+		}
+
+		CollapsibleWidgets.Add(Child);
+	}
+
 	if (bCollapsed)
 	{
 		CachedPCLRootChildVisibilities.Reset();
-		for (int32 ChildIndex = 0; ChildIndex < RootCanvas->GetChildrenCount(); ++ChildIndex)
+		for (UWidget* Child : CollapsibleWidgets)
 		{
-			UWidget* Child = RootCanvas->GetChildAt(ChildIndex);
 			if (!Child || IsPCLCollapsePersistentWidget(Child))
 			{
 				continue;
@@ -1409,9 +1429,8 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 	}
 	else
 	{
-		for (int32 ChildIndex = 0; ChildIndex < RootCanvas->GetChildrenCount(); ++ChildIndex)
+		for (UWidget* Child : CollapsibleWidgets)
 		{
-			UWidget* Child = RootCanvas->GetChildAt(ChildIndex);
 			if (!Child || IsPCLCollapsePersistentWidget(Child))
 			{
 				continue;
@@ -2502,7 +2521,26 @@ void APCLController::SetTabLayout(EPCLTabLayout Layout)
 		SetNamedWidgetHeightOffset(WidgetName, HeightOffset);
 	}
 
+	ApplyTabUIScale(Layout);
 	BuildLegendUI();
+}
+
+void APCLController::ApplyTabUIScale(EPCLTabLayout Layout)
+{
+	if (!UIWidget)
+	{
+		return;
+	}
+
+	UWidget* MainPanel = UIWidget->GetWidgetFromName(PCLMainPanelWidgetName);
+	if (!MainPanel)
+	{
+		return;
+	}
+
+	const float Scale = Layout == EPCLTabLayout::Default ? CustomizeTabUIScale : 1.0f;
+	MainPanel->SetRenderTransformPivot(FVector2D(1.0f, 0.0f));
+	MainPanel->SetRenderScale(FVector2D(Scale, Scale));
 }
 
 void APCLController::SetNamedWidgetHeightOffset(const FName& WidgetName, float HeightOffset)

@@ -307,5 +307,6 @@ private:
 	void ClearActiveFilters();
 	void ResetFilterSelections(bool bApplyFilters);
 	void SetTabLayout(EPCLTabLayout Layout);
+	void ApplyTabUIScale(EPCLTabLayout Layout);
 	void SetNamedWidgetHeightOffset(const FName& WidgetName, float HeightOffset);
 };
