@@ -67,7 +67,7 @@ constexpr float LegendCompactWidth = 345.0f;
 constexpr float LegendCompactHeight = 76.0f;
 constexpr float LegendExpandedWidth = 390.0f;
 constexpr float LegendExpandedHeight = 382.0f;
-constexpr float CustomizeTabUIScale = 2.0f / 3.0f;
+constexpr float PCLTabUIScale = 2.0f / 3.0f;
 constexpr float CustomizeTabHeightOffset = 88.0f;
 constexpr float VisualizeTabHeightOffset = 194.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
@@ -1503,7 +1503,7 @@ void APCLController::BuildDataLoaderUI()
 		{
 			StatusSlot->SetAnchors(FAnchors(1.0f, 0.0f, 1.0f, 0.0f));
 			StatusSlot->SetAlignment(FVector2D::ZeroVector);
-			StatusSlot->SetPosition(FVector2D(-829.921875f, 264.0f));
+			StatusSlot->SetPosition(FVector2D(-1000f, 100.0f));
 			StatusSlot->SetSize(FVector2D(560.0f, 30.0f));
 			StatusSlot->SetZOrder(10);
 		}
@@ -2521,11 +2521,11 @@ void APCLController::SetTabLayout(EPCLTabLayout Layout)
 		SetNamedWidgetHeightOffset(WidgetName, HeightOffset);
 	}
 
-	ApplyTabUIScale(Layout);
+	ApplyTabUIScale();
 	BuildLegendUI();
 }
 
-void APCLController::ApplyTabUIScale(EPCLTabLayout Layout)
+void APCLController::ApplyTabUIScale()
 {
 	if (!UIWidget)
 	{
@@ -2538,9 +2538,8 @@ void APCLController::ApplyTabUIScale(EPCLTabLayout Layout)
 		return;
 	}
 
-	const float Scale = Layout == EPCLTabLayout::Default ? CustomizeTabUIScale : 1.0f;
 	MainPanel->SetRenderTransformPivot(FVector2D(1.0f, 0.0f));
-	MainPanel->SetRenderScale(FVector2D(Scale, Scale));
+	MainPanel->SetRenderScale(FVector2D(PCLTabUIScale, PCLTabUIScale));
 }
 
 void APCLController::SetNamedWidgetHeightOffset(const FName& WidgetName, float HeightOffset)
