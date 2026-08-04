@@ -345,6 +345,11 @@ void ConfigureTextBlock(UTextBlock* TextBlock, int32 FontSize, const FSlateColor
 	}
 
 	FSlateFontInfo Font = TextBlock->GetFont();
+	if (UObject* FontObject =
+			LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font")))
+	{
+		Font.FontObject = FontObject;
+	}
 	Font.Size = FontSize;
 	TextBlock->SetFont(Font);
 	TextBlock->SetColorAndOpacity(Color);
@@ -1475,38 +1480,21 @@ bool APCLController::IsPCLCollapseToggleUnderCursor() const
 
 void APCLController::BuildDataLoaderUI()
 {
-	if (!UIWidget || !UIWidget->WidgetTree)
+	if (!UIWidget)
 	{
 		return;
 	}
 
-	UCanvasPanel* RootCanvas = FindNamedWidget<UCanvasPanel>(UIWidget, TEXT("CanvasPanel_37"));
-	if (!RootCanvas)
+	if (LayerLoadStatusText)
 	{
-		return;
+		LayerLoadStatusText->SetText(FText::GetEmpty());
+		LayerLoadStatusText->SetColorAndOpacity(MakeSlateColor(0.42f, 0.78f, 0.04f));
+		LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
+		LayerLoadStatusText->SetIsEnabled(true);
 	}
-
-	if (!LayerLoadStatusText)
+	else
 	{
-		LayerLoadStatusText = NewObject<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"));
-	}
-
-	LayerLoadStatusText->SetText(FText::GetEmpty());
-	LayerLoadStatusText->SetColorAndOpacity(MakeSlateColor(0.42f, 0.78f, 0.04f));
-	ApplyChakraPetchRegularFont(LayerLoadStatusText, 16);
-	LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
-	LayerLoadStatusText->SetIsEnabled(true);
-
-	if (!LayerLoadStatusText->GetParent())
-	{
-		if (UCanvasPanelSlot* StatusSlot = RootCanvas->AddChildToCanvas(LayerLoadStatusText))
-		{
-			StatusSlot->SetAnchors(FAnchors(1.0f, 0.0f, 1.0f, 0.0f));
-			StatusSlot->SetAlignment(FVector2D::ZeroVector);
-			StatusSlot->SetPosition(FVector2D(-1000f, 100.0f));
-			StatusSlot->SetSize(FVector2D(560.0f, 30.0f));
-			StatusSlot->SetZOrder(10);
-		}
+		UE_LOG(LogTemp, Error, TEXT("UI_PCL is missing the Text_LayerLoadStatus TextBlock."));
 	}
 
 	if (LoadLayerButton)
@@ -2243,12 +2231,14 @@ void APCLController::BuildLegendUI()
 	const FVector2D LegendSize = bCompact ? FVector2D(LegendCompactWidth, LegendCompactHeight) : FVector2D(LegendExpandedWidth, LegendExpandedHeight);
 
 	LegendPanel = NewObject<UCanvasPanel>(UIWidget);
+	LegendPanel->SetRenderTransformPivot(FVector2D(1.0f, 1.0f));
+	LegendPanel->SetRenderScale(FVector2D(PCLTabUIScale, PCLTabUIScale));
 	UCanvasPanelSlot* LegendSlot = RootCanvas->AddChildToCanvas(LegendPanel);
 	if (LegendSlot)
 	{
 		LegendSlot->SetAnchors(FAnchors(1.0f, 1.0f, 1.0f, 1.0f));
 		LegendSlot->SetAlignment(FVector2D(1.0f, 1.0f));
-		LegendSlot->SetPosition(FVector2D(50.0f, -34.0f));
+		LegendSlot->SetPosition(FVector2D(-50.0f, -34.0f));
 		LegendSlot->SetSize(LegendSize);
 		LegendSlot->SetZOrder(30);
 	}
