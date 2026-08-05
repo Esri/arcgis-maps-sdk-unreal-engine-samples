@@ -291,6 +291,7 @@ private:
 	EPCLRendererChoice GetFallbackRendererChoice() const;
 	void EnsureAvailableRendererSelected();
 	void UpdateRendererCheckBoxes();
+	void UpdateColorModulationVisibility();
 	void SetRendererOptionVisibility(EPCLRendererChoice RendererChoice, bool bVisible);
 	void UpdateSliderValueTexts() const;
 	void BuildFilterTabUI();

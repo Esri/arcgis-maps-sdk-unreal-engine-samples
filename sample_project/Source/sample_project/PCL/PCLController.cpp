@@ -2025,6 +2025,8 @@ void APCLController::UpdateRendererCheckBoxes()
 	const bool bHasLoadedRendererAttributes =
 		!RGBAttributeName.IsEmpty() || !ClassAttributeName.IsEmpty() || !ElevationAttributeName.IsEmpty() || !IntensityAttributeName.IsEmpty();
 
+	UpdateColorModulationVisibility();
+
 	if (bHasLoadedRendererAttributes)
 	{
 		EnsureAvailableRendererSelected();
@@ -2052,6 +2054,21 @@ void APCLController::UpdateRendererCheckBoxes()
 	if (IntensityRendererCheckBox)
 	{
 		IntensityRendererCheckBox->SetIsChecked(CurrentRendererChoice == EPCLRendererChoice::Intensity);
+	}
+}
+
+void APCLController::UpdateColorModulationVisibility()
+{
+	const ESlateVisibility Visibility = IntensityAttributeName.IsEmpty() ? ESlateVisibility::Hidden : ESlateVisibility::Visible;
+
+	if (UWidget* Row = UIWidget ? UIWidget->GetWidgetFromName(TEXT("Row_Checkbox_ColorModulation")) : nullptr)
+	{
+		Row->SetVisibility(Visibility);
+	}
+
+	if (UWidget* Divider = UIWidget ? UIWidget->GetWidgetFromName(TEXT("Border_VisualizeDivider")) : nullptr)
+	{
+		Divider->SetVisibility(Visibility);
 	}
 }
 
