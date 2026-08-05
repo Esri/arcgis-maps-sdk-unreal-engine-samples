@@ -11,13 +11,13 @@ This repository is composed of two separate Unity projects. If you would like to
 ### Requirements for Sample Project
 
 * Computer running Windows or macOS
-* The minimum version of Unreal Engine supported for the project is 5.3
+* The minimum version of Unreal Engine supported for the project is 5.6
 * ArcGISMaps SDK for Unreal Engine
 
 ### Requirements for XR Sample Project
 
 * Computer running Windows (OpenXR is not supported on macOS)
-* The minimum version of Unreal Engine supported for the project is 5.5
+* The minimum version of Unreal Engine supported for the project is 5.8
 * ArcGISMaps SDK for Unreal Engine
 * A VR Headset and the necessary software to run through Desktop Mode
 

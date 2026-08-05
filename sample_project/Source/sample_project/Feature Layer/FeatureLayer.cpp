@@ -13,17 +13,16 @@
  * limitations under the License.
  */
 
-
 #include "FeatureLayer.h"
-#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
+#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "ArcGISMapsSDK/Components/ArcGISLocationComponent.h"
+#include "ArcGISMapsSDK/Components/ArcGISMapComponent.h"
 #include "ArcGISMapsSDK/Components/ArcGISSurfacePlacementMode.h"
 #include "Blueprint/UserWidget.h"
-#include "FeatureItem.h"
-#include "ArcGISMapsSDK/Actors/ArcGISMapActor.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Engine/Engine.h"
+#include "FeatureItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstance.h"
 #include "sample_project/InputManager.h"
@@ -65,9 +64,9 @@ void AFeatureLayer::BeginPlay()
 	{
 		return;
 	}
-	
+
 	inputManager->OnInputTrigger.AddDynamic(this, &AFeatureLayer::SelectFeature);
-	
+
 	CreateLink();
 	ProcessWebRequest();
 }
@@ -145,14 +144,14 @@ void AFeatureLayer::MoveCamera(AActor* Item)
 
 	if (const auto locationComponent = Cast<UArcGISLocationComponent>(ArcGISPawn->GetComponentByClass(UArcGISLocationComponent::StaticClass())))
 	{
-		const auto position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(
-			featureItem->Longitude, featureItem->Latitude, 250, MapComponent->GetOriginPosition()->GetSpatialReference());
+		const auto position = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(featureItem->Longitude, featureItem->Latitude, 250,
+																					 MapComponent->GetOriginPosition()->GetSpatialReference());
 		locationComponent->SetPosition(position);
 		locationComponent->SetRotation(UArcGISRotation::CreateArcGISRotation(0, 0, 0));
 	}
 
 	const auto originPosition = UArcGISPoint::CreateArcGISPointWithXYZSpatialReference(featureItem->Longitude, featureItem->Latitude, 0,
-	                                                                                   MapComponent->GetOriginPosition()->GetSpatialReference());
+																					   MapComponent->GetOriginPosition()->GetSpatialReference());
 	MapComponent->SetOriginPosition(originPosition);
 }
 
@@ -167,18 +166,18 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* Item)
 		GEngine->AddOnScreenDebugMessage(1, 1, FColor::Red, "Empty");
 		return;
 	}
-	
+
 	const auto properties = Features[Item->Index]->AsObject()->GetObjectField(TEXT("Properties"));
 
 	if (bGetAllOutfields)
 	{
 		for (auto property : properties->Values)
 		{
-			auto key = property.Key;
+			auto key = FString(property.Key);
 			auto value = property.Value->AsString();
-			Item->PropertiesNames.Add(key);
+			Item->PropertiesNames.Add(*key);
 			Item->Properties.Add(value);
-			resultProperties.Add(key + ": " + value);
+			resultProperties.Add(key + TEXT(": ") + value);
 		}
 
 		FString output = "Properties: \n";
@@ -198,8 +197,7 @@ void AFeatureLayer::RefreshProperties(AFeatureItem* Item)
 
 			if (propertyOutfield.IsEmpty())
 			{
-				Item->Properties.Add(
-					FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
+				Item->Properties.Add(FString::FromInt(feature->GetObjectField(TEXT("properties"))->GetIntegerField(outfield)));
 			}
 			else
 			{
@@ -233,7 +231,7 @@ void AFeatureLayer::SelectFeature()
 		PlayerController->DeprojectMousePositionToWorld(Location, Direction);
 
 		if (UKismetSystemLibrary::LineTraceSingle(GetWorld(), Location, Location + Direction * 10000000.0, TraceTypeQuery1, false, ActorsToIgnore,
-		                                          EDrawDebugTrace::None, HitResult, true))
+												  EDrawDebugTrace::None, HitResult, true))
 		{
 			if (currentFeature)
 			{

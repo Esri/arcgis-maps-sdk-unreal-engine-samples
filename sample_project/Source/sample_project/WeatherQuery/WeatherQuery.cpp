@@ -38,7 +38,7 @@ void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 		if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 		{
 			//get the array field features
-			TArray<TSharedPtr<FJsonValue>> WeatherFeatures = ResponseObj->GetArrayField("features");
+			TArray<TSharedPtr<FJsonValue>> WeatherFeatures = ResponseObj->GetArrayField(TEXT("features"));
 			//parse through the features in order to get individual properties associated with the features
 			for (auto WeatherStat : WeatherFeatures)
 			{
@@ -47,20 +47,20 @@ void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 					//create a new feature object to store the data received associated with this feature iteration
 					FWeatherData WeatherData;
 					auto feature = WeatherStat->AsObject();
-					if (feature->GetObjectField("properties")->GetStringField("COUNTRY").Contains("United States Of America"))
+					if (feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("COUNTRY")).Contains(TEXT("United States Of America")))
 					{
 						//outfield can be set in the scene on bp_feature
 						//this loop will take each outfield set in the scene and check to see if the outfield exists
 						//if it does exist, it will return the result of the outfield associated with this feature
 						//if it does not exist, it will return and error message in the scene
-						WeatherData.StationName = feature->GetObjectField("properties")->GetStringField("STATION_NAME");
-						WeatherData.Country = feature->GetObjectField("properties")->GetStringField("COUNTRY");	
-						WeatherData.SkyCondition = feature->GetObjectField("properties")->GetStringField("SKY_CONDTN");
-						WeatherData.Tempurature = feature->GetObjectField("properties")->GetNumberField("TEMP");
-						WeatherData.Weather = feature->GetObjectField("properties")->GetStringField("WEATHER");
+						WeatherData.StationName = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("STATION_NAME"));
+						WeatherData.Country = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("COUNTRY"));	
+						WeatherData.SkyCondition = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("SKY_CONDTN"));
+						WeatherData.Tempurature = feature->GetObjectField(TEXT("properties"))->GetNumberField(TEXT("TEMP"));
+						WeatherData.Weather = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("WEATHER"));
 						
 						//this will get the geometry or coordinates of the feature
-						auto coordinates = feature->GetObjectField("geometry")->GetArrayField("coordinates");
+						auto coordinates = feature->GetObjectField(TEXT("geometry"))->GetArrayField(TEXT("coordinates"));
 						//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
 						//if not, it will return an error
 						//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
@@ -114,10 +114,10 @@ void AWeatherQuery::ProcessCityQueryResponse(FHttpRequestPtr Request, FHttpRespo
 	//deserialize the json data received in the http request
 	if (FJsonSerializer::Deserialize(Reader, ResponseObj))
 	{
-		auto address = ResponseObj->GetObjectField("address");
-		if (address->GetStringField("City").Len() > 0)
+		auto address = ResponseObj->GetObjectField(TEXT("address"));
+		if (address->GetStringField(TEXT("City")).Len() > 0)
 		{
-			CityName = address->GetStringField("City") + ", " + address->GetStringField("RegionAbbr");	
+			CityName = address->GetStringField(TEXT("City")) + TEXT(", ") + address->GetStringField(TEXT("RegionAbbr"));	
 		}
 	}
 }
