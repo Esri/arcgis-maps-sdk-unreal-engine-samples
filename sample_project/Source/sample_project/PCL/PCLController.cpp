@@ -1,6 +1,41 @@
-// /* Copyright 2023 Esri* * Licensed under the Apache License Version 2.0 (the "License"); * you may not use this file except in compliance with the License. * You may obtain a copy of the License at * *     http://www.apache.org/licenses/LICENSE-2.0 * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. */
+/* Copyright 2026 Esri
+ *
+ * Licensed under the Apache License Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include "PCLController.h"
+
+#include "Async/Async.h"
+#include "Blueprint/WidgetTree.h"
+#include "Brushes/SlateColorBrush.h"
+#include "Brushes/SlateRoundedBoxBrush.h"
+#include "Components/Border.h"
+#include "Components/ButtonSlot.h"
+#include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/Image.h"
+#include "Components/ScrollBox.h"
+#include "Components/ScrollBoxSlot.h"
+#include "Components/SizeBox.h"
+#include "Components/Spacer.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
+#include "Engine/Texture2D.h"
+#include "Framework/Application/SlateApplication.h"
+#include "InputCoreTypes.h"
+#include "Slate/WidgetTransform.h"
 
 #include "ArcGISMapsSDK/API/GameEngine/ArcGISLoadStatus.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/ArcGISPointCloudLayer.h"
@@ -27,27 +62,7 @@
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/ArcGISPointCloudLayer.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Layers/Base/ArcGISLayerCollection.h"
 #include "ArcGISMapsSDK/BlueprintNodes/GameEngine/Map/ArcGISMap.h"
-#include "Async/Async.h"
-#include "Blueprint/WidgetTree.h"
-#include "Brushes/SlateColorBrush.h"
-#include "Brushes/SlateRoundedBoxBrush.h"
-#include "Components/Border.h"
-#include "Components/ButtonSlot.h"
-#include "Components/CanvasPanel.h"
-#include "Components/CanvasPanelSlot.h"
-#include "Components/HorizontalBox.h"
-#include "Components/HorizontalBoxSlot.h"
-#include "Components/Image.h"
-#include "Components/ScrollBox.h"
-#include "Components/ScrollBoxSlot.h"
-#include "Components/SizeBox.h"
-#include "Components/Spacer.h"
-#include "Components/VerticalBox.h"
-#include "Components/VerticalBoxSlot.h"
-#include "Engine/Texture2D.h"
-#include "Framework/Application/SlateApplication.h"
-#include "InputCoreTypes.h"
-#include "Slate/WidgetTransform.h"
+
 #include "sample_project/InputManager.h"
 
 namespace
@@ -73,7 +88,8 @@ constexpr float VisualizeTabHeightOffset = 194.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
 constexpr float PointCloudLayerLoadRetryInterval = 0.25f;
 constexpr int32 MaxPointCloudLayerLoadRetries = 40;
-const FString PointCloudLayerSource = TEXT("https://www.arcgis.com/home/item.html?id=93c83277e8c34ea2ab38f2e1eb1e0d63");
+const FString PointCloudLayerSource =
+	TEXT("https://tiles.arcgis.com/tiles/V6ZHFr6zdgNZuVG0/arcgis/rest/services/BARNEGAT_BAY_LiDAR_UTM/SceneServer");
 const FName ExpandableTabWidgetNames[] = {TEXT("CanvasPanel_37"),  TEXT("Background"),		TEXT("Switcher_PCLTabs"),
 										  TEXT("Panel_Customize"), TEXT("Panel_Visualize"), TEXT("Panel_VisualizeContent"),
 										  TEXT("Panel_Filter")};
@@ -94,736 +110,717 @@ const FVector2D PCLGearButtonSize(48.0f, 48.0f);
 const FVector2D PCLGearIconSize(34.0f, 34.0f);
 const FLinearColor PCLGearPurple(0.309f, 0.063f, 1.0f, 1.0f);
 
-FText FormatSliderValue(float Value)
+FText FormatSliderValue(float value)
 {
-	return FText::FromString(FString::Printf(TEXT("%.0f"), Value));
+	return FText::FromString(FString::Printf(TEXT("%.0f"), value));
 }
 
-bool IsValidPointCloudSource(const FString& Source)
+bool IsValidURL(const FString& source)
 {
-	return !Source.IsEmpty() &&
-		   (Source.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase) || Source.StartsWith(TEXT("http://"), ESearchCase::IgnoreCase));
+	return !source.IsEmpty() &&
+		   (source.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase) || source.StartsWith(TEXT("http://"), ESearchCase::IgnoreCase));
 }
 
-FString NormalizeAttributeName(FString Name)
+FString NormalizeAttributeName(FString name)
 {
-	Name.ReplaceInline(TEXT("_"), TEXT(""));
-	Name.ReplaceInline(TEXT("-"), TEXT(""));
-	Name.ReplaceInline(TEXT(" "), TEXT(""));
-	return Name.ToUpper();
+	name.ReplaceInline(TEXT("_"), TEXT(""));
+	name.ReplaceInline(TEXT("-"), TEXT(""));
+	name.ReplaceInline(TEXT(" "), TEXT(""));
+	return name.ToUpper();
 }
 
-bool MatchesAttributeName(const FString& NormalizedName, const TCHAR* Candidate)
+bool MatchesAttributeName(const FString& normalizedName, const TCHAR* candidate)
 {
-	const FString CandidateString(Candidate);
-	return NormalizedName == CandidateString || NormalizedName.Contains(CandidateString);
+	const FString candidateString(candidate);
+	return normalizedName == candidateString || normalizedName.Contains(candidateString);
 }
 
-bool IsRGBAttribute(const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudAttribute& Attribute, const FString& NormalizedName)
+bool IsRGBAttribute(const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudAttribute& attribute, const FString& normalizedName)
 {
-	return NormalizedName == TEXT("RGB") || NormalizedName == TEXT("RGBA") || NormalizedName == TEXT("COLOR") || NormalizedName == TEXT("COLORRGB") ||
-		   Attribute.GetValuesPerElement() >= 3;
+	return normalizedName == TEXT("RGB") || normalizedName == TEXT("RGBA") || normalizedName == TEXT("COLOR") || normalizedName == TEXT("COLORRGB") ||
+		   attribute.GetValuesPerElement() >= 3;
 }
 
-Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer GetLoadedRenderer(UArcGISPointCloudLayer* PointCloudLayer)
+Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer GetLoadedRenderer(UArcGISPointCloudLayer* pointCloudLayer)
 {
-	if (!PointCloudLayer || !PointCloudLayer->APIObject)
+
+	if (!pointCloudLayer || !pointCloudLayer->APIObject)
 	{
 		return Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer(nullptr);
 	}
 
-	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
-	if (!LayerAPI || LayerAPI->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
+	auto layerApi = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(pointCloudLayer->APIObject);
+
+	if (!layerApi || layerApi->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
 	{
 		return Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer(nullptr);
 	}
 
-	return LayerAPI->GetRenderer();
+	return layerApi->GetRenderer();
 }
 
-FColor MakeColor(uint8 Red, uint8 Green, uint8 Blue)
-{
-	return FColor(Red, Green, Blue, 255);
-}
-
-void ConfigurePointCloudRendererSettings(Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer& Renderer,
-										 double PointSize,
+void ConfigurePointCloudRendererSettings(Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer& renderer,
+										 double pointSize,
 										 bool bColorModulationEnabled,
-										 const FString& IntensityAttributeName)
+										 const FString& intensityAttributeName)
 {
-	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm SizeAlgorithm(
-		PointSize, Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
-	Renderer.SetSizeAlgorithm(SizeAlgorithm);
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm sizeAlgorithm(
+		pointSize, Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
+	renderer.SetSizeAlgorithm(sizeAlgorithm);
 
-	if (bColorModulationEnabled && !IntensityAttributeName.IsEmpty())
+	if (bColorModulationEnabled && !intensityAttributeName.IsEmpty())
 	{
-		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation ColorModulation(IntensityAttributeName, 0.0, 65535.0);
-		Renderer.SetColorModulation(ColorModulation);
+		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation colorModulation(intensityAttributeName, 0.0, 65535.0);
+		renderer.SetColorModulation(colorModulation);
 	}
 	else
 	{
-		Renderer.SetColorModulation(Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation());
+		renderer.SetColorModulation(Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation());
 	}
 }
 
-void AddColorStop(Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop>& Stops,
-				  double Value,
-				  FColor&& Color,
-				  const FString& Label)
+void AddColorStop(Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop>& stops,
+				  double value,
+				  FColor&& color,
+				  const FString& label)
 {
-	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop Stop(Color, Value);
-	Stop.SetLabel(Label);
-	Stops.Add(Stop);
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop stop(color, value);
+	stop.SetLabel(label);
+	stops.Add(stop);
 }
 
-void GetStandardClassInfo(int32 ClassValue, FString& Label, uint8& Red, uint8& Green, uint8& Blue)
+struct FStandardClassInfo
 {
-	switch (ClassValue)
+	FString Label;
+	uint8 Red;
+	uint8 Green;
+	uint8 Blue;
+};
+
+FStandardClassInfo GetStandardClassInfo(int32 classValue)
+{
+	switch (classValue)
 	{
 		case 0:
-			Label = TEXT("Created, never classified");
-			Red = 128;
-			Green = 128;
-			Blue = 128;
-			return;
+			return {TEXT("Created, never classified"), 128, 128, 128};
 		case 1:
-			Label = TEXT("Unclassified");
-			Red = 190;
-			Green = 137;
-			Blue = 12;
-			return;
+			return {TEXT("Unclassified"), 190, 137, 12};
 		case 2:
-			Label = TEXT("Ground");
-			Red = 219;
-			Green = 255;
-			Blue = 104;
-			return;
+			return {TEXT("Ground"), 219, 255, 104};
 		case 3:
-			Label = TEXT("Low vegetation");
-			Red = 246;
-			Green = 44;
-			Blue = 28;
-			return;
+			return {TEXT("Low vegetation"), 246, 44, 28};
 		case 4:
-			Label = TEXT("Medium vegetation");
-			Red = 244;
-			Green = 102;
-			Blue = 32;
-			return;
+			return {TEXT("Medium vegetation"), 244, 102, 32};
 		case 5:
-			Label = TEXT("High vegetation");
-			Red = 199;
-			Green = 24;
-			Blue = 255;
-			return;
+			return {TEXT("High vegetation"), 199, 24, 255};
 		case 6:
-			Label = TEXT("Building");
-			Red = 255;
-			Green = 255;
-			Blue = 112;
-			return;
+			return {TEXT("Building"), 255, 255, 112};
 		case 7:
-			Label = TEXT("Low point (noise)");
-			Red = 152;
-			Green = 152;
-			Blue = 152;
-			return;
+			return {TEXT("Low point (noise)"), 152, 152, 152};
 		case 8:
-			Label = TEXT("Model key-point");
-			Red = 255;
-			Green = 186;
-			Blue = 87;
-			return;
+			return {TEXT("Model key-point"), 255, 186, 87};
 		case 9:
-			Label = TEXT("Water");
-			Red = 246;
-			Green = 244;
-			Blue = 22;
-			return;
+			return {TEXT("Water"), 246, 244, 22};
 		case 10:
-			Label = TEXT("Rail");
-			Red = 209;
-			Green = 98;
-			Blue = 224;
-			return;
+			return {TEXT("Rail"), 209, 98, 224};
 		case 11:
-			Label = TEXT("Road surface");
-			Red = 218;
-			Green = 218;
-			Blue = 218;
-			return;
+			return {TEXT("Road surface"), 218, 218, 218};
 		case 12:
-			Label = TEXT("Overlap points");
-			Red = 84;
-			Green = 167;
-			Blue = 255;
-			return;
+			return {TEXT("Overlap points"), 84, 167, 255};
 		case 13:
-			Label = TEXT("Wire guard");
-			Red = 255;
-			Green = 121;
-			Blue = 198;
-			return;
+			return {TEXT("Wire guard"), 255, 121, 198};
 		case 14:
-			Label = TEXT("Wire conductor");
-			Red = 255;
-			Green = 160;
-			Blue = 67;
-			return;
+			return {TEXT("Wire conductor"), 255, 160, 67};
 		case 15:
-			Label = TEXT("Transmission tower");
-			Red = 255;
-			Green = 92;
-			Blue = 92;
-			return;
+			return {TEXT("Transmission tower"), 255, 92, 92};
 		case 16:
-			Label = TEXT("Wire connector");
-			Red = 136;
-			Green = 255;
-			Blue = 218;
-			return;
+			return {TEXT("Wire connector"), 136, 255, 218};
 		case 17:
-			Label = TEXT("Bridge deck");
-			Red = 141;
-			Green = 108;
-			Blue = 255;
-			return;
+			return {TEXT("Bridge deck"), 141, 108, 255};
 		case 18:
-			Label = TEXT("High noise");
-			Red = 80;
-			Green = 80;
-			Blue = 80;
-			return;
+			return {TEXT("High noise"), 80, 80, 80};
 		default:
-			Label = FString::Printf(TEXT("Class %d"), ClassValue);
-			Red = 128;
-			Green = 128;
-			Blue = 128;
-			return;
+			return {FString::Printf(TEXT("Class %d"), classValue), 128, 128, 128};
 	}
 }
 
-void AddClassValue(Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorUniqueValue>& UniqueValues,
-				   int32 ClassValue)
+void AddClassValue(Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorUniqueValue>& uniqueValues,
+				   int32 classValue)
 {
-	FString Label;
-	uint8 Red = 128;
-	uint8 Green = 128;
-	uint8 Blue = 128;
-	GetStandardClassInfo(ClassValue, Label, Red, Green, Blue);
+	const FStandardClassInfo classInfo = GetStandardClassInfo(classValue);
 
-	Esri::Unreal::ArcGISCollection<FString> ValueGroup;
-	ValueGroup.Add(FString::FromInt(ClassValue));
+	Esri::Unreal::ArcGISCollection<FString> valueGroup;
+	valueGroup.Add(FString::FromInt(classValue));
 
-	auto Color = MakeColor(Red, Green, Blue);
-	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorUniqueValue UniqueValue(Color, ValueGroup);
-	UniqueValue.SetLabel(Label);
-	UniqueValue.SetDescription(Label);
-	UniqueValues.Add(UniqueValue);
+	auto color = FColor(classInfo.Red, classInfo.Green, classInfo.Blue, 255);
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorUniqueValue uniqueValue(color, valueGroup);
+	uniqueValue.SetLabel(classInfo.Label);
+	uniqueValue.SetDescription(classInfo.Label);
+	uniqueValues.Add(uniqueValue);
 }
 
-FString GetClassCodeLabel(int32 ClassCode)
+FString GetClassCodeLabel(int32 classCode)
 {
-	FString Label;
-	uint8 Red = 0;
-	uint8 Green = 0;
-	uint8 Blue = 0;
-	GetStandardClassInfo(ClassCode, Label, Red, Green, Blue);
-	return Label;
+	return GetStandardClassInfo(classCode).Label;
 }
 
-FSlateColor MakeSlateColor(float Red, float Green, float Blue, float Alpha = 1.0f)
+FSlateColor MakeSlateColor(float red, float green, float blue, float alpha = 1.0f)
 {
-	return FSlateColor(FLinearColor(Red, Green, Blue, Alpha));
+	return FSlateColor(FLinearColor(red, green, blue, alpha));
 }
 
-void ConfigureTextBlock(UTextBlock* TextBlock, int32 FontSize, const FSlateColor& Color)
+void ConfigureTextBlock(UTextBlock* textBlock, int32 fontSize, const FSlateColor& color)
 {
-	if (!TextBlock)
+
+	if (!textBlock)
 	{
 		return;
 	}
 
-	FSlateFontInfo Font = TextBlock->GetFont();
-	if (UObject* FontObject =
+	FSlateFontInfo font = textBlock->GetFont();
+
+	if (UObject* fontObject =
 			LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font")))
 	{
-		Font.FontObject = FontObject;
+		font.FontObject = fontObject;
 	}
-	Font.Size = FontSize;
-	TextBlock->SetFont(Font);
-	TextBlock->SetColorAndOpacity(Color);
+	font.Size = fontSize;
+	textBlock->SetFont(font);
+	textBlock->SetColorAndOpacity(color);
 }
 
-UTextBlock* CreateText(UObject* Outer, const FString& Text, int32 FontSize, const FSlateColor& Color)
+UTextBlock* CreateText(UObject* outer, const FString& text, int32 fontSize, const FSlateColor& color)
 {
-	UTextBlock* TextBlock = NewObject<UTextBlock>(Outer);
-	TextBlock->SetText(FText::FromString(Text));
-	ConfigureTextBlock(TextBlock, FontSize, Color);
-	return TextBlock;
+	UTextBlock* textBlock = NewObject<UTextBlock>(outer);
+	textBlock->SetText(FText::FromString(text));
+	ConfigureTextBlock(textBlock, fontSize, color);
+	return textBlock;
 }
 
-UBorder* CreateColorBlock(UObject* Outer, const FLinearColor& Color)
+UBorder* CreateColorBlock(UObject* outer, const FLinearColor& color)
 {
-	UBorder* ColorBlock = NewObject<UBorder>(Outer);
-	ColorBlock->SetBrushColor(Color);
-	return ColorBlock;
+	UBorder* colorBlock = NewObject<UBorder>(outer);
+	colorBlock->SetBrushColor(color);
+	return colorBlock;
 }
 
-UTexture2D* CreateLegendCircleTexture(UObject* Outer, const FLinearColor& Color)
+UTexture2D* CreateLegendCircleTexture(UObject* outer, const FLinearColor& color)
 {
-	constexpr int32 TextureSize = 32;
-	constexpr float Center = (TextureSize - 1) * 0.5f;
-	constexpr float Radius = 10.5f;
+	constexpr int32 textureSize = 32;
+	constexpr float center = (textureSize - 1) * 0.5f;
+	constexpr float radius = 10.5f;
 
-	UTexture2D* Texture = UTexture2D::CreateTransient(TextureSize, TextureSize, PF_B8G8R8A8);
-	if (!Texture)
+	UTexture2D* texture = UTexture2D::CreateTransient(textureSize, textureSize, PF_B8G8R8A8);
+
+	if (!texture)
 	{
 		return nullptr;
 	}
 
-	Texture->SRGB = true;
-	Texture->CompressionSettings = TC_VectorDisplacementmap;
-	Texture->MipGenSettings = TMGS_NoMipmaps;
+	texture->SRGB = true;
+	texture->CompressionSettings = TC_VectorDisplacementmap;
+	texture->MipGenSettings = TMGS_NoMipmaps;
 
-	FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
-	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
-	FColor* Pixels = static_cast<FColor*>(Data);
-	const FColor FillColor = Color.ToFColor(true);
+	FTexture2DMipMap& mip = texture->GetPlatformData()->Mips[0];
+	void* data = mip.BulkData.Lock(LOCK_READ_WRITE);
+	FColor* pixels = static_cast<FColor*>(data);
+	const FColor fillColor = color.ToFColor(true);
 
-	for (int32 Y = 0; Y < TextureSize; ++Y)
+	for (int32 y = 0; y < textureSize; ++y)
 	{
-		for (int32 X = 0; X < TextureSize; ++X)
+
+		for (int32 x = 0; x < textureSize; ++x)
 		{
-			const float DX = X - Center;
-			const float DY = Y - Center;
-			Pixels[Y * TextureSize + X] = (DX * DX + DY * DY) <= Radius * Radius ? FillColor : FColor(0, 0, 0, 0);
+			const float dx = x - center;
+			const float dy = y - center;
+			pixels[y * textureSize + x] = (dx * dx + dy * dy) <= radius * radius ? fillColor : FColor(0, 0, 0, 0);
 		}
 	}
 
-	Mip.BulkData.Unlock();
-	Texture->UpdateResource();
-	return Texture;
+	mip.BulkData.Unlock();
+	texture->UpdateResource();
+	return texture;
 }
 
-void ApplyLegendTitleFont(UTextBlock* Title)
+void ApplyLegendTitleFont(UTextBlock* title)
 {
-	if (!Title)
+
+	if (!title)
 	{
 		return;
 	}
 
-	UObject* FontObject =
+	UObject* fontObject =
 		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
-	if (!FontObject)
+
+	if (!fontObject)
 	{
 		return;
 	}
 
-	FSlateFontInfo Font = Title->GetFont();
-	Font.FontObject = FontObject;
-	Font.Size = 27;
-	Title->SetFont(Font);
+	FSlateFontInfo font = title->GetFont();
+	font.FontObject = fontObject;
+	font.Size = 27;
+	title->SetFont(font);
 }
 
-void ApplyChakraPetchSemiBoldFont(UTextBlock* TextBlock, int32 FontSize)
+void ApplyChakraPetchSemiBoldFont(UTextBlock* textBlock, int32 fontSize)
 {
-	if (!TextBlock)
+
+	if (!textBlock)
 	{
 		return;
 	}
 
-	UObject* FontObject =
+	UObject* fontObject =
 		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
-	if (!FontObject)
+
+	if (!fontObject)
 	{
 		return;
 	}
 
-	FSlateFontInfo Font = TextBlock->GetFont();
-	Font.FontObject = FontObject;
-	Font.Size = FontSize;
-	TextBlock->SetFont(Font);
+	FSlateFontInfo font = textBlock->GetFont();
+	font.FontObject = fontObject;
+	font.Size = fontSize;
+	textBlock->SetFont(font);
 }
 
-void ApplyChakraPetchRegularFont(UTextBlock* TextBlock, int32 FontSize)
+void ApplyChakraPetchRegularFont(UTextBlock* textBlock, int32 fontSize)
 {
-	if (!TextBlock)
+
+	if (!textBlock)
 	{
 		return;
 	}
 
-	UObject* FontObject =
+	UObject* fontObject =
 		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font"));
-	if (!FontObject)
+
+	if (!fontObject)
 	{
 		return;
 	}
 
-	FSlateFontInfo Font = TextBlock->GetFont();
-	Font.FontObject = FontObject;
-	Font.Size = FontSize;
-	TextBlock->SetFont(Font);
+	FSlateFontInfo font = textBlock->GetFont();
+	font.FontObject = fontObject;
+	font.Size = fontSize;
+	textBlock->SetFont(font);
 }
 
-UHorizontalBox* AddLegendRow(UObject* Outer,
-							 UPanelWidget* Parent,
-							 const FString& Label,
-							 const FLinearColor& Color,
-							 UTexture2D* CircleTexture = nullptr)
+UHorizontalBox* AddLegendRow(UObject* outer,
+							 UPanelWidget* parent,
+							 const FString& label,
+							 const FLinearColor& color,
+							 UTexture2D* circleTexture = nullptr)
 {
-	UHorizontalBox* Row = NewObject<UHorizontalBox>(Outer);
-	Parent->AddChild(Row);
-	if (auto* VerticalSlot = Cast<UVerticalBoxSlot>(Row->Slot))
+	UHorizontalBox* row = NewObject<UHorizontalBox>(outer);
+	parent->AddChild(row);
+
+	if (auto* verticalSlot = Cast<UVerticalBoxSlot>(row->Slot))
 	{
-		VerticalSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 1.0f));
+		verticalSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 1.0f));
 	}
-	else if (auto* ScrollSlot = Cast<UScrollBoxSlot>(Row->Slot))
+	else if (auto* scrollSlot = Cast<UScrollBoxSlot>(row->Slot))
 	{
-		ScrollSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 1.0f));
+		scrollSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 1.0f));
 	}
 
-	USizeBox* SwatchBox = NewObject<USizeBox>(Outer);
-	SwatchBox->SetWidthOverride(26.0f);
-	SwatchBox->SetHeightOverride(24.0f);
-	Row->AddChild(SwatchBox);
-	if (auto* SwatchSlot = Cast<UHorizontalBoxSlot>(SwatchBox->Slot))
+	USizeBox* swatchBox = NewObject<USizeBox>(outer);
+	swatchBox->SetWidthOverride(26.0f);
+	swatchBox->SetHeightOverride(24.0f);
+	row->AddChild(swatchBox);
+
+	if (auto* swatchSlot = Cast<UHorizontalBoxSlot>(swatchBox->Slot))
 	{
-		SwatchSlot->SetPadding(FMargin(0.0f, 0.0f, 8.0f, 0.0f));
-		SwatchSlot->SetVerticalAlignment(VAlign_Center);
-		SwatchSlot->SetHorizontalAlignment(HAlign_Center);
+		swatchSlot->SetPadding(FMargin(0.0f, 0.0f, 8.0f, 0.0f));
+		swatchSlot->SetVerticalAlignment(VAlign_Center);
+		swatchSlot->SetHorizontalAlignment(HAlign_Center);
 	}
 
-	if (CircleTexture)
+	if (circleTexture)
 	{
-		UImage* Swatch = NewObject<UImage>(Outer);
-		Swatch->SetBrushFromTexture(CircleTexture, true);
-		SwatchBox->AddChild(Swatch);
+		UImage* swatch = NewObject<UImage>(outer);
+		swatch->SetBrushFromTexture(circleTexture, true);
+		swatchBox->AddChild(swatch);
 	}
 	else
 	{
-		UBorder* Swatch = CreateColorBlock(Outer, Color);
-		SwatchBox->AddChild(Swatch);
+		UBorder* swatch = CreateColorBlock(outer, color);
+		swatchBox->AddChild(swatch);
 	}
 
-	UTextBlock* LabelText = CreateText(Outer, Label, 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
-	ApplyChakraPetchSemiBoldFont(LabelText, 18);
-	Row->AddChild(LabelText);
-	if (auto* LabelSlot = Cast<UHorizontalBoxSlot>(LabelText->Slot))
+	UTextBlock* labelText = CreateText(outer, label, 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	ApplyChakraPetchSemiBoldFont(labelText, 18);
+	row->AddChild(labelText);
+
+	if (auto* labelSlot = Cast<UHorizontalBoxSlot>(labelText->Slot))
 	{
-		LabelSlot->SetPadding(FMargin(0.0f));
-		LabelSlot->SetVerticalAlignment(VAlign_Center);
+		labelSlot->SetPadding(FMargin(0.0f));
+		labelSlot->SetVerticalAlignment(VAlign_Center);
 	}
 
-	return Row;
+	return row;
 }
 
-void AddGradientStep(UObject* Outer, UVerticalBox* GradientBox, const FLinearColor& Color)
+void AddGradientStep(UObject* outer, UVerticalBox* gradientBox, const FLinearColor& color)
 {
-	UBorder* Step = CreateColorBlock(Outer, Color);
-	GradientBox->AddChild(Step);
-	if (auto* StepSlot = Cast<UVerticalBoxSlot>(Step->Slot))
+	UBorder* step = CreateColorBlock(outer, color);
+	gradientBox->AddChild(step);
+
+	if (auto* stepSlot = Cast<UVerticalBoxSlot>(step->Slot))
 	{
-		StepSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+		stepSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 	}
 }
 
-FLinearColor EvaluateGradientColor(const TArray<FLinearColor>& Colors, float T)
+FLinearColor EvaluateGradientColor(const TArray<FLinearColor>& colors, float t)
 {
-	if (Colors.IsEmpty())
+
+	if (colors.IsEmpty())
 	{
 		return FLinearColor::White;
 	}
 
-	if (Colors.Num() == 1)
+	if (colors.Num() == 1)
 	{
-		return Colors[0];
+		return colors[0];
 	}
 
-	const float Scaled = FMath::Clamp(T, 0.0f, 1.0f) * static_cast<float>(Colors.Num() - 1);
-	const int32 Index = FMath::Min(FMath::FloorToInt(Scaled), Colors.Num() - 2);
-	const float LocalT = Scaled - static_cast<float>(Index);
-	return FMath::Lerp(Colors[Index], Colors[Index + 1], LocalT);
+	const float scaled = FMath::Clamp(t, 0.0f, 1.0f) * static_cast<float>(colors.Num() - 1);
+	const int32 index = FMath::Min(FMath::FloorToInt(scaled), colors.Num() - 2);
+	const float localT = scaled - static_cast<float>(index);
+	return FMath::Lerp(colors[index], colors[index + 1], localT);
 }
 
-UTexture2D* CreateLegendGradientTexture(UObject* Outer, const TArray<FLinearColor>& TopToBottomColors)
+UTexture2D* CreateLegendGradientTexture(UObject* outer, const TArray<FLinearColor>& topToBottomColors)
 {
-	constexpr int32 TextureWidth = 16;
-	constexpr int32 TextureHeight = 128;
+	constexpr int32 textureWidth = 16;
+	constexpr int32 textureHeight = 128;
 
-	UTexture2D* Texture = UTexture2D::CreateTransient(TextureWidth, TextureHeight, PF_B8G8R8A8);
-	if (!Texture)
+	UTexture2D* texture = UTexture2D::CreateTransient(textureWidth, textureHeight, PF_B8G8R8A8);
+
+	if (!texture)
 	{
 		return nullptr;
 	}
 
-	Texture->SRGB = true;
-	Texture->CompressionSettings = TC_VectorDisplacementmap;
-	Texture->MipGenSettings = TMGS_NoMipmaps;
+	texture->SRGB = true;
+	texture->CompressionSettings = TC_VectorDisplacementmap;
+	texture->MipGenSettings = TMGS_NoMipmaps;
 
-	FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
-	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
-	FColor* Pixels = static_cast<FColor*>(Data);
+	FTexture2DMipMap& mip = texture->GetPlatformData()->Mips[0];
+	void* data = mip.BulkData.Lock(LOCK_READ_WRITE);
+	FColor* pixels = static_cast<FColor*>(data);
 
-	for (int32 Y = 0; Y < TextureHeight; ++Y)
+	for (int32 y = 0; y < textureHeight; ++y)
 	{
-		const float T = static_cast<float>(Y) / static_cast<float>(TextureHeight - 1);
-		const FColor Color = EvaluateGradientColor(TopToBottomColors, T).ToFColor(true);
+		const float t = static_cast<float>(y) / static_cast<float>(textureHeight - 1);
+		const FColor color = EvaluateGradientColor(topToBottomColors, t).ToFColor(true);
 
-		for (int32 X = 0; X < TextureWidth; ++X)
+		for (int32 x = 0; x < textureWidth; ++x)
 		{
-			Pixels[Y * TextureWidth + X] = Color;
+			pixels[y * textureWidth + x] = color;
 		}
 	}
 
-	Mip.BulkData.Unlock();
-	Texture->UpdateResource();
-	return Texture;
+	mip.BulkData.Unlock();
+	texture->UpdateResource();
+	return texture;
 }
 
-void SetVerticalSlotPadding(UWidget* Widget, const FMargin& Padding)
+void SetVerticalSlotPadding(UWidget* widget, const FMargin& padding)
 {
-	if (auto* VerticalSlot = Cast<UVerticalBoxSlot>(Widget ? Widget->Slot : nullptr))
-	{
-		VerticalSlot->SetPadding(Padding);
-	}
-	else if (auto* ScrollSlot = Cast<UScrollBoxSlot>(Widget ? Widget->Slot : nullptr))
-	{
-		ScrollSlot->SetPadding(Padding);
-	}
-}
 
-void SetHorizontalSlotPadding(UWidget* Widget, const FMargin& Padding)
-{
-	if (auto* Slot = Cast<UHorizontalBoxSlot>(Widget ? Widget->Slot : nullptr))
+	if (auto* verticalSlot = Cast<UVerticalBoxSlot>(widget ? widget->Slot : nullptr))
 	{
-		Slot->SetPadding(Padding);
-		Slot->SetVerticalAlignment(VAlign_Center);
+		verticalSlot->SetPadding(padding);
+	}
+	else if (auto* scrollSlot = Cast<UScrollBoxSlot>(widget ? widget->Slot : nullptr))
+	{
+		scrollSlot->SetPadding(padding);
 	}
 }
 
-UCheckBox* AddCheckBoxRow(UObject* Outer, UPanelWidget* Parent, const FString& Label, bool bChecked)
+void SetHorizontalSlotPadding(UWidget* widget, const FMargin& padding)
 {
-	UHorizontalBox* Row = NewObject<UHorizontalBox>(Outer);
-	Parent->AddChild(Row);
-	SetVerticalSlotPadding(Row, FMargin(0.0f, 1.0f, 0.0f, 1.0f));
 
-	UCheckBox* CheckBox = NewObject<UCheckBox>(Outer);
-	FCheckBoxStyle CheckBoxStyle = CheckBox->GetWidgetStyle();
-	FSlateColorBrush UncheckedBrush(FLinearColor(0.82f, 0.82f, 0.84f, 1.0f));
-	FSlateColorBrush UncheckedHoveredBrush(FLinearColor(0.92f, 0.92f, 0.94f, 1.0f));
-	FSlateRoundedBoxBrush CheckedBrush(FLinearColor(0.61f, 0.24f, 1.0f, 1.0f), 0.0f, FLinearColor::White, 2.0f, FVector2D(22.0f, 22.0f));
-	FSlateRoundedBoxBrush CheckedHoveredBrush(FLinearColor(0.69f, 0.36f, 1.0f, 1.0f), 0.0f, FLinearColor::White, 2.0f, FVector2D(22.0f, 22.0f));
-	UncheckedBrush.ImageSize = FVector2D(22.0f, 22.0f);
-	UncheckedHoveredBrush.ImageSize = FVector2D(22.0f, 22.0f);
-	CheckedBrush.ImageSize = FVector2D(22.0f, 22.0f);
-	CheckedHoveredBrush.ImageSize = FVector2D(22.0f, 22.0f);
-	CheckBoxStyle.SetUncheckedImage(UncheckedBrush);
-	CheckBoxStyle.SetUncheckedHoveredImage(UncheckedHoveredBrush);
-	CheckBoxStyle.SetUncheckedPressedImage(UncheckedHoveredBrush);
-	CheckBoxStyle.SetCheckedImage(CheckedBrush);
-	CheckBoxStyle.SetCheckedHoveredImage(CheckedHoveredBrush);
-	CheckBoxStyle.SetCheckedPressedImage(CheckedHoveredBrush);
-	CheckBoxStyle.SetUndeterminedImage(CheckedBrush);
-	CheckBoxStyle.SetUndeterminedHoveredImage(CheckedHoveredBrush);
-	CheckBoxStyle.SetUndeterminedPressedImage(CheckedHoveredBrush);
-	CheckBox->SetWidgetStyle(CheckBoxStyle);
-	CheckBox->SetIsChecked(bChecked);
-	Row->AddChild(CheckBox);
-	SetHorizontalSlotPadding(CheckBox, FMargin(0.0f, 0.0f, 10.0f, 0.0f));
-
-	UTextBlock* LabelText = CreateText(Outer, Label, 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
-	ApplyChakraPetchSemiBoldFont(LabelText, 22);
-	Row->AddChild(LabelText);
-	SetHorizontalSlotPadding(LabelText, FMargin(0.0f));
-
-	return CheckBox;
-}
-
-UScrollBox* AddFilterScrollSection(UObject* Outer, UVerticalBox* Parent, float Height)
-{
-	USizeBox* SectionBox = NewObject<USizeBox>(Outer);
-	SectionBox->SetHeightOverride(Height);
-	Parent->AddChild(SectionBox);
-	SetVerticalSlotPadding(SectionBox, FMargin(0.0f, 0.0f, 0.0f, 12.0f));
-
-	UScrollBox* ScrollBox = NewObject<UScrollBox>(Outer);
-	ScrollBox->SetOrientation(EOrientation::Orient_Vertical);
-	ScrollBox->SetScrollBarVisibility(ESlateVisibility::Visible);
-	ScrollBox->SetAlwaysShowScrollbar(true);
-	ScrollBox->SetAlwaysShowScrollbarTrack(true);
-	ScrollBox->SetScrollbarThickness(FVector2D(18.0f, 18.0f));
-	SectionBox->AddChild(ScrollBox);
-
-	return ScrollBox;
-}
-
-void AddFilterSectionDivider(UObject* Outer, UVerticalBox* Parent)
-{
-	USizeBox* DividerBox = NewObject<USizeBox>(Outer);
-	DividerBox->SetWidthOverride(253.0f);
-	DividerBox->SetHeightOverride(3.0f);
-	Parent->AddChild(DividerBox);
-	if (auto* DividerSlot = Cast<UVerticalBoxSlot>(DividerBox->Slot))
+	if (auto* slot = Cast<UHorizontalBoxSlot>(widget ? widget->Slot : nullptr))
 	{
-		DividerSlot->SetHorizontalAlignment(HAlign_Center);
-		DividerSlot->SetPadding(FMargin(0.0f, 3.0f, 0.0f, 9.0f));
+		slot->SetPadding(padding);
+		slot->SetVerticalAlignment(VAlign_Center);
+	}
+}
+
+UCheckBox* AddCheckBoxRow(UObject* outer, UPanelWidget* parent, const FString& label, bool bChecked)
+{
+	UHorizontalBox* row = NewObject<UHorizontalBox>(outer);
+	parent->AddChild(row);
+	SetVerticalSlotPadding(row, FMargin(0.0f, 1.0f, 0.0f, 1.0f));
+
+	UCheckBox* checkBox = NewObject<UCheckBox>(outer);
+	FCheckBoxStyle checkBoxStyle = checkBox->GetWidgetStyle();
+	FSlateColorBrush uncheckedBrush(FLinearColor(0.82f, 0.82f, 0.84f, 1.0f));
+	FSlateColorBrush uncheckedHoveredBrush(FLinearColor(0.92f, 0.92f, 0.94f, 1.0f));
+	FSlateRoundedBoxBrush checkedBrush(FLinearColor(0.61f, 0.24f, 1.0f, 1.0f), 0.0f, FLinearColor::White, 2.0f, FVector2D(22.0f, 22.0f));
+	FSlateRoundedBoxBrush checkedHoveredBrush(FLinearColor(0.69f, 0.36f, 1.0f, 1.0f), 0.0f, FLinearColor::White, 2.0f, FVector2D(22.0f, 22.0f));
+	uncheckedBrush.ImageSize = FVector2D(22.0f, 22.0f);
+	uncheckedHoveredBrush.ImageSize = FVector2D(22.0f, 22.0f);
+	checkedBrush.ImageSize = FVector2D(22.0f, 22.0f);
+	checkedHoveredBrush.ImageSize = FVector2D(22.0f, 22.0f);
+	checkBoxStyle.SetUncheckedImage(uncheckedBrush);
+	checkBoxStyle.SetUncheckedHoveredImage(uncheckedHoveredBrush);
+	checkBoxStyle.SetUncheckedPressedImage(uncheckedHoveredBrush);
+	checkBoxStyle.SetCheckedImage(checkedBrush);
+	checkBoxStyle.SetCheckedHoveredImage(checkedHoveredBrush);
+	checkBoxStyle.SetCheckedPressedImage(checkedHoveredBrush);
+	checkBoxStyle.SetUndeterminedImage(checkedBrush);
+	checkBoxStyle.SetUndeterminedHoveredImage(checkedHoveredBrush);
+	checkBoxStyle.SetUndeterminedPressedImage(checkedHoveredBrush);
+	checkBox->SetWidgetStyle(checkBoxStyle);
+	checkBox->SetIsChecked(bChecked);
+	row->AddChild(checkBox);
+	SetHorizontalSlotPadding(checkBox, FMargin(0.0f, 0.0f, 10.0f, 0.0f));
+
+	UTextBlock* labelText = CreateText(outer, label, 22, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	ApplyChakraPetchSemiBoldFont(labelText, 22);
+	row->AddChild(labelText);
+	SetHorizontalSlotPadding(labelText, FMargin(0.0f));
+
+	return checkBox;
+}
+
+int32 CountSelectedOptions(const TArray<TObjectPtr<UCheckBox>>& checkBoxes)
+{
+	int32 selectedOptionCount = 0;
+
+	for (const TObjectPtr<UCheckBox>& checkBox : checkBoxes)
+	{
+
+		if (checkBox && checkBox->IsChecked())
+		{
+			++selectedOptionCount;
+		}
 	}
 
-	UBorder* Divider = CreateColorBlock(Outer, FLinearColor(0.74f, 0.74f, 0.74f, 1.0f));
-	DividerBox->AddChild(Divider);
+	return selectedOptionCount;
+}
+
+template <typename ValueType, typename FilterType, typename ValueGetter, typename FilterFactory>
+void AddSelectedPointCloudFilter(const TArray<TObjectPtr<UCheckBox>>& checkBoxes,
+								 int32 optionCount,
+								 TUniquePtr<Esri::Unreal::ArcGISCollection<ValueType>>& activeValues,
+								 TUniquePtr<FilterType>& activeFilter,
+								 Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter>& activeFilters,
+								 ValueGetter getValue,
+								 FilterFactory createFilter)
+{
+	activeValues = MakeUnique<Esri::Unreal::ArcGISCollection<ValueType>>();
+	const int32 optionLimit = FMath::Min(checkBoxes.Num(), optionCount);
+
+	for (int32 index = 0; index < optionLimit; ++index)
+	{
+
+		if (checkBoxes[index] && checkBoxes[index]->IsChecked())
+		{
+			activeValues->Add(getValue(index));
+		}
+	}
+
+	activeFilter = createFilter(*activeValues);
+	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter baseFilter(activeFilter->GetHandle());
+	activeFilters.Add(baseFilter);
+	baseFilter.SetHandle(nullptr);
+}
+
+struct FFilterSectionWidgets
+{
+	UScrollBox* ScrollBox;
+	UCheckBox* AllCheckBox;
+};
+
+FFilterSectionWidgets AddFilterSection(UObject* outer, UVerticalBox* parent, const FString& title, float height)
+{
+	UTextBlock* heading = CreateText(outer, title, 24, MakeSlateColor(0.68f, 0.68f, 0.72f));
+	ApplyChakraPetchSemiBoldFont(heading, 24);
+	parent->AddChild(heading);
+	SetVerticalSlotPadding(heading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
+
+	USizeBox* sectionBox = NewObject<USizeBox>(outer);
+	sectionBox->SetHeightOverride(height);
+	parent->AddChild(sectionBox);
+	SetVerticalSlotPadding(sectionBox, FMargin(0.0f, 0.0f, 0.0f, 12.0f));
+
+	UScrollBox* scrollBox = NewObject<UScrollBox>(outer);
+	scrollBox->SetOrientation(EOrientation::Orient_Vertical);
+	scrollBox->SetScrollBarVisibility(ESlateVisibility::Visible);
+	scrollBox->SetAlwaysShowScrollbar(true);
+	scrollBox->SetAlwaysShowScrollbarTrack(true);
+	scrollBox->SetScrollbarThickness(FVector2D(18.0f, 18.0f));
+	sectionBox->AddChild(scrollBox);
+
+	UCheckBox* allCheckBox = AddCheckBoxRow(outer, scrollBox, TEXT("<all>"), true);
+	return {scrollBox, allCheckBox};
+}
+
+void AddFilterSectionDivider(UObject* outer, UVerticalBox* parent)
+{
+	USizeBox* dividerBox = NewObject<USizeBox>(outer);
+	dividerBox->SetWidthOverride(253.0f);
+	dividerBox->SetHeightOverride(3.0f);
+	parent->AddChild(dividerBox);
+
+	if (auto* dividerSlot = Cast<UVerticalBoxSlot>(dividerBox->Slot))
+	{
+		dividerSlot->SetHorizontalAlignment(HAlign_Center);
+		dividerSlot->SetPadding(FMargin(0.0f, 3.0f, 0.0f, 9.0f));
+	}
+
+	UBorder* divider = CreateColorBlock(outer, FLinearColor(0.74f, 0.74f, 0.74f, 1.0f));
+	dividerBox->AddChild(divider);
 }
 
 template <typename WidgetType>
-WidgetType* FindNamedWidget(UUserWidget* Widget, const TCHAR* WidgetName, bool bWarnIfMissing = true)
+WidgetType* FindNamedWidget(UUserWidget* widget, const TCHAR* widgetName, bool bWarnIfMissing = true)
 {
-	WidgetType* NamedWidget = Widget ? Cast<WidgetType>(Widget->GetWidgetFromName(WidgetName)) : nullptr;
-	if (!NamedWidget && bWarnIfMissing)
+	WidgetType* namedWidget = widget ? Cast<WidgetType>(widget->GetWidgetFromName(widgetName)) : nullptr;
+
+	if (!namedWidget && bWarnIfMissing)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UI_PCL widget binding failed: %s"), WidgetName);
+		UE_LOG(LogTemp, Warning, TEXT("UI_PCL widget binding failed: %s"), widgetName);
 	}
 
-	return NamedWidget;
+	return namedWidget;
 }
 
-UWidget* FindPCLNamedWidget(UUserWidget* Widget, const FName& WidgetName)
+UWidget* FindPCLNamedWidget(UUserWidget* widget, const FName& widgetName)
 {
-	return Widget ? Widget->GetWidgetFromName(WidgetName) : nullptr;
+	return widget ? widget->GetWidgetFromName(widgetName) : nullptr;
 }
 
-bool IsPCLCollapsePersistentWidget(const UWidget* Widget)
+bool IsPCLCollapsePersistentWidget(const UWidget* widget)
 {
-	if (!Widget)
-	{
-		return false;
-	}
 
-	const FName WidgetName = Widget->GetFName();
-	return WidgetName == PCLCollapseButtonWidgetName || WidgetName == PCLGearIconWidgetName || WidgetName == PCLInfoWidgetName;
-}
-
-bool IsWidgetUnderCursor(const UWidget* Widget)
-{
-	if (!Widget || !Widget->IsVisible() || !FSlateApplication::IsInitialized())
+	if (!widget)
 	{
 		return false;
 	}
 
-	const FGeometry& Geometry = Widget->GetCachedGeometry();
-	return !Geometry.GetLocalSize().IsNearlyZero() && Geometry.IsUnderLocation(FSlateApplication::Get().GetCursorPos());
+	const FName widgetName = widget->GetFName();
+	return widgetName == PCLCollapseButtonWidgetName || widgetName == PCLGearIconWidgetName || widgetName == PCLInfoWidgetName;
+}
+
+bool IsWidgetUnderCursor(const UWidget* widget)
+{
+
+	if (!widget || !widget->IsVisible() || !FSlateApplication::IsInitialized())
+	{
+		return false;
+	}
+
+	const FGeometry& geometry = widget->GetCachedGeometry();
+	return !geometry.GetLocalSize().IsNearlyZero() && geometry.IsUnderLocation(FSlateApplication::Get().GetCursorPos());
 }
 
 FSlateRoundedBoxBrush MakePCLGearButtonBrush()
 {
-	FSlateRoundedBoxBrush Brush(PCLGearPurple, 0.0f);
-	Brush.ImageSize = PCLGearButtonSize;
-	return Brush;
+	FSlateRoundedBoxBrush brush(PCLGearPurple, 0.0f);
+	brush.ImageSize = PCLGearButtonSize;
+	return brush;
 }
 
-void DisablePCLButtonFocus(UButton* Button)
+void ConfigurePCLCollapseButton(UButton* button)
 {
-	if (!Button)
+
+	if (!button)
 	{
 		return;
 	}
 
-	PRAGMA_DISABLE_DEPRECATION_WARNINGS
-	Button->IsFocusable = false;
-	PRAGMA_ENABLE_DEPRECATION_WARNINGS
+	FButtonStyle collapseStyle = button->GetStyle();
+	collapseStyle.SetHovered(collapseStyle.Normal);
+	collapseStyle.SetPressed(collapseStyle.Normal);
+	collapseStyle.SetDisabled(collapseStyle.Normal);
+	collapseStyle.SetNormalPadding(FMargin(0.0f));
+	collapseStyle.SetPressedPadding(FMargin(0.0f));
+	button->SetStyle(collapseStyle);
+	button->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
+	button->SetRenderTransform(FWidgetTransform(FVector2D::ZeroVector, FVector2D(1.0f, 1.0f), FVector2D::ZeroVector, 180.0f));
 }
 
-void ConfigurePCLCollapseButton(UButton* Button)
+void ConfigurePCLGearButton(UUserWidget* uiWidget, UButton* button)
 {
-	if (!Button)
+
+	if (!uiWidget || !uiWidget->WidgetTree || !button)
 	{
 		return;
 	}
 
-	FButtonStyle CollapseStyle = Button->GetStyle();
-	CollapseStyle.SetHovered(CollapseStyle.Normal);
-	CollapseStyle.SetPressed(CollapseStyle.Normal);
-	CollapseStyle.SetDisabled(CollapseStyle.Normal);
-	CollapseStyle.SetNormalPadding(FMargin(0.0f));
-	CollapseStyle.SetPressedPadding(FMargin(0.0f));
-	Button->SetStyle(CollapseStyle);
-	DisablePCLButtonFocus(Button);
-	Button->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
-	Button->SetRenderTransform(FWidgetTransform(FVector2D::ZeroVector, FVector2D(1.0f, 1.0f), FVector2D::ZeroVector, 180.0f));
-}
+	FSlateRoundedBoxBrush gearBrush = MakePCLGearButtonBrush();
+	FButtonStyle gearStyle = button->GetStyle();
+	gearStyle.SetNormal(gearBrush);
+	gearStyle.SetHovered(gearBrush);
+	gearStyle.SetPressed(gearBrush);
+	gearStyle.SetDisabled(gearBrush);
+	gearStyle.SetNormalPadding(FMargin(0.0f));
+	gearStyle.SetPressedPadding(FMargin(0.0f));
+	button->SetStyle(gearStyle);
+	button->SetBackgroundColor(FLinearColor::White);
+	button->SetColorAndOpacity(FLinearColor::White);
 
-void ConfigurePCLGearButton(UUserWidget* UIWidget, UButton* Button)
-{
-	if (!UIWidget || !UIWidget->WidgetTree || !Button)
+	UImage* gearIcon = Cast<UImage>(uiWidget->WidgetTree->FindWidget(PCLGearRuntimeIconWidgetName));
+
+	if (!gearIcon)
 	{
-		return;
+		gearIcon = uiWidget->WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), PCLGearRuntimeIconWidgetName);
 	}
 
-	FSlateRoundedBoxBrush GearBrush = MakePCLGearButtonBrush();
-	FButtonStyle GearStyle = Button->GetStyle();
-	GearStyle.SetNormal(GearBrush);
-	GearStyle.SetHovered(GearBrush);
-	GearStyle.SetPressed(GearBrush);
-	GearStyle.SetDisabled(GearBrush);
-	GearStyle.SetNormalPadding(FMargin(0.0f));
-	GearStyle.SetPressedPadding(FMargin(0.0f));
-	Button->SetStyle(GearStyle);
-	Button->SetBackgroundColor(FLinearColor::White);
-	Button->SetColorAndOpacity(FLinearColor::White);
-	DisablePCLButtonFocus(Button);
-
-	UImage* GearIcon = Cast<UImage>(UIWidget->WidgetTree->FindWidget(PCLGearRuntimeIconWidgetName));
-	if (!GearIcon)
+	if (gearIcon)
 	{
-		GearIcon = UIWidget->WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), PCLGearRuntimeIconWidgetName);
-	}
 
-	if (GearIcon)
-	{
-		if (UTexture2D* GearTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/SampleViewer/User-Interface/gear_icon.gear_icon")))
+		if (UTexture2D* gearTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/SampleViewer/User-Interface/gear_icon.gear_icon")))
 		{
-			GearIcon->SetBrushFromTexture(GearTexture, true);
+			gearIcon->SetBrushFromTexture(gearTexture, true);
 		}
-		GearIcon->SetDesiredSizeOverride(PCLGearIconSize);
-		GearIcon->SetColorAndOpacity(FLinearColor::White);
-		GearIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
-		Button->SetContent(GearIcon);
+		gearIcon->SetDesiredSizeOverride(PCLGearIconSize);
+		gearIcon->SetColorAndOpacity(FLinearColor::White);
+		gearIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
+		button->SetContent(gearIcon);
 	}
 }
 
-void ConfigurePCLCollapseToggleAppearance(UUserWidget* UIWidget, UButton* CollapseButton, UButton* GearButton)
+void ConfigurePCLCollapseToggleAppearance(UUserWidget* uiWidget, UButton* collapseButton, UButton* gearButton)
 {
-	ConfigurePCLCollapseButton(CollapseButton);
-	ConfigurePCLGearButton(UIWidget, GearButton);
+	ConfigurePCLCollapseButton(collapseButton);
+	ConfigurePCLGearButton(uiWidget, gearButton);
 }
 
-void ApplyPCLCollapseToggleVisibility(UUserWidget* UIWidget, bool bCollapsed)
+void ApplyPCLCollapseToggleVisibility(UUserWidget* uiWidget, bool bCollapsed)
 {
-	if (UWidget* CollapseButton = FindPCLNamedWidget(UIWidget, PCLCollapseButtonWidgetName))
+
+	if (UWidget* collapseButton = FindPCLNamedWidget(uiWidget, PCLCollapseButtonWidgetName))
 	{
-		CollapseButton->SetVisibility(bCollapsed ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+		collapseButton->SetVisibility(bCollapsed ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
 	}
 
-	if (UWidget* GearButton = FindPCLNamedWidget(UIWidget, PCLGearIconWidgetName))
+	if (UWidget* gearButton = FindPCLNamedWidget(uiWidget, PCLGearIconWidgetName))
 	{
-		GearButton->SetVisibility(bCollapsed ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+		gearButton->SetVisibility(bCollapsed ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	}
 
-	if (UWidget* CollapseIcon = FindPCLNamedWidget(UIWidget, PCLCollapseIconWidgetName))
+	if (UWidget* collapseIcon = FindPCLNamedWidget(uiWidget, PCLCollapseIconWidgetName))
 	{
-		CollapseIcon->SetVisibility(bCollapsed ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+		collapseIcon->SetVisibility(bCollapsed ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 	}
 }
 
-} // namespace
+}
 
-// Sets default values
 APCLController::APCLController()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
 void APCLController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -837,15 +834,16 @@ void APCLController::BeginPlay()
 	}
 
 	MapComponent = MapActor->GetMapComponent();
+
 	if (!MapComponent)
 	{
 		UE_LOG(LogTemp, Error, TEXT("ArcGISMapComponent not found on ArcGISMapActor!"));
 		return;
 	}
 
-	if (UArcGISPoint* OriginPosition = MapComponent->GetOriginPosition())
+	if (UArcGISPoint* originPosition = MapComponent->GetOriginPosition())
 	{
-		SpatialReference = OriginPosition->GetSpatialReference();
+		SpatialReference = originPosition->GetSpatialReference();
 	}
 
 	if (!InputManager)
@@ -870,15 +868,16 @@ void APCLController::BeginPlay()
 		playerController->bShowMouseCursor = true;
 		playerController->bEnableClickEvents = true;
 
-		FInputModeGameAndUI InputMode;
-		InputMode.SetHideCursorDuringCapture(false);
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		playerController->SetInputMode(InputMode);
+		FInputModeGameAndUI inputMode;
+		inputMode.SetHideCursorDuringCapture(false);
+		inputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		playerController->SetInputMode(inputMode);
 	}
 
 	if (UIWidgetClass)
 	{
 		UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
+
 		if (!UIWidget)
 		{
 			return;
@@ -1018,7 +1017,7 @@ void APCLController::BeginPlay()
 	}
 }
 
-void APCLController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void APCLController::EndPlay(const EEndPlayReason::Type endPlayReason)
 {
 	SetMapInputBlockedByUI(false);
 
@@ -1028,25 +1027,25 @@ void APCLController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		InputManager->OnInputEnd.RemoveDynamic(this, &APCLController::OnInputEnded);
 	}
 
-	Super::EndPlay(EndPlayReason);
+	Super::EndPlay(endPlayReason);
 }
 
-// Called every frame
-void APCLController::Tick(float DeltaTime)
+void APCLController::Tick(float deltaTime)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(deltaTime);
 	HandlePCLCollapseInput();
 	UpdateMapInputForUIHover();
 
 	if (!DeferredPointCloudLayerSource.IsEmpty())
 	{
-		DeferredPointCloudLayerRetrySeconds -= DeltaTime;
+		DeferredPointCloudLayerRetrySeconds -= deltaTime;
+
 		if (DeferredPointCloudLayerRetrySeconds <= 0.0f)
 		{
-			const FString Source = DeferredPointCloudLayerSource;
+			const FString source = DeferredPointCloudLayerSource;
 			const bool bZoomWhenLoaded = bDeferredZoomWhenLoaded;
 			DeferredPointCloudLayerSource.Reset();
-			CreatePointCloudLayer(Source, bZoomWhenLoaded);
+			CreatePointCloudLayer(source, bZoomWhenLoaded);
 		}
 	}
 }
@@ -1054,12 +1053,14 @@ void APCLController::Tick(float DeltaTime)
 void APCLController::UpdateMapInputForUIHover()
 {
 	bool bShouldBlockMapInput = false;
+
 	if (UIInteractionPanel && UIInteractionPanel->IsVisible() && FSlateApplication::IsInitialized())
 	{
-		const FGeometry& PanelGeometry = UIInteractionPanel->GetCachedGeometry();
-		if (!PanelGeometry.GetLocalSize().IsNearlyZero())
+		const FGeometry& panelGeometry = UIInteractionPanel->GetCachedGeometry();
+
+		if (!panelGeometry.GetLocalSize().IsNearlyZero())
 		{
-			bShouldBlockMapInput = PanelGeometry.IsUnderLocation(FSlateApplication::Get().GetCursorPos());
+			bShouldBlockMapInput = panelGeometry.IsUnderLocation(FSlateApplication::Get().GetCursorPos());
 		}
 	}
 
@@ -1073,45 +1074,48 @@ void APCLController::UpdateMapInputForUIHover()
 
 void APCLController::SetMapInputBlockedByUI(bool bBlocked)
 {
+
 	if (bMapInputBlockedByUI == bBlocked)
 	{
 		return;
 	}
 
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (!PlayerController)
+	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (!playerController)
 	{
 		return;
 	}
 
 	if (bBlocked)
 	{
-		PlayerController->FlushPressedKeys();
-		PlayerController->SetIgnoreLookInput(true);
-		PlayerController->SetIgnoreMoveInput(true);
+		playerController->FlushPressedKeys();
+		playerController->SetIgnoreLookInput(true);
+		playerController->SetIgnoreMoveInput(true);
 
-		FInputModeUIOnly InputMode;
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		PlayerController->SetInputMode(InputMode);
+		FInputModeUIOnly inputMode;
+		inputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		playerController->SetInputMode(inputMode);
 	}
 	else
 	{
-		PlayerController->SetIgnoreLookInput(false);
-		PlayerController->SetIgnoreMoveInput(false);
+		playerController->SetIgnoreLookInput(false);
+		playerController->SetIgnoreMoveInput(false);
 
-		FInputModeGameAndUI InputMode;
-		InputMode.SetHideCursorDuringCapture(false);
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		PlayerController->SetInputMode(InputMode);
+		FInputModeGameAndUI inputMode;
+		inputMode.SetHideCursorDuringCapture(false);
+		inputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		playerController->SetInputMode(inputMode);
 	}
 
-	PlayerController->bShowMouseCursor = true;
+	playerController->bShowMouseCursor = true;
 	bMapInputBlockedByUI = bBlocked;
 }
 
 void APCLController::OnInputTriggered()
 {
 	bPointerDownOverPCLCollapseToggle = IsPCLCollapseToggleUnderCursor();
+
 	if (bPointerDownOverPCLCollapseToggle)
 	{
 		SetMapInputBlockedByUI(true);
@@ -1120,6 +1124,7 @@ void APCLController::OnInputTriggered()
 
 void APCLController::OnInputEnded()
 {
+
 	if (bPointerDownOverPCLCollapseToggle && IsPCLCollapseToggleUnderCursor())
 	{
 		TogglePCLUICollapse();
@@ -1128,32 +1133,35 @@ void APCLController::OnInputEnded()
 	bPointerDownOverPCLCollapseToggle = false;
 }
 
-void APCLController::OnPointSizeChanged(float Value)
+void APCLController::OnPointSizeChanged(float value)
 {
 	UpdateSliderValueTexts();
 
-	auto Renderer = GetLoadedRenderer(PointCloudLayer);
-	if (Renderer)
+	auto renderer = GetLoadedRenderer(PointCloudLayer);
+
+	if (renderer)
 	{
-		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm SizeAlgorithm(
-			FMath::Clamp(static_cast<double>(Value), MinPointSize, MaxPointSize), Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
-		Renderer.SetSizeAlgorithm(SizeAlgorithm);
+		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm sizeAlgorithm(
+			FMath::Clamp(static_cast<double>(value), MinPointSize, MaxPointSize), Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
+		renderer.SetSizeAlgorithm(sizeAlgorithm);
 	}
 }
 
-void APCLController::OnPointsPerInchChanged(float Value)
+void APCLController::OnPointsPerInchChanged(float value)
 {
 	UpdateSliderValueTexts();
 
-	auto Renderer = GetLoadedRenderer(PointCloudLayer);
-	if (Renderer)
+	auto renderer = GetLoadedRenderer(PointCloudLayer);
+
+	if (renderer)
 	{
-		Renderer.SetPointsPerInch(FMath::Max(static_cast<double>(Value), MinPointsPerInch));
+		renderer.SetPointsPerInch(FMath::Max(static_cast<double>(value), MinPointsPerInch));
 	}
 }
 
 void APCLController::SetColorModulationEnabled(bool bEnabled)
 {
+
 	if (bColorModulationEnabled == bEnabled)
 	{
 		return;
@@ -1161,40 +1169,42 @@ void APCLController::SetColorModulationEnabled(bool bEnabled)
 
 	bColorModulationEnabled = bEnabled;
 
-	auto Renderer = GetLoadedRenderer(PointCloudLayer);
-	if (Renderer)
+	auto renderer = GetLoadedRenderer(PointCloudLayer);
+
+	if (renderer)
 	{
-		Renderer.SetColorModulation(bColorModulationEnabled && !IntensityAttributeName.IsEmpty() ?
+		renderer.SetColorModulation(bColorModulationEnabled && !IntensityAttributeName.IsEmpty() ?
 										Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation(IntensityAttributeName, 0.0, 65535.0) :
 										Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorModulation());
 	}
 }
 
-void APCLController::SetPointCloudRenderer(EPCLRendererChoice RendererChoice)
+void APCLController::SetPointCloudRenderer(EPCLRendererChoice rendererChoice)
 {
 	RefreshAvailablePointCloudAttributes();
-	if (!IsRendererAvailableFromCachedAttributes(RendererChoice))
+
+	if (!IsRendererAvailableFromCachedAttributes(rendererChoice))
 	{
-		RendererChoice = GetFallbackRendererChoice();
+		rendererChoice = GetFallbackRendererChoice();
 	}
 
-	if (CurrentRendererChoice == RendererChoice)
+	if (CurrentRendererChoice == rendererChoice)
 	{
 		UpdateRendererCheckBoxes();
 		BuildLegendUI();
 		return;
 	}
 
-	CurrentRendererChoice = RendererChoice;
+	CurrentRendererChoice = rendererChoice;
 	UpdateRendererCheckBoxes();
 	BuildLegendUI();
 	ApplyPointCloudVisualization();
 }
 
-bool APCLController::IsPointCloudRendererAvailable(EPCLRendererChoice RendererChoice)
+bool APCLController::IsPointCloudRendererAvailable(EPCLRendererChoice rendererChoice)
 {
 	RefreshAvailablePointCloudAttributes();
-	return IsRendererAvailableFromCachedAttributes(RendererChoice);
+	return IsRendererAvailableFromCachedAttributes(rendererChoice);
 }
 
 void APCLController::OnColorModulationCheckStateChanged(bool bIsChecked)
@@ -1204,6 +1214,7 @@ void APCLController::OnColorModulationCheckStateChanged(bool bIsChecked)
 
 void APCLController::OnRGBRendererCheckStateChanged(bool bIsChecked)
 {
+
 	if (bIsChecked && !bUpdatingRendererCheckBoxes)
 	{
 		SetPointCloudRenderer(EPCLRendererChoice::RGB);
@@ -1212,6 +1223,7 @@ void APCLController::OnRGBRendererCheckStateChanged(bool bIsChecked)
 
 void APCLController::OnClassRendererCheckStateChanged(bool bIsChecked)
 {
+
 	if (bIsChecked && !bUpdatingRendererCheckBoxes)
 	{
 		SetPointCloudRenderer(EPCLRendererChoice::Class);
@@ -1220,6 +1232,7 @@ void APCLController::OnClassRendererCheckStateChanged(bool bIsChecked)
 
 void APCLController::OnElevationRendererCheckStateChanged(bool bIsChecked)
 {
+
 	if (bIsChecked && !bUpdatingRendererCheckBoxes)
 	{
 		SetPointCloudRenderer(EPCLRendererChoice::Elevation);
@@ -1228,6 +1241,7 @@ void APCLController::OnElevationRendererCheckStateChanged(bool bIsChecked)
 
 void APCLController::OnIntensityRendererCheckStateChanged(bool bIsChecked)
 {
+
 	if (bIsChecked && !bUpdatingRendererCheckBoxes)
 	{
 		SetPointCloudRenderer(EPCLRendererChoice::Intensity);
@@ -1251,19 +1265,21 @@ void APCLController::OnVisualizeTabClicked()
 
 void APCLController::OnFilterCheckStateChanged(bool bIsChecked)
 {
+
 	if (bUpdatingFilterCheckBoxes)
 	{
 		return;
 	}
 
-	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
+	TGuardValue<bool> updatingGuard(bUpdatingFilterCheckBoxes, true);
 
 	if (ClassAllCheckBox)
 	{
 		bool bAllClassesChecked = true;
-		for (TObjectPtr<UCheckBox> CheckBox : ClassFilterCheckBoxes)
+
+		for (TObjectPtr<UCheckBox> checkBox : ClassFilterCheckBoxes)
 		{
-			bAllClassesChecked = bAllClassesChecked && CheckBox && CheckBox->IsChecked();
+			bAllClassesChecked = bAllClassesChecked && checkBox && checkBox->IsChecked();
 		}
 		ClassAllCheckBox->SetIsChecked(bAllClassesChecked);
 	}
@@ -1271,9 +1287,10 @@ void APCLController::OnFilterCheckStateChanged(bool bIsChecked)
 	if (ReturnsAllCheckBox)
 	{
 		bool bAllReturnsChecked = true;
-		for (TObjectPtr<UCheckBox> CheckBox : ReturnsFilterCheckBoxes)
+
+		for (TObjectPtr<UCheckBox> checkBox : ReturnsFilterCheckBoxes)
 		{
-			bAllReturnsChecked = bAllReturnsChecked && CheckBox && CheckBox->IsChecked();
+			bAllReturnsChecked = bAllReturnsChecked && checkBox && checkBox->IsChecked();
 		}
 		ReturnsAllCheckBox->SetIsChecked(bAllReturnsChecked);
 	}
@@ -1283,38 +1300,30 @@ void APCLController::OnFilterCheckStateChanged(bool bIsChecked)
 
 void APCLController::OnClassAllFilterCheckStateChanged(bool bIsChecked)
 {
-	if (bUpdatingFilterCheckBoxes)
-	{
-		return;
-	}
-
-	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
-
-	for (TObjectPtr<UCheckBox> CheckBox : ClassFilterCheckBoxes)
-	{
-		if (CheckBox)
-		{
-			CheckBox->SetIsChecked(bIsChecked);
-		}
-	}
-
-	ApplyPointCloudFilters();
+	SetAllFilterOptionsChecked(ClassFilterCheckBoxes, bIsChecked);
 }
 
 void APCLController::OnReturnsAllFilterCheckStateChanged(bool bIsChecked)
 {
+	SetAllFilterOptionsChecked(ReturnsFilterCheckBoxes, bIsChecked);
+}
+
+void APCLController::SetAllFilterOptionsChecked(const TArray<TObjectPtr<UCheckBox>>& filterCheckBoxes, bool bIsChecked)
+{
+
 	if (bUpdatingFilterCheckBoxes)
 	{
 		return;
 	}
 
-	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
+	TGuardValue<bool> updatingGuard(bUpdatingFilterCheckBoxes, true);
 
-	for (TObjectPtr<UCheckBox> CheckBox : ReturnsFilterCheckBoxes)
+	for (const TObjectPtr<UCheckBox>& checkBox : filterCheckBoxes)
 	{
-		if (CheckBox)
+
+		if (checkBox)
 		{
-			CheckBox->SetIsChecked(bIsChecked);
+			checkBox->SetIsChecked(bIsChecked);
 		}
 	}
 
@@ -1328,15 +1337,15 @@ void APCLController::OnResetFiltersClicked()
 
 void APCLController::OnLoadPointCloudLayerClicked()
 {
-	FString Source = SourceUrlTextBox ? SourceUrlTextBox->GetText().ToString() : FString();
-	Source.TrimStartAndEndInline();
+	FString source = SourceUrlTextBox ? SourceUrlTextBox->GetText().ToString() : FString();
+	source.TrimStartAndEndInline();
 
 	if (SourceUrlTextBox)
 	{
-		SourceUrlTextBox->SetText(FText::FromString(Source));
+		SourceUrlTextBox->SetText(FText::FromString(source));
 	}
 
-	if (!IsValidPointCloudSource(Source))
+	if (!IsValidURL(source))
 	{
 		SetLayerLoadStatus(false);
 		return;
@@ -1344,7 +1353,7 @@ void APCLController::OnLoadPointCloudLayerClicked()
 
 	DeferredPointCloudLayerSource.Reset();
 	PointCloudLayerLoadRetryCount = 0;
-	CreatePointCloudLayer(Source, true);
+	CreatePointCloudLayer(source, true);
 }
 
 void APCLController::OnCollapseButtonClicked()
@@ -1363,6 +1372,7 @@ void APCLController::ConfigurePCLCollapseInitialState()
 
 void APCLController::HandlePCLCollapseInput()
 {
+
 	if (!UIWidget || !FSlateApplication::IsInitialized())
 	{
 		bPointerDownOverPCLCollapseToggle = false;
@@ -1388,62 +1398,72 @@ void APCLController::HandlePCLCollapseInput()
 
 void APCLController::SetPCLUICollapsed(bool bCollapsed)
 {
+
 	if (!UIWidget)
 	{
 		return;
 	}
 
-	UCanvasPanel* RootCanvas = Cast<UCanvasPanel>(FindPCLNamedWidget(UIWidget, PCLRootCanvasWidgetName));
-	if (!RootCanvas)
+	UCanvasPanel* rootCanvas = Cast<UCanvasPanel>(FindPCLNamedWidget(UIWidget, PCLRootCanvasWidgetName));
+
+	if (!rootCanvas)
 	{
 		return;
 	}
 
-	TArray<UWidget*> CollapsibleWidgets;
-	for (int32 ChildIndex = 0; ChildIndex < RootCanvas->GetChildrenCount(); ++ChildIndex)
+	TArray<UWidget*> collapsibleWidgets;
+
+	for (int32 childIndex = 0; childIndex < rootCanvas->GetChildrenCount(); ++childIndex)
 	{
-		UWidget* Child = RootCanvas->GetChildAt(ChildIndex);
-		if (Child && Child->GetFName() == PCLMainPanelWidgetName)
+		UWidget* child = rootCanvas->GetChildAt(childIndex);
+
+		if (child && child->GetFName() == PCLMainPanelWidgetName)
 		{
-			if (const UPanelWidget* MainPanel = Cast<UPanelWidget>(Child))
+
+			if (const UPanelWidget* mainPanel = Cast<UPanelWidget>(child))
 			{
-				for (int32 MainChildIndex = 0; MainChildIndex < MainPanel->GetChildrenCount(); ++MainChildIndex)
+
+				for (int32 mainChildIndex = 0; mainChildIndex < mainPanel->GetChildrenCount(); ++mainChildIndex)
 				{
-					CollapsibleWidgets.Add(MainPanel->GetChildAt(MainChildIndex));
+					collapsibleWidgets.Add(mainPanel->GetChildAt(mainChildIndex));
 				}
 			}
 			continue;
 		}
 
-		CollapsibleWidgets.Add(Child);
+		collapsibleWidgets.Add(child);
 	}
 
 	if (bCollapsed)
 	{
 		CachedPCLRootChildVisibilities.Reset();
-		for (UWidget* Child : CollapsibleWidgets)
+
+		for (UWidget* child : collapsibleWidgets)
 		{
-			if (!Child || IsPCLCollapsePersistentWidget(Child))
+
+			if (!child || IsPCLCollapsePersistentWidget(child))
 			{
 				continue;
 			}
 
-			CachedPCLRootChildVisibilities.Add(Child->GetFName(), Child->GetVisibility());
-			Child->SetVisibility(ESlateVisibility::Collapsed);
+			CachedPCLRootChildVisibilities.Add(child->GetFName(), child->GetVisibility());
+			child->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 	else
 	{
-		for (UWidget* Child : CollapsibleWidgets)
+
+		for (UWidget* child : collapsibleWidgets)
 		{
-			if (!Child || IsPCLCollapsePersistentWidget(Child))
+
+			if (!child || IsPCLCollapsePersistentWidget(child))
 			{
 				continue;
 			}
 
-			if (const ESlateVisibility* CachedVisibility = CachedPCLRootChildVisibilities.Find(Child->GetFName()))
+			if (const ESlateVisibility* cachedVisibility = CachedPCLRootChildVisibilities.Find(child->GetFName()))
 			{
-				Child->SetVisibility(*CachedVisibility);
+				child->SetVisibility(*cachedVisibility);
 			}
 		}
 
@@ -1457,13 +1477,14 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 
 void APCLController::TogglePCLUICollapse()
 {
-	const double CurrentTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
-	if (LastPCLCollapseToggleTimeSeconds >= 0.0 && CurrentTimeSeconds - LastPCLCollapseToggleTimeSeconds < 0.05)
+	const double currentTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+
+	if (LastPCLCollapseToggleTimeSeconds >= 0.0 && currentTimeSeconds - LastPCLCollapseToggleTimeSeconds < 0.05)
 	{
 		return;
 	}
 
-	LastPCLCollapseToggleTimeSeconds = CurrentTimeSeconds;
+	LastPCLCollapseToggleTimeSeconds = currentTimeSeconds;
 	SetPCLUICollapsed(!bPCLUICollapsed);
 
 	if (FSlateApplication::IsInitialized())
@@ -1480,6 +1501,7 @@ bool APCLController::IsPCLCollapseToggleUnderCursor() const
 
 void APCLController::BuildDataLoaderUI()
 {
+
 	if (!UIWidget)
 	{
 		return;
@@ -1500,6 +1522,7 @@ void APCLController::BuildDataLoaderUI()
 	if (LoadLayerButton)
 	{
 		LoadLayerButtonText = Cast<UTextBlock>(LoadLayerButton->GetContent());
+
 		if (!LoadLayerButtonText)
 		{
 			LoadLayerButtonText = NewObject<UTextBlock>(UIWidget, TEXT("Text_LoadLayer"));
@@ -1509,21 +1532,24 @@ void APCLController::BuildDataLoaderUI()
 		LoadLayerButtonText->SetText(FText::FromString(TEXT("Load")));
 		LoadLayerButtonText->SetColorAndOpacity(MakeSlateColor(1.0f, 1.0f, 1.0f));
 		ApplyChakraPetchSemiBoldFont(LoadLayerButtonText, 20);
-		if (auto* ButtonSlot = Cast<UButtonSlot>(LoadLayerButtonText->Slot))
+
+		if (auto* buttonSlot = Cast<UButtonSlot>(LoadLayerButtonText->Slot))
 		{
-			ButtonSlot->SetHorizontalAlignment(HAlign_Center);
-			ButtonSlot->SetVerticalAlignment(VAlign_Center);
+			buttonSlot->SetHorizontalAlignment(HAlign_Center);
+			buttonSlot->SetVerticalAlignment(VAlign_Center);
 		}
 	}
 }
 
-void APCLController::DeferPointCloudLayerLoad(const FString& Source, bool bZoomWhenLoaded)
+void APCLController::DeferPointCloudLayerLoad(const FString& source, bool bZoomWhenLoaded)
 {
 	++PointCloudLayerLoadRetryCount;
+
 	if (PointCloudLayerLoadRetryCount > MaxPointCloudLayerLoadRetries)
 	{
 		DeferredPointCloudLayerSource.Reset();
 		SetLayerLoadStatus(false);
+
 		if (LoadLayerButton)
 		{
 			LoadLayerButton->SetIsEnabled(true);
@@ -1533,13 +1559,15 @@ void APCLController::DeferPointCloudLayerLoad(const FString& Source, bool bZoomW
 		return;
 	}
 
-	DeferredPointCloudLayerSource = Source;
+	DeferredPointCloudLayerSource = source;
 	bDeferredZoomWhenLoaded = bZoomWhenLoaded;
 	DeferredPointCloudLayerRetrySeconds = PointCloudLayerLoadRetryInterval;
+
 	if (LoadLayerButton)
 	{
 		LoadLayerButton->SetIsEnabled(false);
 	}
+
 	if (LayerLoadStatusText)
 	{
 		LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
@@ -1548,23 +1576,26 @@ void APCLController::DeferPointCloudLayerLoad(const FString& Source, bool bZoomW
 
 void APCLController::SetLayerLoadStatus(bool bSucceeded) const
 {
+
 	if (!LayerLoadStatusText)
 	{
 		return;
 	}
 
-	LayerLoadStatusText->SetText(FText::FromString(bSucceeded ? TEXT("Layer loaded successfully...") : TEXT("Failed to load point scene layer!")));
+	LayerLoadStatusText->SetText(FText::FromString(bSucceeded ? TEXT("Layer loaded successfully...") : TEXT("Failed to load point cloud layer!")));
 	LayerLoadStatusText->SetColorAndOpacity(FSlateColor(bSucceeded ? FLinearColor(0.42f, 0.78f, 0.04f) : FLinearColor(0.93f, 0.31f, 0.43f)));
 	LayerLoadStatusText->SetVisibility(ESlateVisibility::Visible);
+
 	if (!bSucceeded && LoadLayerButton)
 	{
 		LoadLayerButton->SetIsEnabled(true);
 	}
 }
 
-void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhenLoaded)
+void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhenLoaded)
 {
-	if (!IsValidPointCloudSource(Source))
+
+	if (!IsValidURL(source))
 	{
 		SetLayerLoadStatus(false);
 		return;
@@ -1576,28 +1607,29 @@ void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhen
 		return;
 	}
 
-	auto* Map = MapComponent->GetMap();
-	if (!Map || !Map->APIObject || !static_cast<bool>(*Map->APIObject))
+	auto* map = MapComponent->GetMap();
+
+	if (!map || !map->APIObject || !static_cast<bool>(*map->APIObject))
 	{
-		DeferPointCloudLayerLoad(Source, bZoomWhenLoaded);
+		DeferPointCloudLayerLoad(source, bZoomWhenLoaded);
 		return;
 	}
 
-	UArcGISLayerCollection* MapLayers = nullptr;
+	UArcGISLayerCollection* mapLayers = nullptr;
 	try
 	{
-		MapLayers = Map->GetLayers();
+		mapLayers = map->GetLayers();
 	}
-	catch (const Esri::Unreal::ArcGISException& LoadError)
+	catch (const Esri::Unreal::ArcGISException& loadError)
 	{
-		UE_LOG(LogTemp, Verbose, TEXT("ArcGIS Map is not ready for point cloud layers: %s"), *LoadError.GetMessage());
-		DeferPointCloudLayerLoad(Source, bZoomWhenLoaded);
+		UE_LOG(LogTemp, Verbose, TEXT("ArcGIS Map is not ready for point cloud layers: %s"), *loadError.GetMessage());
+		DeferPointCloudLayerLoad(source, bZoomWhenLoaded);
 		return;
 	}
 
-	if (!MapLayers)
+	if (!mapLayers)
 	{
-		DeferPointCloudLayerLoad(Source, bZoomWhenLoaded);
+		DeferPointCloudLayerLoad(source, bZoomWhenLoaded);
 		return;
 	}
 
@@ -1605,133 +1637,145 @@ void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhen
 	PointCloudLayerLoadRetryCount = 0;
 
 	++LayerLoadRequestId;
-	const uint64 RequestId = LayerLoadRequestId;
+	const uint64 requestId = LayerLoadRequestId;
 
 	if (PendingPointCloudLayer)
 	{
-		const int64 PendingLayerId = PendingPointCloudLayer->GetInstanceId();
-		for (int64 Index = MapLayers->GetSize() - 1; Index >= 0; --Index)
+		const int64 pendingLayerId = PendingPointCloudLayer->GetInstanceId();
+
+		for (int64 index = mapLayers->GetSize() - 1; index >= 0; --index)
 		{
-			if (UArcGISLayer* ExistingLayer = MapLayers->At(Index); ExistingLayer && ExistingLayer->GetInstanceId() == PendingLayerId)
+
+			if (UArcGISLayer* existingLayer = mapLayers->At(index); existingLayer && existingLayer->GetInstanceId() == pendingLayerId)
 			{
-				MapLayers->Remove(Index);
+				mapLayers->Remove(index);
 				break;
 			}
 		}
 		PendingPointCloudLayer = nullptr;
 	}
 
-	UArcGISPointCloudLayer* CandidateLayer = nullptr;
+	UArcGISPointCloudLayer* candidateLayer = nullptr;
 	try
 	{
-		CandidateLayer = UArcGISPointCloudLayer::CreateArcGISPointCloudLayer(Source, MapComponent->GetAPIKey());
+		candidateLayer = UArcGISPointCloudLayer::CreateArcGISPointCloudLayer(source, MapComponent->GetAPIKey());
 	}
-	catch (const Esri::Unreal::ArcGISException& LoadError)
+	catch (const Esri::Unreal::ArcGISException& loadError)
 	{
 		SetLayerLoadStatus(false);
-		UE_LOG(LogTemp, Warning, TEXT("Invalid point cloud layer source '%s': %s"), *Source, *LoadError.GetMessage());
+		UE_LOG(LogTemp, Warning, TEXT("Invalid point cloud layer source '%s': %s"), *source, *loadError.GetMessage());
 		return;
 	}
-	if (!CandidateLayer || !CandidateLayer->APIObject)
+
+	if (!candidateLayer || !candidateLayer->APIObject)
 	{
 		SetLayerLoadStatus(false);
 		return;
 	}
 
-	PendingPointCloudLayer = CandidateLayer;
-	CandidateLayer->SetOpacity(1.0f);
-	CandidateLayer->SetIsVisible(true);
+	PendingPointCloudLayer = candidateLayer;
+	candidateLayer->SetOpacity(1.0f);
+	candidateLayer->SetIsVisible(true);
 
 	if (LoadLayerButton)
 	{
 		LoadLayerButton->SetIsEnabled(false);
 	}
+
 	if (LayerLoadStatusText)
 	{
 		LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
 	}
 
-	TWeakObjectPtr<APCLController> WeakThis(this);
-	TWeakObjectPtr<UArcGISPointCloudLayer> WeakCandidate(CandidateLayer);
-	CandidateLayer->APIObject->SetDoneLoading([WeakThis, WeakCandidate, RequestId, bZoomWhenLoaded,
-											   Source](Esri::Unreal::ArcGISException& LoadError) {
-		const bool bHadLoadError = static_cast<bool>(LoadError);
-		const FString LoadErrorMessage = bHadLoadError ? LoadError.GetMessage() : FString();
+	TWeakObjectPtr<APCLController> weakThis(this);
+	TWeakObjectPtr<UArcGISPointCloudLayer> weakCandidate(candidateLayer);
+	candidateLayer->APIObject->SetDoneLoading([weakThis, weakCandidate, requestId, bZoomWhenLoaded,
+											   source](Esri::Unreal::ArcGISException& loadError) {
+		const bool bHadLoadError = static_cast<bool>(loadError);
+		const FString loadErrorMessage = bHadLoadError ? loadError.GetMessage() : FString();
 
-		AsyncTask(ENamedThreads::GameThread, [WeakThis, WeakCandidate, RequestId, bZoomWhenLoaded, bHadLoadError, LoadErrorMessage, Source]() {
-			auto* Controller = WeakThis.Get();
-			auto* LoadedLayer = WeakCandidate.Get();
-			if (!Controller || !LoadedLayer || Controller->LayerLoadRequestId != RequestId || Controller->PendingPointCloudLayer != LoadedLayer)
+		AsyncTask(ENamedThreads::GameThread, [weakThis, weakCandidate, requestId, bZoomWhenLoaded, bHadLoadError, loadErrorMessage, source]() {
+			auto* controller = weakThis.Get();
+			auto* loadedLayer = weakCandidate.Get();
+
+			if (!controller || !loadedLayer || controller->LayerLoadRequestId != requestId || controller->PendingPointCloudLayer != loadedLayer)
 			{
 				return;
 			}
 
-			Controller->PendingPointCloudLayer = nullptr;
-			if (Controller->LoadLayerButton)
+			controller->PendingPointCloudLayer = nullptr;
+
+			if (controller->LoadLayerButton)
 			{
-				Controller->LoadLayerButton->SetIsEnabled(true);
+				controller->LoadLayerButton->SetIsEnabled(true);
 			}
 
-			auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(LoadedLayer->APIObject);
-			const bool bLoaded = !bHadLoadError && LayerAPI && LayerAPI->GetLoadStatus() == Esri::GameEngine::ArcGISLoadStatus::Loaded;
+			auto layerApi = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(loadedLayer->APIObject);
+			const bool bLoaded = !bHadLoadError && layerApi && layerApi->GetLoadStatus() == Esri::GameEngine::ArcGISLoadStatus::Loaded;
 
-			auto* CurrentMap = Controller->MapComponent ? Controller->MapComponent->GetMap() : nullptr;
-			auto* CurrentLayers = CurrentMap ? CurrentMap->GetLayers() : nullptr;
+			auto* currentMap = controller->MapComponent ? controller->MapComponent->GetMap() : nullptr;
+			auto* currentLayers = currentMap ? currentMap->GetLayers() : nullptr;
 
 			if (!bLoaded)
 			{
-				if (CurrentLayers)
+
+				if (currentLayers)
 				{
-					const int64 LoadedLayerId = LoadedLayer->GetInstanceId();
-					for (int64 Index = CurrentLayers->GetSize() - 1; Index >= 0; --Index)
+					const int64 loadedLayerId = loadedLayer->GetInstanceId();
+
+					for (int64 index = currentLayers->GetSize() - 1; index >= 0; --index)
 					{
-						if (UArcGISLayer* ExistingLayer = CurrentLayers->At(Index); ExistingLayer && ExistingLayer->GetInstanceId() == LoadedLayerId)
+
+						if (UArcGISLayer* existingLayer = currentLayers->At(index); existingLayer && existingLayer->GetInstanceId() == loadedLayerId)
 						{
-							CurrentLayers->Remove(Index);
+							currentLayers->Remove(index);
 							break;
 						}
 					}
 				}
 
-				Controller->SetLayerLoadStatus(false);
-				UE_LOG(LogTemp, Warning, TEXT("Failed to load point cloud layer from '%s': %s"), *Source,
-					   LoadErrorMessage.IsEmpty() ? TEXT("Unknown load error") : *LoadErrorMessage);
+				controller->SetLayerLoadStatus(false);
+				UE_LOG(LogTemp, Warning, TEXT("Failed to load point cloud layer from '%s': %s"), *source,
+					   loadErrorMessage.IsEmpty() ? TEXT("Unknown load error") : *loadErrorMessage);
 				return;
 			}
 
-			if (CurrentLayers)
+			if (currentLayers)
 			{
-				const int64 LoadedLayerId = LoadedLayer->GetInstanceId();
-				for (int64 Index = CurrentLayers->GetSize() - 1; Index >= 0; --Index)
+				const int64 loadedLayerId = loadedLayer->GetInstanceId();
+
+				for (int64 index = currentLayers->GetSize() - 1; index >= 0; --index)
 				{
-					if (auto* ExistingPointCloudLayer = Cast<UArcGISPointCloudLayer>(CurrentLayers->At(Index));
-						ExistingPointCloudLayer && ExistingPointCloudLayer->GetInstanceId() != LoadedLayerId)
+
+					if (auto* existingPointCloudLayer = Cast<UArcGISPointCloudLayer>(currentLayers->At(index));
+						existingPointCloudLayer && existingPointCloudLayer->GetInstanceId() != loadedLayerId)
 					{
-						CurrentLayers->Remove(Index);
+						currentLayers->Remove(index);
 					}
 				}
 			}
 
-			Controller->PointCloudLayer = LoadedLayer;
-			Controller->SetLayerLoadStatus(true);
-			UE_LOG(LogTemp, Display, TEXT("Loaded point cloud layer from '%s'."), *Source);
-			Controller->RefreshAvailablePointCloudAttributes();
-			Controller->UpdateRendererCheckBoxes();
-			Controller->ApplyPointCloudVisualization();
-			Controller->BuildFilterTabUI();
-			Controller->BuildLegendUI();
-			Controller->ApplyPointCloudFilters();
+			controller->PointCloudLayer = loadedLayer;
+			controller->SetLayerLoadStatus(true);
+			UE_LOG(LogTemp, Display, TEXT("Loaded point cloud layer from '%s'."), *source);
+			controller->RefreshAvailablePointCloudAttributes();
+			controller->UpdateRendererCheckBoxes();
+			controller->ApplyPointCloudVisualization();
+			controller->BuildFilterTabUI();
+			controller->BuildLegendUI();
+			controller->ApplyPointCloudFilters();
 
-			if (bZoomWhenLoaded && Controller->MapComponent)
+			if (bZoomWhenLoaded && controller->MapComponent)
 			{
-				APlayerController* PlayerController = UGameplayStatics::GetPlayerController(Controller->GetWorld(), 0);
-				AActor* ViewActor = PlayerController ? PlayerController->GetPawn() : nullptr;
-				if (!ViewActor && PlayerController)
+				APlayerController* playerController = UGameplayStatics::GetPlayerController(controller->GetWorld(), 0);
+				AActor* viewActor = playerController ? playerController->GetPawn() : nullptr;
+
+				if (!viewActor && playerController)
 				{
-					ViewActor = PlayerController->GetViewTarget();
+					viewActor = playerController->GetViewTarget();
 				}
 
-				if (!ViewActor || !Controller->MapComponent->ZoomToExtent(ViewActor, LoadedLayer->GetExtent()))
+				if (!viewActor || !controller->MapComponent->ZoomToExtent(viewActor, loadedLayer->GetExtent()))
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Point cloud layer loaded, but zoom to layer failed."));
 				}
@@ -1739,11 +1783,12 @@ void APCLController::CreatePointCloudLayer(const FString& Source, bool bZoomWhen
 		});
 	});
 
-	MapLayers->Add(CandidateLayer);
+	mapLayers->Add(candidateLayer);
 }
 
 void APCLController::ApplyPointCloudVisualization()
 {
+
 	if (!PointCloudLayer)
 	{
 		return;
@@ -1754,105 +1799,113 @@ void APCLController::ApplyPointCloudVisualization()
 		return;
 	}
 
-	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
-	if (!LayerAPI)
+	auto layerApi = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
+
+	if (!layerApi)
 	{
 		return;
 	}
 
-	if (LayerAPI->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
+	if (layerApi->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
 	{
 		return;
 	}
 
 	RefreshAvailablePointCloudAttributes();
 
-	const double PointSize =
+	const double pointSize =
 		FMath::Clamp(PointSizeSlider ? static_cast<double>(PointSizeSlider->GetValue()) : DefaultPointSize, MinPointSize, MaxPointSize);
-	const double PointsPerInch =
+	const double pointsPerInch =
 		FMath::Max(PointsPerInchSlider ? static_cast<double>(PointsPerInchSlider->GetValue()) : DefaultPointsPerInch, MinPointsPerInch);
 
 	EnsureAvailableRendererSelected();
 
-	auto ApplyRenderer = [&](auto& Renderer) {
-		ConfigurePointCloudRendererSettings(Renderer, PointSize, bColorModulationEnabled, IntensityAttributeName);
-		LayerAPI->SetRenderer(Renderer);
+	auto applyRenderer = [&](auto& renderer) {
+		ConfigurePointCloudRendererSettings(renderer, pointSize, bColorModulationEnabled, IntensityAttributeName);
+		layerApi->SetRenderer(renderer);
 
-		auto AttachedRenderer = LayerAPI->GetRenderer();
-		if (AttachedRenderer)
+		auto attachedRenderer = layerApi->GetRenderer();
+
+		if (attachedRenderer)
 		{
-			AttachedRenderer.SetPointsPerInch(PointsPerInch);
+			attachedRenderer.SetPointsPerInch(pointsPerInch);
 		}
 	};
 
-	auto ApplyRGBRenderer = [&]() {
-		const FString AttributeName = RGBAttributeName.IsEmpty() ? TEXT("RGB") : RGBAttributeName;
-		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRGBRenderer Renderer(AttributeName);
-		ApplyRenderer(Renderer);
+	auto applyRgbRenderer = [&]() {
+		const FString attributeName = RGBAttributeName.IsEmpty() ? TEXT("RGB") : RGBAttributeName;
+		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRGBRenderer renderer(attributeName);
+		applyRenderer(renderer);
 	};
 
 	switch (CurrentRendererChoice)
 	{
 		case EPCLRendererChoice::Class:
+
 			if (!ClassAttributeName.IsEmpty())
 			{
-				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorUniqueValue> UniqueValues;
-				for (int32 ClassValue = 0; ClassValue <= 18; ++ClassValue)
+				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorUniqueValue> uniqueValues;
+
+				for (int32 classValue = 0; classValue <= 18; ++classValue)
 				{
-					AddClassValue(UniqueValues, ClassValue);
+					AddClassValue(uniqueValues, classValue);
 				}
 
-				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudUniqueValueRenderer Renderer(ClassAttributeName, UniqueValues);
-				ApplyRenderer(Renderer);
+				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudUniqueValueRenderer renderer(ClassAttributeName, uniqueValues);
+				applyRenderer(renderer);
 				return;
 			}
 			break;
 		case EPCLRendererChoice::Elevation:
+
 			if (!ElevationAttributeName.IsEmpty())
 			{
-				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop> Stops;
-				AddColorStop(Stops, ElevationLow, MakeColor(42, 43, 238), TEXT("< -1.5"));
-				AddColorStop(Stops, 0.0, MakeColor(40, 210, 246), TEXT(""));
-				AddColorStop(Stops, ElevationMid, MakeColor(91, 248, 134), TEXT("1.5"));
-				AddColorStop(Stops, 2.5, MakeColor(250, 244, 73), TEXT(""));
-				AddColorStop(Stops, ElevationHigh, MakeColor(255, 59, 22), TEXT("> 3.5"));
+				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop> stops;
+				AddColorStop(stops, ElevationLow, FColor(42, 43, 238, 255), TEXT("< -1.5"));
+				AddColorStop(stops, 0.0, FColor(40, 210, 246, 255), TEXT(""));
+				AddColorStop(stops, ElevationMid, FColor(91, 248, 134, 255), TEXT("1.5"));
+				AddColorStop(stops, 2.5, FColor(250, 244, 73, 255), TEXT(""));
+				AddColorStop(stops, ElevationHigh, FColor(255, 59, 22, 255), TEXT("> 3.5"));
 
-				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(ElevationAttributeName, Stops);
-				ApplyRenderer(Renderer);
+				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer renderer(ElevationAttributeName, stops);
+				applyRenderer(renderer);
 				return;
 			}
 			break;
 		case EPCLRendererChoice::Intensity:
+
 			if (!IntensityAttributeName.IsEmpty())
 			{
-				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop> Stops;
-				AddColorStop(Stops, IntensityLow, MakeColor(0, 0, 0), TEXT("< 10,385"));
-				AddColorStop(Stops, IntensityMid, MakeColor(128, 128, 128), TEXT("38,032"));
-				AddColorStop(Stops, IntensityHigh, MakeColor(255, 255, 255), TEXT("> 65,680"));
+				Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudColorStop> stops;
+				AddColorStop(stops, IntensityLow, FColor(0, 0, 0, 255), TEXT("< 10,385"));
+				AddColorStop(stops, IntensityMid, FColor(128, 128, 128, 255), TEXT("38,032"));
+				AddColorStop(stops, IntensityHigh, FColor(255, 255, 255, 255), TEXT("> 65,680"));
 
-				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer Renderer(IntensityAttributeName, Stops);
-				ApplyRenderer(Renderer);
+				Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudStretchRenderer renderer(IntensityAttributeName, stops);
+				applyRenderer(renderer);
 				return;
 			}
 			break;
 		case EPCLRendererChoice::RGB:
 		default:
-			ApplyRGBRenderer();
+			applyRgbRenderer();
 			return;
 	}
 
-	ApplyRGBRenderer();
+	applyRgbRenderer();
 }
 
 void APCLController::ApplyPointCloudFilters()
 {
+
 	if (!PointCloudLayer || !PointCloudLayer->APIObject)
 	{
 		return;
 	}
 
-	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
-	if (!LayerAPI || LayerAPI->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
+	auto layerApi = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
+
+	if (!layerApi || layerApi->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
 	{
 		return;
 	}
@@ -1865,45 +1918,50 @@ void APCLController::ApplyPointCloudFilters()
 	ActiveClassCodeFilter.Reset();
 	ActiveReturnsFilter.Reset();
 
-	const bool bUseClassFilter = !ClassAttributeName.IsEmpty() && !AreAllClassOptionsSelected() && AreAnyClassOptionsSelected();
+	const int32 selectedClassOptionCount = CountSelectedOptions(ClassFilterCheckBoxes);
+	const bool bUseClassFilter = !ClassAttributeName.IsEmpty() && selectedClassOptionCount > 0 &&
+								 selectedClassOptionCount < ClassFilterCheckBoxes.Num();
+
 	if (bUseClassFilter)
 	{
-		ActiveClassCodeValues = MakeUnique<Esri::Unreal::ArcGISCollection<double>>();
-		for (int32 Index = 0; Index < ClassFilterCheckBoxes.Num() && Index < ClassFilterValues.Num(); ++Index)
-		{
-			if (ClassFilterCheckBoxes[Index] && ClassFilterCheckBoxes[Index]->IsChecked())
+		AddSelectedPointCloudFilter(
+			ClassFilterCheckBoxes,
+			ClassFilterValues.Num(),
+			ActiveClassCodeValues,
+			ActiveClassCodeFilter,
+			*ActiveFilterCollection,
+			[this](int32 index) { return static_cast<double>(ClassFilterValues[index]); },
+			[this](const Esri::Unreal::ArcGISCollection<double>& selectedValues)
 			{
-				ActiveClassCodeValues->Add(static_cast<double>(ClassFilterValues[Index]));
-			}
-		}
-
-		ActiveClassCodeFilter = MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilter>(
-			ClassAttributeName, *ActiveClassCodeValues, Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilterMode::Include);
-		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter BaseClassFilter(ActiveClassCodeFilter->GetHandle());
-		ActiveFilterCollection->Add(BaseClassFilter);
-		BaseClassFilter.SetHandle(nullptr);
+				return MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilter>(
+					ClassAttributeName,
+					selectedValues,
+					Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilterMode::Include);
+			});
 	}
 
-	const bool bUseReturnsFilter = !ReturnsAttributeName.IsEmpty() && !AreAllReturnsOptionsSelected() && AreAnyReturnsOptionsSelected();
+	const int32 selectedReturnsOptionCount = CountSelectedOptions(ReturnsFilterCheckBoxes);
+	const bool bUseReturnsFilter = !ReturnsAttributeName.IsEmpty() && selectedReturnsOptionCount > 0 &&
+								   selectedReturnsOptionCount < ReturnsFilterCheckBoxes.Num();
+
 	if (bUseReturnsFilter)
 	{
-		ActiveReturnsValues = MakeUnique<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType>>();
-		for (int32 Index = 0; Index < ReturnsFilterCheckBoxes.Num() && Index < UE_ARRAY_COUNT(FilterReturnValues); ++Index)
-		{
-			if (ReturnsFilterCheckBoxes[Index] && ReturnsFilterCheckBoxes[Index]->IsChecked())
+		AddSelectedPointCloudFilter(
+			ReturnsFilterCheckBoxes,
+			static_cast<int32>(UE_ARRAY_COUNT(FilterReturnValues)),
+			ActiveReturnsValues,
+			ActiveReturnsFilter,
+			*ActiveFilterCollection,
+			[](int32 index) { return FilterReturnValues[index]; },
+			[this](
+				const Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType>& selectedValues)
 			{
-				ActiveReturnsValues->Add(FilterReturnValues[Index]);
-			}
-		}
-
-		ActiveReturnsFilter =
-			MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter>(ReturnsAttributeName, *ActiveReturnsValues);
-		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter BaseReturnsFilter(ActiveReturnsFilter->GetHandle());
-		ActiveFilterCollection->Add(BaseReturnsFilter);
-		BaseReturnsFilter.SetHandle(nullptr);
+				return MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter>(
+					ReturnsAttributeName, selectedValues);
+			});
 	}
 
-	LayerAPI->SetFilters(*ActiveFilterCollection);
+	layerApi->SetFilters(*ActiveFilterCollection);
 }
 
 void APCLController::RefreshAvailablePointCloudAttributes()
@@ -1919,62 +1977,65 @@ void APCLController::RefreshAvailablePointCloudAttributes()
 		return;
 	}
 
-	auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
-	if (!LayerAPI || LayerAPI->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
+	auto layerApi = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject);
+
+	if (!layerApi || layerApi->GetLoadStatus() != Esri::GameEngine::ArcGISLoadStatus::Loaded)
 	{
 		return;
 	}
 
-	auto Attributes = LayerAPI->GetAttributes();
-	if (!Attributes)
+	auto attributes = layerApi->GetAttributes();
+
+	if (!attributes)
 	{
 		return;
 	}
 
-	for (size_t Index = 0; Index < Attributes.GetSize(); ++Index)
+	for (size_t index = 0; index < attributes.GetSize(); ++index)
 	{
-		auto Attribute = Attributes.At(Index);
-		if (!Attribute)
+		auto attribute = attributes.At(index);
+
+		if (!attribute)
 		{
 			continue;
 		}
 
-		const FString Name = Attribute.GetName();
-		const FString NormalizedName = NormalizeAttributeName(Name);
+		const FString name = attribute.GetName();
+		const FString normalizedName = NormalizeAttributeName(name);
 
-		if (RGBAttributeName.IsEmpty() && IsRGBAttribute(Attribute, NormalizedName))
+		if (RGBAttributeName.IsEmpty() && IsRGBAttribute(attribute, normalizedName))
 		{
-			RGBAttributeName = Name;
+			RGBAttributeName = name;
 		}
 
 		if (ClassAttributeName.IsEmpty() &&
-			(MatchesAttributeName(NormalizedName, TEXT("CLASSCODE")) || MatchesAttributeName(NormalizedName, TEXT("CLASSIFICATION")) ||
-			 MatchesAttributeName(NormalizedName, TEXT("CLASS"))))
+			(MatchesAttributeName(normalizedName, TEXT("CLASSCODE")) || MatchesAttributeName(normalizedName, TEXT("CLASSIFICATION")) ||
+			 MatchesAttributeName(normalizedName, TEXT("CLASS"))))
 		{
-			ClassAttributeName = Name;
+			ClassAttributeName = name;
 		}
 
-		if (ElevationAttributeName.IsEmpty() && (MatchesAttributeName(NormalizedName, TEXT("ELEVATION")) ||
-												 MatchesAttributeName(NormalizedName, TEXT("HEIGHT")) || NormalizedName == TEXT("Z")))
+		if (ElevationAttributeName.IsEmpty() && (MatchesAttributeName(normalizedName, TEXT("ELEVATION")) ||
+												 MatchesAttributeName(normalizedName, TEXT("HEIGHT")) || normalizedName == TEXT("Z")))
 		{
-			ElevationAttributeName = Name;
+			ElevationAttributeName = name;
 		}
 
-		if (IntensityAttributeName.IsEmpty() && MatchesAttributeName(NormalizedName, TEXT("INTENSITY")))
+		if (IntensityAttributeName.IsEmpty() && MatchesAttributeName(normalizedName, TEXT("INTENSITY")))
 		{
-			IntensityAttributeName = Name;
+			IntensityAttributeName = name;
 		}
 
-		if (ReturnsAttributeName.IsEmpty() && MatchesAttributeName(NormalizedName, TEXT("RETURNS")))
+		if (ReturnsAttributeName.IsEmpty() && MatchesAttributeName(normalizedName, TEXT("RETURNS")))
 		{
-			ReturnsAttributeName = Name;
+			ReturnsAttributeName = name;
 		}
 	}
 }
 
-bool APCLController::IsRendererAvailableFromCachedAttributes(EPCLRendererChoice RendererChoice) const
+bool APCLController::IsRendererAvailableFromCachedAttributes(EPCLRendererChoice rendererChoice) const
 {
-	switch (RendererChoice)
+	switch (rendererChoice)
 	{
 		case EPCLRendererChoice::RGB:
 			return !RGBAttributeName.IsEmpty();
@@ -1991,18 +2052,22 @@ bool APCLController::IsRendererAvailableFromCachedAttributes(EPCLRendererChoice 
 
 EPCLRendererChoice APCLController::GetFallbackRendererChoice() const
 {
+
 	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::RGB))
 	{
 		return EPCLRendererChoice::RGB;
 	}
+
 	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Class))
 	{
 		return EPCLRendererChoice::Class;
 	}
+
 	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Elevation))
 	{
 		return EPCLRendererChoice::Elevation;
 	}
+
 	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Intensity))
 	{
 		return EPCLRendererChoice::Intensity;
@@ -2013,6 +2078,7 @@ EPCLRendererChoice APCLController::GetFallbackRendererChoice() const
 
 void APCLController::EnsureAvailableRendererSelected()
 {
+
 	if (!IsRendererAvailableFromCachedAttributes(CurrentRendererChoice))
 	{
 		CurrentRendererChoice = GetFallbackRendererChoice();
@@ -2021,7 +2087,7 @@ void APCLController::EnsureAvailableRendererSelected()
 
 void APCLController::UpdateRendererCheckBoxes()
 {
-	TGuardValue<bool> UpdatingGuard(bUpdatingRendererCheckBoxes, true);
+	TGuardValue<bool> updatingGuard(bUpdatingRendererCheckBoxes, true);
 	const bool bHasLoadedRendererAttributes =
 		!RGBAttributeName.IsEmpty() || !ClassAttributeName.IsEmpty() || !ElevationAttributeName.IsEmpty() || !IntensityAttributeName.IsEmpty();
 
@@ -2059,72 +2125,74 @@ void APCLController::UpdateRendererCheckBoxes()
 
 void APCLController::UpdateColorModulationVisibility()
 {
-	const ESlateVisibility Visibility = IntensityAttributeName.IsEmpty() ? ESlateVisibility::Hidden : ESlateVisibility::Visible;
+	const ESlateVisibility visibility = IntensityAttributeName.IsEmpty() ? ESlateVisibility::Hidden : ESlateVisibility::Visible;
 
-	if (UWidget* Row = UIWidget ? UIWidget->GetWidgetFromName(TEXT("Row_Checkbox_ColorModulation")) : nullptr)
+	if (UWidget* row = UIWidget ? UIWidget->GetWidgetFromName(TEXT("Row_Checkbox_ColorModulation")) : nullptr)
 	{
-		Row->SetVisibility(Visibility);
+		row->SetVisibility(visibility);
 	}
 
-	if (UWidget* Divider = UIWidget ? UIWidget->GetWidgetFromName(TEXT("Border_VisualizeDivider")) : nullptr)
+	if (UWidget* divider = UIWidget ? UIWidget->GetWidgetFromName(TEXT("Border_VisualizeDivider")) : nullptr)
 	{
-		Divider->SetVisibility(Visibility);
+		divider->SetVisibility(visibility);
 	}
 }
 
-void APCLController::SetRendererOptionVisibility(EPCLRendererChoice RendererChoice, bool bVisible)
+void APCLController::SetRendererOptionVisibility(EPCLRendererChoice rendererChoice, bool bVisible)
 {
-	const ESlateVisibility Visibility = bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed;
-	const TCHAR* RowName = nullptr;
-	const TCHAR* CheckBoxName = nullptr;
-	const TCHAR* TextName = nullptr;
+	const ESlateVisibility visibility = bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed;
+	const TCHAR* rowName = nullptr;
+	const TCHAR* checkBoxName = nullptr;
+	const TCHAR* textName = nullptr;
 
-	switch (RendererChoice)
+	switch (rendererChoice)
 	{
 		case EPCLRendererChoice::RGB:
-			RowName = TEXT("Row_Checkbox_Renderer_RGB");
-			CheckBoxName = TEXT("Checkbox_Renderer_RGB");
-			TextName = TEXT("Text_Renderer_RGB");
+			rowName = TEXT("Row_Checkbox_Renderer_RGB");
+			checkBoxName = TEXT("Checkbox_Renderer_RGB");
+			textName = TEXT("Text_Renderer_RGB");
 			break;
 		case EPCLRendererChoice::Class:
-			RowName = TEXT("Row_Checkbox_Renderer_Class");
-			CheckBoxName = TEXT("Checkbox_Renderer_Class");
-			TextName = TEXT("Text_Renderer_Class");
+			rowName = TEXT("Row_Checkbox_Renderer_Class");
+			checkBoxName = TEXT("Checkbox_Renderer_Class");
+			textName = TEXT("Text_Renderer_Class");
 			break;
 		case EPCLRendererChoice::Elevation:
-			RowName = TEXT("Row_Checkbox_Renderer_Elevation");
-			CheckBoxName = TEXT("Checkbox_Renderer_Elevation");
-			TextName = TEXT("Text_Renderer_Elevation");
+			rowName = TEXT("Row_Checkbox_Renderer_Elevation");
+			checkBoxName = TEXT("Checkbox_Renderer_Elevation");
+			textName = TEXT("Text_Renderer_Elevation");
 			break;
 		case EPCLRendererChoice::Intensity:
-			RowName = TEXT("Row_Checkbox_Renderer_Intensity");
-			CheckBoxName = TEXT("Checkbox_Renderer_Intensity");
-			TextName = TEXT("Text_Renderer_Intensity");
+			rowName = TEXT("Row_Checkbox_Renderer_Intensity");
+			checkBoxName = TEXT("Checkbox_Renderer_Intensity");
+			textName = TEXT("Text_Renderer_Intensity");
 			break;
 		default:
 			return;
 	}
 
-	if (UWidget* Row = UIWidget ? UIWidget->GetWidgetFromName(RowName) : nullptr)
+	if (UWidget* row = UIWidget ? UIWidget->GetWidgetFromName(rowName) : nullptr)
 	{
-		Row->SetVisibility(Visibility);
+		row->SetVisibility(visibility);
 		return;
 	}
 
-	if (UWidget* CheckBox = UIWidget ? UIWidget->GetWidgetFromName(CheckBoxName) : nullptr)
+	if (UWidget* checkBox = UIWidget ? UIWidget->GetWidgetFromName(checkBoxName) : nullptr)
 	{
-		CheckBox->SetVisibility(Visibility);
-		CheckBox->SetIsEnabled(bVisible);
+		checkBox->SetVisibility(visibility);
+		checkBox->SetIsEnabled(bVisible);
 	}
-	if (UWidget* Text = UIWidget ? UIWidget->GetWidgetFromName(TextName) : nullptr)
+
+	if (UWidget* text = UIWidget ? UIWidget->GetWidgetFromName(textName) : nullptr)
 	{
-		Text->SetVisibility(Visibility);
-		Text->SetIsEnabled(bVisible);
+		text->SetVisibility(visibility);
+		text->SetIsEnabled(bVisible);
 	}
 }
 
 void APCLController::UpdateSliderValueTexts() const
 {
+
 	if (PointSizeValueText && PointSizeSlider)
 	{
 		PointSizeValueText->SetText(FormatSliderValue(PointSizeSlider->GetValue()));
@@ -2138,6 +2206,7 @@ void APCLController::UpdateSliderValueTexts() const
 
 void APCLController::BuildFilterTabUI()
 {
+
 	if (!FilterPanel || !UIWidget)
 	{
 		return;
@@ -2160,58 +2229,51 @@ void APCLController::BuildFilterTabUI()
 		return;
 	}
 
-	UVerticalBox* Content = NewObject<UVerticalBox>(UIWidget);
-	FilterPanel->AddChild(Content);
+	UVerticalBox* content = NewObject<UVerticalBox>(UIWidget);
+	FilterPanel->AddChild(content);
 
-	if (auto* CanvasSlot = Cast<UCanvasPanelSlot>(Content->Slot))
+	if (auto* canvasSlot = Cast<UCanvasPanelSlot>(content->Slot))
 	{
-		CanvasSlot->SetAnchors(FAnchors(0.0f, 0.0f, 1.0f, 0.0f));
-		CanvasSlot->SetOffsets(FMargin(0.0f, 0.0f, 0.0f, 492.0f));
+		canvasSlot->SetAnchors(FAnchors(0.0f, 0.0f, 1.0f, 0.0f));
+		canvasSlot->SetOffsets(FMargin(0.0f, 0.0f, 0.0f, 492.0f));
 	}
+
+	auto addFilterOption = [this](UScrollBox* scrollBox,
+								  const FString& label,
+								  TArray<TObjectPtr<UCheckBox>>& filterCheckBoxes)
+	{
+		UCheckBox* checkBox = AddCheckBoxRow(UIWidget, scrollBox, label, true);
+		checkBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnFilterCheckStateChanged);
+		filterCheckBoxes.Add(checkBox);
+	};
 
 	if (bHasClassCodeFilter)
 	{
-		UTextBlock* ClassHeading = CreateText(UIWidget, TEXT("Class Code"), 24, MakeSlateColor(0.68f, 0.68f, 0.72f));
-		ApplyChakraPetchSemiBoldFont(ClassHeading, 24);
-		Content->AddChild(ClassHeading);
-		SetVerticalSlotPadding(ClassHeading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
-
-		UScrollBox* ClassScrollBox = AddFilterScrollSection(UIWidget, Content, 242.0f);
-
-		ClassAllCheckBox = AddCheckBoxRow(UIWidget, ClassScrollBox, TEXT("<all>"), true);
+		const FFilterSectionWidgets classSection = AddFilterSection(UIWidget, content, TEXT("Class Code"), 242.0f);
+		ClassAllCheckBox = classSection.AllCheckBox;
 		ClassAllCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnClassAllFilterCheckStateChanged);
 
-		for (int32 ClassCode = 0; ClassCode <= 18; ++ClassCode)
+		for (int32 classCode = 0; classCode <= 18; ++classCode)
 		{
-			UCheckBox* CheckBox = AddCheckBoxRow(UIWidget, ClassScrollBox, GetClassCodeLabel(ClassCode), true);
-			CheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnFilterCheckStateChanged);
-			ClassFilterCheckBoxes.Add(CheckBox);
-			ClassFilterValues.Add(ClassCode);
+			addFilterOption(classSection.ScrollBox, GetClassCodeLabel(classCode), ClassFilterCheckBoxes);
+			ClassFilterValues.Add(classCode);
 		}
 	}
 
 	if (bHasClassCodeFilter && bHasReturnsFilter)
 	{
-		AddFilterSectionDivider(UIWidget, Content);
+		AddFilterSectionDivider(UIWidget, content);
 	}
 
 	if (bHasReturnsFilter)
 	{
-		UTextBlock* ReturnsHeading = CreateText(UIWidget, TEXT("Returns"), 24, MakeSlateColor(0.68f, 0.68f, 0.72f));
-		ApplyChakraPetchSemiBoldFont(ReturnsHeading, 24);
-		Content->AddChild(ReturnsHeading);
-		SetVerticalSlotPadding(ReturnsHeading, FMargin(0.0f, 0.0f, 0.0f, 10.0f));
-
-		UScrollBox* ReturnsScrollBox = AddFilterScrollSection(UIWidget, Content, 167.0f);
-
-		ReturnsAllCheckBox = AddCheckBoxRow(UIWidget, ReturnsScrollBox, TEXT("<all>"), true);
+		const FFilterSectionWidgets returnsSection = AddFilterSection(UIWidget, content, TEXT("Returns"), 167.0f);
+		ReturnsAllCheckBox = returnsSection.AllCheckBox;
 		ReturnsAllCheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnReturnsAllFilterCheckStateChanged);
 
-		for (int32 Index = 0; Index < UE_ARRAY_COUNT(FilterReturnLabels); ++Index)
+		for (int32 index = 0; index < UE_ARRAY_COUNT(FilterReturnLabels); ++index)
 		{
-			UCheckBox* CheckBox = AddCheckBoxRow(UIWidget, ReturnsScrollBox, FilterReturnLabels[Index], true);
-			CheckBox->OnCheckStateChanged.AddDynamic(this, &APCLController::OnFilterCheckStateChanged);
-			ReturnsFilterCheckBoxes.Add(CheckBox);
+			addFilterOption(returnsSection.ScrollBox, FilterReturnLabels[index], ReturnsFilterCheckBoxes);
 		}
 	}
 
@@ -2220,6 +2282,7 @@ void APCLController::BuildFilterTabUI()
 
 void APCLController::BuildLegendUI()
 {
+
 	if (!UIWidget || !UIWidget->WidgetTree)
 	{
 		return;
@@ -2237,177 +2300,184 @@ void APCLController::BuildLegendUI()
 		return;
 	}
 
-	UCanvasPanel* RootCanvas = Cast<UCanvasPanel>(UIWidget->WidgetTree->RootWidget);
-	if (!RootCanvas)
+	UCanvasPanel* rootCanvas = Cast<UCanvasPanel>(UIWidget->WidgetTree->RootWidget);
+
+	if (!rootCanvas)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("UI_PCL legend binding failed: root widget is not a canvas panel."));
 		return;
 	}
 
 	const bool bCompact = CurrentRendererChoice == EPCLRendererChoice::RGB;
-	const FVector2D LegendSize = bCompact ? FVector2D(LegendCompactWidth, LegendCompactHeight) : FVector2D(LegendExpandedWidth, LegendExpandedHeight);
+	const FVector2D legendSize = bCompact ? FVector2D(LegendCompactWidth, LegendCompactHeight) : FVector2D(LegendExpandedWidth, LegendExpandedHeight);
 
 	LegendPanel = NewObject<UCanvasPanel>(UIWidget);
 	LegendPanel->SetRenderTransformPivot(FVector2D(1.0f, 1.0f));
 	LegendPanel->SetRenderScale(FVector2D(PCLTabUIScale, PCLTabUIScale));
-	UCanvasPanelSlot* LegendSlot = RootCanvas->AddChildToCanvas(LegendPanel);
-	if (LegendSlot)
+	UCanvasPanelSlot* legendSlot = rootCanvas->AddChildToCanvas(LegendPanel);
+
+	if (legendSlot)
 	{
-		LegendSlot->SetAnchors(FAnchors(1.0f, 1.0f, 1.0f, 1.0f));
-		LegendSlot->SetAlignment(FVector2D(1.0f, 1.0f));
-		LegendSlot->SetPosition(FVector2D(-50.0f, -34.0f));
-		LegendSlot->SetSize(LegendSize);
-		LegendSlot->SetZOrder(30);
+		legendSlot->SetAnchors(FAnchors(1.0f, 1.0f, 1.0f, 1.0f));
+		legendSlot->SetAlignment(FVector2D(1.0f, 1.0f));
+		legendSlot->SetPosition(FVector2D(-50.0f, -34.0f));
+		legendSlot->SetSize(legendSize);
+		legendSlot->SetZOrder(30);
 	}
 
-	UBorder* Background = CreateColorBlock(UIWidget, FLinearColor(0.03f, 0.03f, 0.035f, 0.88f));
-	UCanvasPanelSlot* BackgroundSlot = LegendPanel->AddChildToCanvas(Background);
-	if (BackgroundSlot)
+	UBorder* background = CreateColorBlock(UIWidget, FLinearColor(0.03f, 0.03f, 0.035f, 0.88f));
+	UCanvasPanelSlot* backgroundSlot = LegendPanel->AddChildToCanvas(background);
+
+	if (backgroundSlot)
 	{
-		BackgroundSlot->SetPosition(FVector2D::ZeroVector);
-		BackgroundSlot->SetSize(LegendSize);
+		backgroundSlot->SetPosition(FVector2D::ZeroVector);
+		backgroundSlot->SetSize(legendSize);
 	}
 
-	UBorder* Accent = CreateColorBlock(UIWidget, FLinearColor(0.58f, 0.23f, 1.0f, 1.0f));
-	UCanvasPanelSlot* AccentSlot = LegendPanel->AddChildToCanvas(Accent);
-	if (AccentSlot)
+	UBorder* accent = CreateColorBlock(UIWidget, FLinearColor(0.58f, 0.23f, 1.0f, 1.0f));
+	UCanvasPanelSlot* accentSlot = LegendPanel->AddChildToCanvas(accent);
+
+	if (accentSlot)
 	{
-		AccentSlot->SetPosition(FVector2D::ZeroVector);
-		AccentSlot->SetSize(FVector2D(8.0f, LegendSize.Y));
+		accentSlot->SetPosition(FVector2D::ZeroVector);
+		accentSlot->SetSize(FVector2D(8.0f, legendSize.Y));
 	}
 
-	UVerticalBox* Content = NewObject<UVerticalBox>(UIWidget);
-	UCanvasPanelSlot* ContentSlot = LegendPanel->AddChildToCanvas(Content);
-	if (ContentSlot)
+	UVerticalBox* content = NewObject<UVerticalBox>(UIWidget);
+	UCanvasPanelSlot* contentSlot = LegendPanel->AddChildToCanvas(content);
+
+	if (contentSlot)
 	{
-		ContentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(59.0f, 24.0f));
-		ContentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(308.0f, 321.0f));
+		contentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(59.0f, 24.0f));
+		contentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(308.0f, 321.0f));
 	}
 
 	if (CurrentRendererChoice == EPCLRendererChoice::RGB)
 	{
-		Content->AddChild(CreateText(UIWidget, TEXT("No legend"), 28, MakeSlateColor(0.78f, 0.78f, 0.82f)));
+		content->AddChild(CreateText(UIWidget, TEXT("No legend"), 28, MakeSlateColor(0.78f, 0.78f, 0.82f)));
 		return;
 	}
 
-	FString LegendTitle = PointCloudLayer ? PointCloudLayer->GetName() : FString();
-	if (LegendTitle.TrimStartAndEnd().IsEmpty())
+	FString legendTitle = PointCloudLayer ? PointCloudLayer->GetName() : FString();
+
+	if (legendTitle.TrimStartAndEnd().IsEmpty())
 	{
-		LegendTitle = TEXT("Point cloud layer");
+		legendTitle = TEXT("Point cloud layer");
 	}
 
-	UTextBlock* Title = CreateText(UIWidget, LegendTitle, 27, MakeSlateColor(0.62f, 0.62f, 0.66f));
-	ApplyLegendTitleFont(Title);
-	Title->SetRenderTranslation(FVector2D(-22.0f, 0.0f));
-	Content->AddChild(Title);
-	SetVerticalSlotPadding(Title, FMargin(0.0f, 0.0f, 0.0f, 36.0f));
+	UTextBlock* title = CreateText(UIWidget, legendTitle, 27, MakeSlateColor(0.62f, 0.62f, 0.66f));
+	ApplyLegendTitleFont(title);
+	title->SetRenderTranslation(FVector2D(-22.0f, 0.0f));
+	content->AddChild(title);
+	SetVerticalSlotPadding(title, FMargin(0.0f, 0.0f, 0.0f, 36.0f));
 
 	if (CurrentRendererChoice == EPCLRendererChoice::Class)
 	{
-		UTextBlock* Heading = CreateText(UIWidget, TEXT("Class Code"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
-		Content->AddChild(Heading);
-		SetVerticalSlotPadding(Heading, FMargin(0.0f, 0.0f, 0.0f, 8.0f));
+		UTextBlock* heading = CreateText(UIWidget, TEXT("Class Code"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
+		content->AddChild(heading);
+		SetVerticalSlotPadding(heading, FMargin(0.0f, 0.0f, 0.0f, 8.0f));
 
-		USizeBox* ClassListBox = NewObject<USizeBox>(UIWidget);
-		ClassListBox->SetWidthOverride(299.0f);
-		ClassListBox->SetHeightOverride(158.0f);
-		Content->AddChild(ClassListBox);
+		USizeBox* classListBox = NewObject<USizeBox>(UIWidget);
+		classListBox->SetWidthOverride(299.0f);
+		classListBox->SetHeightOverride(158.0f);
+		content->AddChild(classListBox);
 
-		UScrollBox* ClassList = NewObject<UScrollBox>(UIWidget);
-		ClassList->SetOrientation(EOrientation::Orient_Vertical);
-		ClassList->SetScrollBarVisibility(ESlateVisibility::Visible);
-		ClassList->SetAlwaysShowScrollbar(true);
-		ClassList->SetAlwaysShowScrollbarTrack(true);
-		ClassList->SetScrollbarThickness(FVector2D(18.0f, 18.0f));
-		ClassListBox->AddChild(ClassList);
+		UScrollBox* classList = NewObject<UScrollBox>(UIWidget);
+		classList->SetOrientation(EOrientation::Orient_Vertical);
+		classList->SetScrollBarVisibility(ESlateVisibility::Visible);
+		classList->SetAlwaysShowScrollbar(true);
+		classList->SetAlwaysShowScrollbarTrack(true);
+		classList->SetScrollbarThickness(FVector2D(18.0f, 18.0f));
+		classListBox->AddChild(classList);
 
-		const int32 VisibleClassCodes[] = {1, 2, 3, 5, 6, 7, 9};
-		for (int32 ClassCode : VisibleClassCodes)
+		const int32 visibleClassCodes[] = {1, 2, 3, 5, 6, 7, 9};
+
+		for (int32 classCode : visibleClassCodes)
 		{
-			FString Label;
-			uint8 Red = 0;
-			uint8 Green = 0;
-			uint8 Blue = 0;
-			GetStandardClassInfo(ClassCode, Label, Red, Green, Blue);
-			const FLinearColor ClassColor(Red / 255.0f, Green / 255.0f, Blue / 255.0f, 1.0f);
-			UTexture2D* CircleTexture = CreateLegendCircleTexture(UIWidget, ClassColor);
-			if (CircleTexture)
+			const FStandardClassInfo classInfo = GetStandardClassInfo(classCode);
+			const FLinearColor classColor(
+				classInfo.Red / 255.0f, classInfo.Green / 255.0f, classInfo.Blue / 255.0f, 1.0f);
+			UTexture2D* circleTexture = CreateLegendCircleTexture(UIWidget, classColor);
+
+			if (circleTexture)
 			{
-				LegendTextures.Add(CircleTexture);
+				LegendTextures.Add(circleTexture);
 			}
-			AddLegendRow(UIWidget, ClassList, Label, ClassColor, CircleTexture);
+			AddLegendRow(UIWidget, classList, classInfo.Label, classColor, circleTexture);
 		}
 
 		return;
 	}
 
 	const bool bElevationLegend = CurrentRendererChoice == EPCLRendererChoice::Elevation;
-	UTextBlock* Heading = CreateText(UIWidget, bElevationLegend ? TEXT("Elevation") : TEXT("Intensity"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
-	Content->AddChild(Heading);
-	SetVerticalSlotPadding(Heading, FMargin(0.0f, 0.0f, 0.0f, 26.0f));
+	UTextBlock* heading = CreateText(UIWidget, bElevationLegend ? TEXT("Elevation") : TEXT("Intensity"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f));
+	content->AddChild(heading);
+	SetVerticalSlotPadding(heading, FMargin(0.0f, 0.0f, 0.0f, 26.0f));
 
-	UHorizontalBox* GradientRow = NewObject<UHorizontalBox>(UIWidget);
-	Content->AddChild(GradientRow);
+	UHorizontalBox* gradientRow = NewObject<UHorizontalBox>(UIWidget);
+	content->AddChild(gradientRow);
 
-	USizeBox* GradientSizeBox = NewObject<USizeBox>(UIWidget);
-	GradientSizeBox->SetWidthOverride(36.0f);
-	GradientSizeBox->SetHeightOverride(122.0f);
-	GradientRow->AddChild(GradientSizeBox);
-	SetHorizontalSlotPadding(GradientSizeBox, FMargin(6.0f, 0.0f, 18.0f, 0.0f));
+	USizeBox* gradientSizeBox = NewObject<USizeBox>(UIWidget);
+	gradientSizeBox->SetWidthOverride(36.0f);
+	gradientSizeBox->SetHeightOverride(122.0f);
+	gradientRow->AddChild(gradientSizeBox);
+	SetHorizontalSlotPadding(gradientSizeBox, FMargin(6.0f, 0.0f, 18.0f, 0.0f));
 
-	TArray<FLinearColor> GradientColors;
+	TArray<FLinearColor> gradientColors;
+
 	if (bElevationLegend)
 	{
-		GradientColors = {FLinearColor(0.95f, 0.12f, 0.08f), FLinearColor(1.0f, 0.9f, 0.2f), FLinearColor(0.35f, 0.95f, 0.48f),
+		gradientColors = {FLinearColor(0.95f, 0.12f, 0.08f), FLinearColor(1.0f, 0.9f, 0.2f), FLinearColor(0.35f, 0.95f, 0.48f),
 						  FLinearColor(0.25f, 0.82f, 1.0f), FLinearColor(0.22f, 0.12f, 1.0f)};
 	}
 	else
 	{
-		GradientColors = {FLinearColor::White, FLinearColor(0.65f, 0.65f, 0.65f), FLinearColor(0.16f, 0.16f, 0.16f), FLinearColor::Black};
+		gradientColors = {FLinearColor::White, FLinearColor(0.65f, 0.65f, 0.65f), FLinearColor(0.16f, 0.16f, 0.16f), FLinearColor::Black};
 	}
 
-	if (UTexture2D* GradientTexture = CreateLegendGradientTexture(UIWidget, GradientColors))
+	if (UTexture2D* gradientTexture = CreateLegendGradientTexture(UIWidget, gradientColors))
 	{
-		LegendTextures.Add(GradientTexture);
+		LegendTextures.Add(gradientTexture);
 
-		UImage* GradientImage = NewObject<UImage>(UIWidget);
-		GradientImage->SetBrushFromTexture(GradientTexture, true);
-		GradientSizeBox->AddChild(GradientImage);
+		UImage* gradientImage = NewObject<UImage>(UIWidget);
+		gradientImage->SetBrushFromTexture(gradientTexture, true);
+		gradientSizeBox->AddChild(gradientImage);
 	}
 
-	UVerticalBox* LabelColumn = NewObject<UVerticalBox>(UIWidget);
-	GradientRow->AddChild(LabelColumn);
-	SetHorizontalSlotPadding(LabelColumn, FMargin(0.0f));
+	UVerticalBox* labelColumn = NewObject<UVerticalBox>(UIWidget);
+	gradientRow->AddChild(labelColumn);
+	SetHorizontalSlotPadding(labelColumn, FMargin(0.0f));
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("> 3.5") : TEXT("> 65,680"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	labelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("> 3.5") : TEXT("> 65,680"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 
-	USpacer* TopSpacer = NewObject<USpacer>(UIWidget);
-	TopSpacer->SetSize(FVector2D(1.0f, 31.0f));
-	LabelColumn->AddChild(TopSpacer);
+	USpacer* topSpacer = NewObject<USpacer>(UIWidget);
+	topSpacer->SetSize(FVector2D(1.0f, 31.0f));
+	labelColumn->AddChild(topSpacer);
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("1.5") : TEXT("38,032"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	labelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("1.5") : TEXT("38,032"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 
-	USpacer* BottomSpacer = NewObject<USpacer>(UIWidget);
-	BottomSpacer->SetSize(FVector2D(1.0f, 31.0f));
-	LabelColumn->AddChild(BottomSpacer);
+	USpacer* bottomSpacer = NewObject<USpacer>(UIWidget);
+	bottomSpacer->SetSize(FVector2D(1.0f, 31.0f));
+	labelColumn->AddChild(bottomSpacer);
 
-	LabelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("< -1.5") : TEXT("< 10,385"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
+	labelColumn->AddChild(CreateText(UIWidget, bElevationLegend ? TEXT("< -1.5") : TEXT("< 10,385"), 18, MakeSlateColor(1.0f, 1.0f, 1.0f)));
 }
 
 void APCLController::ResetFilterSelections(bool bApplyFilters)
 {
-	TGuardValue<bool> UpdatingGuard(bUpdatingFilterCheckBoxes, true);
+	TGuardValue<bool> updatingGuard(bUpdatingFilterCheckBoxes, true);
 
 	if (ClassAllCheckBox)
 	{
 		ClassAllCheckBox->SetIsChecked(true);
 	}
 
-	for (TObjectPtr<UCheckBox> CheckBox : ClassFilterCheckBoxes)
+	for (TObjectPtr<UCheckBox> checkBox : ClassFilterCheckBoxes)
 	{
-		if (CheckBox)
+
+		if (checkBox)
 		{
-			CheckBox->SetIsChecked(true);
+			checkBox->SetIsChecked(true);
 		}
 	}
 
@@ -2416,11 +2486,12 @@ void APCLController::ResetFilterSelections(bool bApplyFilters)
 		ReturnsAllCheckBox->SetIsChecked(true);
 	}
 
-	for (TObjectPtr<UCheckBox> CheckBox : ReturnsFilterCheckBoxes)
+	for (TObjectPtr<UCheckBox> checkBox : ReturnsFilterCheckBoxes)
 	{
-		if (CheckBox)
+
+		if (checkBox)
 		{
-			CheckBox->SetIsChecked(true);
+			checkBox->SetIsChecked(true);
 		}
 	}
 
@@ -2430,76 +2501,16 @@ void APCLController::ResetFilterSelections(bool bApplyFilters)
 	}
 }
 
-bool APCLController::AreAllClassOptionsSelected() const
-{
-	if (ClassFilterCheckBoxes.IsEmpty())
-	{
-		return false;
-	}
-
-	for (const TObjectPtr<UCheckBox>& CheckBox : ClassFilterCheckBoxes)
-	{
-		if (!CheckBox || !CheckBox->IsChecked())
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-bool APCLController::AreAnyClassOptionsSelected() const
-{
-	for (const TObjectPtr<UCheckBox>& CheckBox : ClassFilterCheckBoxes)
-	{
-		if (CheckBox && CheckBox->IsChecked())
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool APCLController::AreAllReturnsOptionsSelected() const
-{
-	if (ReturnsFilterCheckBoxes.IsEmpty())
-	{
-		return false;
-	}
-
-	for (const TObjectPtr<UCheckBox>& CheckBox : ReturnsFilterCheckBoxes)
-	{
-		if (!CheckBox || !CheckBox->IsChecked())
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-bool APCLController::AreAnyReturnsOptionsSelected() const
-{
-	for (const TObjectPtr<UCheckBox>& CheckBox : ReturnsFilterCheckBoxes)
-	{
-		if (CheckBox && CheckBox->IsChecked())
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
 void APCLController::ClearActiveFilters()
 {
+
 	if (PointCloudLayer && PointCloudLayer->APIObject)
 	{
-		if (auto LayerAPI = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject))
+
+		if (auto layerApi = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject))
 		{
 			ActiveFilterCollection = MakeUnique<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter>>();
-			LayerAPI->SetFilters(*ActiveFilterCollection);
+			layerApi->SetFilters(*ActiveFilterCollection);
 		}
 	}
 
@@ -2509,23 +2520,24 @@ void APCLController::ClearActiveFilters()
 	ActiveReturnsFilter.Reset();
 }
 
-void APCLController::SetTabLayout(EPCLTabLayout Layout)
+void APCLController::SetTabLayout(EPCLTabLayout layout)
 {
-	CurrentTabLayout = Layout;
+	CurrentTabLayout = layout;
 
-	float HeightOffset = CustomizeTabHeightOffset;
-	if (Layout == EPCLTabLayout::Visualize)
+	float heightOffset = CustomizeTabHeightOffset;
+
+	if (layout == EPCLTabLayout::Visualize)
 	{
-		HeightOffset = VisualizeTabHeightOffset;
+		heightOffset = VisualizeTabHeightOffset;
 	}
-	else if (Layout == EPCLTabLayout::Filter)
+	else if (layout == EPCLTabLayout::Filter)
 	{
-		HeightOffset = FilterTabHeightOffset;
+		heightOffset = FilterTabHeightOffset;
 	}
 
-	for (const FName& WidgetName : ExpandableTabWidgetNames)
+	for (const FName& widgetName : ExpandableTabWidgetNames)
 	{
-		SetNamedWidgetHeightOffset(WidgetName, HeightOffset);
+		SetNamedWidgetHeightOffset(widgetName, heightOffset);
 	}
 
 	ApplyTabUIScale();
@@ -2534,45 +2546,50 @@ void APCLController::SetTabLayout(EPCLTabLayout Layout)
 
 void APCLController::ApplyTabUIScale()
 {
+
 	if (!UIWidget)
 	{
 		return;
 	}
 
-	UWidget* MainPanel = UIWidget->GetWidgetFromName(PCLMainPanelWidgetName);
-	if (!MainPanel)
+	UWidget* mainPanel = UIWidget->GetWidgetFromName(PCLMainPanelWidgetName);
+
+	if (!mainPanel)
 	{
 		return;
 	}
 
-	MainPanel->SetRenderTransformPivot(FVector2D(1.0f, 0.0f));
-	MainPanel->SetRenderScale(FVector2D(PCLTabUIScale, PCLTabUIScale));
+	mainPanel->SetRenderTransformPivot(FVector2D(1.0f, 0.0f));
+	mainPanel->SetRenderScale(FVector2D(PCLTabUIScale, PCLTabUIScale));
 }
 
-void APCLController::SetNamedWidgetHeightOffset(const FName& WidgetName, float HeightOffset)
+void APCLController::SetNamedWidgetHeightOffset(const FName& widgetName, float heightOffset)
 {
+
 	if (!UIWidget)
 	{
 		return;
 	}
 
-	UWidget* Widget = UIWidget->GetWidgetFromName(WidgetName);
-	if (!Widget)
+	UWidget* widget = UIWidget->GetWidgetFromName(widgetName);
+
+	if (!widget)
 	{
 		return;
 	}
 
-	UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Widget->Slot);
-	if (!CanvasSlot)
+	UCanvasPanelSlot* canvasSlot = Cast<UCanvasPanelSlot>(widget->Slot);
+
+	if (!canvasSlot)
 	{
 		return;
 	}
 
-	if (!CachedTabWidgetSizes.Contains(WidgetName))
+	if (!CachedTabWidgetSizes.Contains(widgetName))
 	{
-		CachedTabWidgetSizes.Add(WidgetName, CanvasSlot->GetSize());
+		CachedTabWidgetSizes.Add(widgetName, canvasSlot->GetSize());
 	}
 
-	const FVector2D OriginalSize = CachedTabWidgetSizes[WidgetName];
-	CanvasSlot->SetSize(FVector2D(OriginalSize.X, OriginalSize.Y + HeightOffset));
+	const FVector2D originalSize = CachedTabWidgetSizes[widgetName];
+	canvasSlot->SetSize(FVector2D(originalSize.X, originalSize.Y + heightOffset));
 }
