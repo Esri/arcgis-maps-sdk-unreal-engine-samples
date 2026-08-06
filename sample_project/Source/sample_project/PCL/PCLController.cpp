@@ -83,8 +83,9 @@ constexpr double IntensityMid = 38032.0;
 constexpr double IntensityHigh = 65680.0;
 constexpr float LegendCompactWidth = 345.0f;
 constexpr float LegendCompactHeight = 76.0f;
-constexpr float LegendExpandedWidth = 390.0f;
+constexpr float LegendExpandedWidth = 480.0f;
 constexpr float LegendExpandedHeight = 382.0f;
+constexpr float LegendExpandedContentWidth = LegendExpandedWidth - 82.0f;
 constexpr float PCLTabUIScale = 2.0f / 3.0f;
 constexpr float CustomizeTabHeightOffset = 88.0f;
 constexpr float VisualizeTabHeightOffset = 194.0f;
@@ -366,7 +367,7 @@ void ApplyLegendTitleFont(UTextBlock* title)
 
 	FSlateFontInfo font = title->GetFont();
 	font.FontObject = fontObject;
-	font.Size = 27;
+	font.Size = 24;
 	title->SetFont(font);
 }
 
@@ -2451,7 +2452,7 @@ void APCLController::BuildLegendUI()
 	if (contentSlot)
 	{
 		contentSlot->SetPosition(bCompact ? FVector2D(34.0f, 20.0f) : FVector2D(59.0f, 24.0f));
-		contentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(308.0f, 321.0f));
+		contentSlot->SetSize(bCompact ? FVector2D(290.0f, 44.0f) : FVector2D(LegendExpandedContentWidth, 321.0f));
 	}
 
 	if (CurrentRendererChoice == EPCLRendererChoice::RGB)
@@ -2467,8 +2468,10 @@ void APCLController::BuildLegendUI()
 		legendTitle = TEXT("Point cloud layer");
 	}
 
-	UTextBlock* title = CreateText(UIWidget, legendTitle, 27, MakeSlateColor(0.62f, 0.62f, 0.66f));
+	UTextBlock* title = CreateText(UIWidget, legendTitle, 24, MakeSlateColor(0.62f, 0.62f, 0.66f));
 	ApplyLegendTitleFont(title);
+	title->SetAutoWrapText(true);
+	title->SetWrapTextAt(LegendExpandedContentWidth);
 	title->SetRenderTranslation(FVector2D(-22.0f, 0.0f));
 	content->AddChild(title);
 	SetVerticalSlotPadding(title, FMargin(0.0f, 0.0f, 0.0f, 36.0f));
