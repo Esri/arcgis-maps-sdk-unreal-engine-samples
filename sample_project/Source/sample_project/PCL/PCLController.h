@@ -177,6 +177,9 @@ private:
 	TObjectPtr<UButton> GearButton;
 
 	UPROPERTY()
+	TObjectPtr<UButton> InfoButton;
+
+	UPROPERTY()
 	TObjectPtr<UTextBlock> LayerLoadStatusText;
 
 	UPROPERTY()
@@ -291,12 +294,16 @@ private:
 	UFUNCTION()
 	void OnCollapseButtonClicked();
 
+	UFUNCTION()
+	void OnInfoButtonClicked();
+
 	void SetAllFilterOptionsChecked(const TArray<TObjectPtr<UCheckBox>>& filterCheckBoxes, bool bIsChecked);
 	void CreatePointCloudLayer(const FString& source, bool bZoomWhenLoaded);
 	void BuildDataLoaderUI();
 	void DeferPointCloudLayerLoad(const FString& source, bool bZoomWhenLoaded);
 	void SetLayerLoadStatus(bool bSucceeded) const;
 	void UpdateMapInputForUIHover();
+	void SyncLegendVisibilityWithMainPanel() const;
 	void SetMapInputBlockedByUI(bool bBlocked);
 	void ApplyPointCloudVisualization();
 	void ApplyPointCloudFilters();
@@ -304,6 +311,7 @@ private:
 	bool IsRendererAvailableFromCachedAttributes(EPCLRendererChoice rendererChoice) const;
 	EPCLRendererChoice GetFallbackRendererChoice() const;
 	void EnsureAvailableRendererSelected();
+	void HandleRendererCheckStateChanged(bool bIsChecked, EPCLRendererChoice rendererChoice);
 	void UpdateRendererCheckBoxes();
 	void UpdateColorModulationVisibility();
 	void SetRendererOptionVisibility(EPCLRendererChoice rendererChoice, bool bVisible);

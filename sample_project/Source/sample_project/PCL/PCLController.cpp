@@ -34,8 +34,11 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/Texture2D.h"
 #include "Framework/Application/SlateApplication.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "InputCoreTypes.h"
 #include "Slate/WidgetTransform.h"
+#include "UObject/UnrealType.h"
 
 #include "ArcGISMapsSDK/API/GameEngine/ArcGISLoadStatus.h"
 #include "ArcGISMapsSDK/API/GameEngine/Layers/ArcGISPointCloudLayer.h"
@@ -106,6 +109,9 @@ const FName PCLCollapseIconWidgetName(TEXT("Collapse"));
 const FName PCLGearIconWidgetName(TEXT("Button_Gear"));
 const FName PCLGearRuntimeIconWidgetName(TEXT("PCL_GearIcon_Runtime"));
 const FName PCLInfoWidgetName(TEXT("wbp_Info"));
+const FName PCLInfoButtonWidgetName(TEXT("wbp_InfoButton"));
+const FName PCLInfoButtonControlName(TEXT("Button_21"));
+const FName PCLMenuHiddenPropertyName(TEXT("IsMenuHidden"));
 const FVector2D PCLGearButtonSize(48.0f, 48.0f);
 const FVector2D PCLGearIconSize(34.0f, 34.0f);
 const FLinearColor PCLGearPurple(0.309f, 0.063f, 1.0f, 1.0f);
@@ -903,6 +909,11 @@ void APCLController::BeginPlay()
 		LoadLayerButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Load"));
 		CollapseButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Collapse"), false);
 		GearButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Gear"), false);
+		UUserWidget* infoWidget = Cast<UUserWidget>(FindPCLNamedWidget(UIWidget, PCLInfoWidgetName));
+		UUserWidget* infoButtonWidget =
+			infoWidget ? Cast<UUserWidget>(infoWidget->GetWidgetFromName(PCLInfoButtonWidgetName)) : nullptr;
+		InfoButton =
+			infoButtonWidget ? Cast<UButton>(infoButtonWidget->GetWidgetFromName(PCLInfoButtonControlName)) : nullptr;
 		UE_LOG(LogTemp, Display, TEXT("UI_PCL collapse widgets: Button_Collapse=%s Button_Gear=%s"),
 			   CollapseButton ? *CollapseButton->GetClass()->GetName() : TEXT("missing"),
 			   GearButton ? *GearButton->GetClass()->GetName() : TEXT("missing"));
@@ -998,13 +1009,22 @@ void APCLController::BeginPlay()
 			GearButton->OnClicked.AddDynamic(this, &APCLController::OnCollapseButtonClicked);
 		}
 
+		if (InfoButton)
+		{
+			InfoButton->OnClicked.AddDynamic(this, &APCLController::OnInfoButtonClicked);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UI_PCL info button binding failed."));
+		}
+
 		UpdateSliderValueTexts();
 		UpdateRendererCheckBoxes();
 		BuildFilterTabUI();
 		SetTabLayout(EPCLTabLayout::Default);
 		ConfigurePCLCollapseInitialState();
 		DeferredPointCloudLayerSource = PointCloudLayerSource;
-		bDeferredZoomWhenLoaded = false;
+		bDeferredZoomWhenLoaded = true;
 		DeferredPointCloudLayerRetrySeconds = PointCloudLayerLoadRetryInterval;
 		PointCloudLayerLoadRetryCount = 0;
 		ApplyPointCloudVisualization();
@@ -1034,6 +1054,7 @@ void APCLController::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);
 	HandlePCLCollapseInput();
+	SyncLegendVisibilityWithMainPanel();
 	UpdateMapInputForUIHover();
 
 	if (!DeferredPointCloudLayerSource.IsEmpty())
@@ -1047,6 +1068,30 @@ void APCLController::Tick(float deltaTime)
 			DeferredPointCloudLayerSource.Reset();
 			CreatePointCloudLayer(source, bZoomWhenLoaded);
 		}
+	}
+}
+
+void APCLController::SyncLegendVisibilityWithMainPanel() const
+{
+
+	if (!UIWidget || !LegendPanel)
+	{
+		return;
+	}
+
+	const UWidget* mainPanel = FindPCLNamedWidget(UIWidget, PCLMainPanelWidgetName);
+
+	if (!mainPanel)
+	{
+		return;
+	}
+
+	const bool bShouldShowLegend = !bPCLUICollapsed && mainPanel->IsVisible();
+	const ESlateVisibility legendVisibility = bShouldShowLegend ? ESlateVisibility::Visible : ESlateVisibility::Hidden;
+
+	if (LegendPanel->GetVisibility() != legendVisibility)
+	{
+		LegendPanel->SetVisibility(legendVisibility);
 	}
 }
 
@@ -1214,37 +1259,41 @@ void APCLController::OnColorModulationCheckStateChanged(bool bIsChecked)
 
 void APCLController::OnRGBRendererCheckStateChanged(bool bIsChecked)
 {
-
-	if (bIsChecked && !bUpdatingRendererCheckBoxes)
-	{
-		SetPointCloudRenderer(EPCLRendererChoice::RGB);
-	}
+	HandleRendererCheckStateChanged(bIsChecked, EPCLRendererChoice::RGB);
 }
 
 void APCLController::OnClassRendererCheckStateChanged(bool bIsChecked)
 {
-
-	if (bIsChecked && !bUpdatingRendererCheckBoxes)
-	{
-		SetPointCloudRenderer(EPCLRendererChoice::Class);
-	}
+	HandleRendererCheckStateChanged(bIsChecked, EPCLRendererChoice::Class);
 }
 
 void APCLController::OnElevationRendererCheckStateChanged(bool bIsChecked)
 {
-
-	if (bIsChecked && !bUpdatingRendererCheckBoxes)
-	{
-		SetPointCloudRenderer(EPCLRendererChoice::Elevation);
-	}
+	HandleRendererCheckStateChanged(bIsChecked, EPCLRendererChoice::Elevation);
 }
 
 void APCLController::OnIntensityRendererCheckStateChanged(bool bIsChecked)
 {
+	HandleRendererCheckStateChanged(bIsChecked, EPCLRendererChoice::Intensity);
+}
 
-	if (bIsChecked && !bUpdatingRendererCheckBoxes)
+void APCLController::HandleRendererCheckStateChanged(bool bIsChecked, EPCLRendererChoice rendererChoice)
+{
+
+	if (bUpdatingRendererCheckBoxes)
 	{
-		SetPointCloudRenderer(EPCLRendererChoice::Intensity);
+		return;
+	}
+
+	if (bIsChecked)
+	{
+		SetPointCloudRenderer(rendererChoice);
+		return;
+	}
+
+	if (CurrentRendererChoice == rendererChoice)
+	{
+		UpdateRendererCheckBoxes();
 	}
 }
 
@@ -1359,6 +1408,35 @@ void APCLController::OnLoadPointCloudLayerClicked()
 void APCLController::OnCollapseButtonClicked()
 {
 	TogglePCLUICollapse();
+}
+
+void APCLController::OnInfoButtonClicked()
+{
+
+	if (!UIWidget)
+	{
+		return;
+	}
+
+	if (UWidget* mainPanel = FindPCLNamedWidget(UIWidget, PCLMainPanelWidgetName))
+	{
+		mainPanel->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	if (LegendPanel)
+	{
+		LegendPanel->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	if (FBoolProperty* isMenuHiddenProperty =
+			FindFProperty<FBoolProperty>(UIWidget->GetClass(), PCLMenuHiddenPropertyName))
+	{
+		isMenuHiddenProperty->SetPropertyValue_InContainer(UIWidget, true);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UI_PCL property binding failed: IsMenuHidden"));
+	}
 }
 
 void APCLController::ConfigurePCLCollapseInitialState()
@@ -1767,15 +1845,40 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 			if (bZoomWhenLoaded && controller->MapComponent)
 			{
+				UArcGISExtentRectangle* layerExtent = loadedLayer->GetExtent();
+
+				if (layerExtent)
+				{
+
+					if (UArcGISPoint* extentCenter = layerExtent->GetCenter())
+					{
+						controller->MapComponent->SetOriginPosition(extentCenter);
+						controller->SpatialReference = extentCenter->GetSpatialReference();
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Point cloud layer loaded, but its extent has no center for updating the origin."));
+					}
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Point cloud layer loaded, but it has no extent for updating the origin."));
+				}
+
 				APlayerController* playerController = UGameplayStatics::GetPlayerController(controller->GetWorld(), 0);
-				AActor* viewActor = playerController ? playerController->GetPawn() : nullptr;
+				AActor* viewActor = playerController ? playerController->GetViewTarget() : nullptr;
 
 				if (!viewActor && playerController)
 				{
-					viewActor = playerController->GetViewTarget();
+					viewActor = playerController->GetPawn();
 				}
 
-				if (!viewActor || !controller->MapComponent->ZoomToExtent(viewActor, loadedLayer->GetExtent()))
+				if (ACharacter* viewCharacter = Cast<ACharacter>(viewActor))
+				{
+					viewCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+				}
+
+				if (!viewActor || !controller->MapComponent->ZoomToExtent(viewActor, layerExtent))
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Point cloud layer loaded, but zoom to layer failed."));
 				}
@@ -2102,25 +2205,22 @@ void APCLController::UpdateRendererCheckBoxes()
 		SetRendererOptionVisibility(EPCLRendererChoice::Intensity, IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::Intensity));
 	}
 
-	if (RGBRendererCheckBox)
+	const auto updateRendererCheckBox = [this](UCheckBox* checkBox, EPCLRendererChoice rendererChoice)
 	{
-		RGBRendererCheckBox->SetIsChecked(CurrentRendererChoice == EPCLRendererChoice::RGB);
-	}
 
-	if (ClassRendererCheckBox)
-	{
-		ClassRendererCheckBox->SetIsChecked(CurrentRendererChoice == EPCLRendererChoice::Class);
-	}
+		if (!checkBox)
+		{
+			return;
+		}
 
-	if (ElevationRendererCheckBox)
-	{
-		ElevationRendererCheckBox->SetIsChecked(CurrentRendererChoice == EPCLRendererChoice::Elevation);
-	}
+		const bool bIsSelected = CurrentRendererChoice == rendererChoice;
+		checkBox->SetIsChecked(bIsSelected);
+	};
 
-	if (IntensityRendererCheckBox)
-	{
-		IntensityRendererCheckBox->SetIsChecked(CurrentRendererChoice == EPCLRendererChoice::Intensity);
-	}
+	updateRendererCheckBox(RGBRendererCheckBox, EPCLRendererChoice::RGB);
+	updateRendererCheckBox(ClassRendererCheckBox, EPCLRendererChoice::Class);
+	updateRendererCheckBox(ElevationRendererCheckBox, EPCLRendererChoice::Elevation);
+	updateRendererCheckBox(IntensityRendererCheckBox, EPCLRendererChoice::Intensity);
 }
 
 void APCLController::UpdateColorModulationVisibility()
@@ -2324,6 +2424,8 @@ void APCLController::BuildLegendUI()
 		legendSlot->SetSize(legendSize);
 		legendSlot->SetZOrder(30);
 	}
+
+	SyncLegendVisibilityWithMainPanel();
 
 	UBorder* background = CreateColorBlock(UIWidget, FLinearColor(0.03f, 0.03f, 0.035f, 0.88f));
 	UCanvasPanelSlot* backgroundSlot = LegendPanel->AddChildToCanvas(background);
