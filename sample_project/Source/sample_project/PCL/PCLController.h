@@ -20,7 +20,6 @@
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CheckBox.h"
-#include "Components/ComboBoxString.h"
 #include "Components/EditableTextBox.h"
 #include "Components/PanelWidget.h"
 #include "Components/Slider.h"
@@ -44,7 +43,6 @@
 
 #include "PCLController.generated.h"
 
-class AInputManager;
 class UTexture2D;
 
 UENUM(BlueprintType)
@@ -92,17 +90,11 @@ public:
 	bool IsPointCloudRendererAvailable(EPCLRendererChoice rendererChoice);
 
 private:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (AllowPrivateAccess))
-	TObjectPtr<AInputManager> InputManager;
-
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
 	TObjectPtr<UUserWidget> UIWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TSubclassOf<UUserWidget> UIWidgetClass;
-
-	UPROPERTY()
-	TObjectPtr<UComboBoxString> UnitDropdown;
 
 	UPROPERTY()
 	TObjectPtr<USlider> PointSizeSlider;
@@ -117,9 +109,6 @@ private:
 	TObjectPtr<UTextBlock> PointsPerInchValueText;
 
 	UPROPERTY()
-	TObjectPtr<UCheckBox> ColorModulationCheckBox;
-
-	UPROPERTY()
 	TObjectPtr<UCheckBox> RGBRendererCheckBox;
 
 	UPROPERTY()
@@ -132,22 +121,10 @@ private:
 	TObjectPtr<UCheckBox> IntensityRendererCheckBox;
 
 	UPROPERTY()
-	TObjectPtr<UButton> CustomizeTabButton;
-
-	UPROPERTY()
-	TObjectPtr<UButton> FilterTabButton;
-
-	UPROPERTY()
-	TObjectPtr<UButton> VisualizeTabButton;
-
-	UPROPERTY()
 	TObjectPtr<UCanvasPanel> LegendPanel;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UTexture2D>> LegendTextures;
-
-	UPROPERTY()
-	TObjectPtr<UPanelWidget> FilterPanel;
 
 	UPROPERTY()
 	TObjectPtr<UCheckBox> ClassAllCheckBox;
@@ -162,22 +139,10 @@ private:
 	TArray<TObjectPtr<UCheckBox>> ReturnsFilterCheckBoxes;
 
 	UPROPERTY()
-	TObjectPtr<UButton> ResetFiltersButton;
-
-	UPROPERTY()
 	TObjectPtr<UEditableTextBox> SourceUrlTextBox;
 
 	UPROPERTY()
 	TObjectPtr<UButton> LoadLayerButton;
-
-	UPROPERTY()
-	TObjectPtr<UButton> CollapseButton;
-
-	UPROPERTY()
-	TObjectPtr<UButton> GearButton;
-
-	UPROPERTY()
-	TObjectPtr<UButton> InfoButton;
 
 	UPROPERTY()
 	TObjectPtr<UTextBlock> LayerLoadStatusText;
@@ -228,8 +193,6 @@ private:
 	bool bUpdatingFilterCheckBoxes = false;
 	bool bMapInputBlockedByUI = false;
 	bool bPCLUICollapsed = false;
-	bool bPointerDownOverPCLCollapseToggle = false;
-	double LastPCLCollapseToggleTimeSeconds = -1.0;
 	uint64 LayerLoadRequestId = 0;
 	FString DeferredPointCloudLayerSource;
 	float DeferredPointCloudLayerRetrySeconds = 0.0f;
@@ -239,12 +202,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UArcGISSpatialReference> SpatialReference;
-
-	UFUNCTION()
-	void OnInputTriggered();
-
-	UFUNCTION()
-	void OnInputEnded();
 
 	UFUNCTION()
 	void OnPointSizeChanged(float value);
@@ -322,7 +279,6 @@ private:
 	void BuildFilterTabUI();
 	void BuildLegendUI();
 	void ConfigurePCLCollapseInitialState();
-	void HandlePCLCollapseInput();
 	void TogglePCLUICollapse();
 	void SetPCLUICollapsed(bool bCollapsed);
 	bool IsPCLCollapseToggleUnderCursor() const;
