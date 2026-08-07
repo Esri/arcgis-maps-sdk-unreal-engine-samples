@@ -278,19 +278,9 @@ FSlateColor MakeSlateColor(float red, float green, float blue, float alpha = 1.0
 
 void ConfigureTextBlock(UTextBlock* textBlock, int32 fontSize, const FSlateColor& color)
 {
-
-	if (!textBlock)
-	{
-		return;
-	}
-
 	FSlateFontInfo font = textBlock->GetFont();
-
-	if (UObject* fontObject =
-			LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font")))
-	{
-		font.FontObject = fontObject;
-	}
+	font.FontObject =
+		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font"));
 	font.Size = fontSize;
 	textBlock->SetFont(font);
 	textBlock->SetColorAndOpacity(color);
@@ -318,12 +308,6 @@ UTexture2D* CreateLegendCircleTexture(UObject* outer, const FLinearColor& color)
 	constexpr float radius = 10.5f;
 
 	UTexture2D* texture = UTexture2D::CreateTransient(textureSize, textureSize, PF_B8G8R8A8);
-
-	if (!texture)
-	{
-		return nullptr;
-	}
-
 	texture->SRGB = true;
 	texture->CompressionSettings = TC_VectorDisplacementmap;
 	texture->MipGenSettings = TMGS_NoMipmaps;
@@ -351,20 +335,8 @@ UTexture2D* CreateLegendCircleTexture(UObject* outer, const FLinearColor& color)
 
 void ApplyLegendTitleFont(UTextBlock* title)
 {
-
-	if (!title)
-	{
-		return;
-	}
-
 	UObject* fontObject =
 		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
-
-	if (!fontObject)
-	{
-		return;
-	}
-
 	FSlateFontInfo font = title->GetFont();
 	font.FontObject = fontObject;
 	font.Size = 24;
@@ -373,20 +345,8 @@ void ApplyLegendTitleFont(UTextBlock* title)
 
 void ApplyChakraPetchSemiBoldFont(UTextBlock* textBlock, int32 fontSize)
 {
-
-	if (!textBlock)
-	{
-		return;
-	}
-
 	UObject* fontObject =
 		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-SemiBold_Font.ChakraPetch-SemiBold_Font"));
-
-	if (!fontObject)
-	{
-		return;
-	}
-
 	FSlateFontInfo font = textBlock->GetFont();
 	font.FontObject = fontObject;
 	font.Size = fontSize;
@@ -395,20 +355,8 @@ void ApplyChakraPetchSemiBoldFont(UTextBlock* textBlock, int32 fontSize)
 
 void ApplyChakraPetchRegularFont(UTextBlock* textBlock, int32 fontSize)
 {
-
-	if (!textBlock)
-	{
-		return;
-	}
-
 	UObject* fontObject =
 		LoadObject<UObject>(nullptr, TEXT("/Game/SampleViewer/User-Interface/Fonts/ChakraPetch-Regular_Font.ChakraPetch-Regular_Font"));
-
-	if (!fontObject)
-	{
-		return;
-	}
-
 	FSlateFontInfo font = textBlock->GetFont();
 	font.FontObject = fontObject;
 	font.Size = fontSize;
@@ -506,12 +454,6 @@ UTexture2D* CreateLegendGradientTexture(UObject* outer, const TArray<FLinearColo
 	constexpr int32 textureHeight = 128;
 
 	UTexture2D* texture = UTexture2D::CreateTransient(textureWidth, textureHeight, PF_B8G8R8A8);
-
-	if (!texture)
-	{
-		return nullptr;
-	}
-
 	texture->SRGB = true;
 	texture->CompressionSettings = TC_VectorDisplacementmap;
 	texture->MipGenSettings = TMGS_NoMipmaps;
@@ -688,16 +630,9 @@ void AddFilterSectionDivider(UObject* outer, UVerticalBox* parent)
 }
 
 template <typename WidgetType>
-WidgetType* FindNamedWidget(UUserWidget* widget, const TCHAR* widgetName, bool bWarnIfMissing = true)
+WidgetType* FindNamedWidget(UUserWidget* widget, const TCHAR* widgetName)
 {
-	WidgetType* namedWidget = widget ? Cast<WidgetType>(widget->GetWidgetFromName(widgetName)) : nullptr;
-
-	if (!namedWidget && bWarnIfMissing)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UI_PCL widget binding failed: %s"), widgetName);
-	}
-
-	return namedWidget;
+	return widget ? Cast<WidgetType>(widget->GetWidgetFromName(widgetName)) : nullptr;
 }
 
 UWidget* FindPCLNamedWidget(UUserWidget* widget, const FName& widgetName)
@@ -738,12 +673,6 @@ FSlateRoundedBoxBrush MakePCLGearButtonBrush()
 
 void ConfigurePCLCollapseButton(UButton* button)
 {
-
-	if (!button)
-	{
-		return;
-	}
-
 	FButtonStyle collapseStyle = button->GetStyle();
 	collapseStyle.SetHovered(collapseStyle.Normal);
 	collapseStyle.SetPressed(collapseStyle.Normal);
@@ -757,12 +686,6 @@ void ConfigurePCLCollapseButton(UButton* button)
 
 void ConfigurePCLGearButton(UUserWidget* uiWidget, UButton* button)
 {
-
-	if (!uiWidget || !uiWidget->WidgetTree || !button)
-	{
-		return;
-	}
-
 	FSlateRoundedBoxBrush gearBrush = MakePCLGearButtonBrush();
 	FButtonStyle gearStyle = button->GetStyle();
 	gearStyle.SetNormal(gearBrush);
@@ -782,18 +705,12 @@ void ConfigurePCLGearButton(UUserWidget* uiWidget, UButton* button)
 		gearIcon = uiWidget->WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), PCLGearRuntimeIconWidgetName);
 	}
 
-	if (gearIcon)
-	{
-
-		if (UTexture2D* gearTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/SampleViewer/User-Interface/gear_icon.gear_icon")))
-		{
-			gearIcon->SetBrushFromTexture(gearTexture, true);
-		}
-		gearIcon->SetDesiredSizeOverride(PCLGearIconSize);
-		gearIcon->SetColorAndOpacity(FLinearColor::White);
-		gearIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
-		button->SetContent(gearIcon);
-	}
+	UTexture2D* gearTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/SampleViewer/User-Interface/gear_icon.gear_icon"));
+	gearIcon->SetBrushFromTexture(gearTexture, true);
+	gearIcon->SetDesiredSizeOverride(PCLGearIconSize);
+	gearIcon->SetColorAndOpacity(FLinearColor::White);
+	gearIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
+	button->SetContent(gearIcon);
 }
 
 void ConfigurePCLCollapseToggleAppearance(UUserWidget* uiWidget, UButton* collapseButton, UButton* gearButton)
@@ -836,7 +753,6 @@ void APCLController::BeginPlay()
 
 	if (!MapActor)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ArcGISMapActor not found in the level!"));
 		return;
 	}
 
@@ -844,7 +760,6 @@ void APCLController::BeginPlay()
 
 	if (!MapComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ArcGISMapComponent not found on ArcGISMapActor!"));
 		return;
 	}
 
@@ -862,10 +777,6 @@ void APCLController::BeginPlay()
 	{
 		InputManager->OnInputTrigger.AddDynamic(this, &APCLController::OnInputTriggered);
 		InputManager->OnInputEnd.AddDynamic(this, &APCLController::OnInputEnded);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("InputManager not found in the level."));
 	}
 
 	auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -891,7 +802,7 @@ void APCLController::BeginPlay()
 		}
 
 		UIWidget->AddToViewport();
-		UnitDropdown = FindNamedWidget<UComboBoxString>(UIWidget, TEXT("UnitDropDown"), false);
+		UnitDropdown = FindNamedWidget<UComboBoxString>(UIWidget, TEXT("UnitDropDown"));
 		PointSizeSlider = FindNamedWidget<USlider>(UIWidget, TEXT("Slider_PointsSize"));
 		PointsPerInchSlider = FindNamedWidget<USlider>(UIWidget, TEXT("Slider_PointsPerInch"));
 		PointSizeValueText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_PointSizeValue"));
@@ -908,18 +819,15 @@ void APCLController::BeginPlay()
 		ResetFiltersButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_ResetFilters"));
 		SourceUrlTextBox = FindNamedWidget<UEditableTextBox>(UIWidget, TEXT("EditableTextBox_0"));
 		LoadLayerButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Load"));
-		CollapseButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Collapse"), false);
-		GearButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Gear"), false);
+		CollapseButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Collapse"));
+		GearButton = FindNamedWidget<UButton>(UIWidget, TEXT("Button_Gear"));
 		UUserWidget* infoWidget = Cast<UUserWidget>(FindPCLNamedWidget(UIWidget, PCLInfoWidgetName));
 		UUserWidget* infoButtonWidget =
 			infoWidget ? Cast<UUserWidget>(infoWidget->GetWidgetFromName(PCLInfoButtonWidgetName)) : nullptr;
 		InfoButton =
 			infoButtonWidget ? Cast<UButton>(infoButtonWidget->GetWidgetFromName(PCLInfoButtonControlName)) : nullptr;
-		UE_LOG(LogTemp, Display, TEXT("UI_PCL collapse widgets: Button_Collapse=%s Button_Gear=%s"),
-			   CollapseButton ? *CollapseButton->GetClass()->GetName() : TEXT("missing"),
-			   GearButton ? *GearButton->GetClass()->GetName() : TEXT("missing"));
 		ConfigurePCLCollapseToggleAppearance(UIWidget, CollapseButton, GearButton);
-		LayerLoadStatusText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"), false);
+		LayerLoadStatusText = FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"));
 		UIInteractionPanel = FindNamedWidget<UWidget>(UIWidget, TEXT("Background"));
 		BuildDataLoaderUI();
 
@@ -1010,14 +918,7 @@ void APCLController::BeginPlay()
 			GearButton->OnClicked.AddDynamic(this, &APCLController::OnCollapseButtonClicked);
 		}
 
-		if (InfoButton)
-		{
-			InfoButton->OnClicked.AddDynamic(this, &APCLController::OnInfoButtonClicked);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UI_PCL info button binding failed."));
-		}
+		InfoButton->OnClicked.AddDynamic(this, &APCLController::OnInfoButtonClicked);
 
 		UpdateSliderValueTexts();
 		UpdateRendererCheckBoxes();
@@ -1413,31 +1314,16 @@ void APCLController::OnCollapseButtonClicked()
 
 void APCLController::OnInfoButtonClicked()
 {
-
-	if (!UIWidget)
-	{
-		return;
-	}
-
-	if (UWidget* mainPanel = FindPCLNamedWidget(UIWidget, PCLMainPanelWidgetName))
-	{
-		mainPanel->SetVisibility(ESlateVisibility::Hidden);
-	}
+	FindPCLNamedWidget(UIWidget, PCLMainPanelWidgetName)->SetVisibility(ESlateVisibility::Hidden);
 
 	if (LegendPanel)
 	{
 		LegendPanel->SetVisibility(ESlateVisibility::Hidden);
 	}
 
-	if (FBoolProperty* isMenuHiddenProperty =
-			FindFProperty<FBoolProperty>(UIWidget->GetClass(), PCLMenuHiddenPropertyName))
-	{
-		isMenuHiddenProperty->SetPropertyValue_InContainer(UIWidget, true);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UI_PCL property binding failed: IsMenuHidden"));
-	}
+	FBoolProperty* isMenuHiddenProperty =
+		FindFProperty<FBoolProperty>(UIWidget->GetClass(), PCLMenuHiddenPropertyName);
+	isMenuHiddenProperty->SetPropertyValue_InContainer(UIWidget, true);
 }
 
 void APCLController::ConfigurePCLCollapseInitialState()
@@ -1551,7 +1437,6 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 
 	bPCLUICollapsed = bCollapsed;
 	ApplyPCLCollapseToggleVisibility(UIWidget, bPCLUICollapsed);
-	UE_LOG(LogTemp, Display, TEXT("UI_PCL collapse state changed: %s"), bPCLUICollapsed ? TEXT("collapsed") : TEXT("expanded"));
 }
 
 void APCLController::TogglePCLUICollapse()
@@ -1593,10 +1478,6 @@ void APCLController::BuildDataLoaderUI()
 		LayerLoadStatusText->SetVisibility(ESlateVisibility::Hidden);
 		LayerLoadStatusText->SetIsEnabled(true);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("UI_PCL is missing the Text_LayerLoadStatus TextBlock."));
-	}
 
 	if (LoadLayerButton)
 	{
@@ -1633,8 +1514,6 @@ void APCLController::DeferPointCloudLayerLoad(const FString& source, bool bZoomW
 		{
 			LoadLayerButton->SetIsEnabled(true);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("ArcGIS Map was not ready after %.1f seconds; point cloud layer load was cancelled."),
-			   MaxPointCloudLayerLoadRetries * PointCloudLayerLoadRetryInterval);
 		return;
 	}
 
@@ -1699,9 +1578,8 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 	{
 		mapLayers = map->GetLayers();
 	}
-	catch (const Esri::Unreal::ArcGISException& loadError)
+	catch (const Esri::Unreal::ArcGISException&)
 	{
-		UE_LOG(LogTemp, Verbose, TEXT("ArcGIS Map is not ready for point cloud layers: %s"), *loadError.GetMessage());
 		DeferPointCloudLayerLoad(source, bZoomWhenLoaded);
 		return;
 	}
@@ -1739,10 +1617,9 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 	{
 		candidateLayer = UArcGISPointCloudLayer::CreateArcGISPointCloudLayer(source, MapComponent->GetAPIKey());
 	}
-	catch (const Esri::Unreal::ArcGISException& loadError)
+	catch (const Esri::Unreal::ArcGISException&)
 	{
 		SetLayerLoadStatus(false);
-		UE_LOG(LogTemp, Warning, TEXT("Invalid point cloud layer source '%s': %s"), *source, *loadError.GetMessage());
 		return;
 	}
 
@@ -1768,12 +1645,11 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 	TWeakObjectPtr<APCLController> weakThis(this);
 	TWeakObjectPtr<UArcGISPointCloudLayer> weakCandidate(candidateLayer);
-	candidateLayer->APIObject->SetDoneLoading([weakThis, weakCandidate, requestId, bZoomWhenLoaded,
-											   source](Esri::Unreal::ArcGISException& loadError) {
+	candidateLayer->APIObject->SetDoneLoading([weakThis, weakCandidate, requestId,
+											   bZoomWhenLoaded](Esri::Unreal::ArcGISException& loadError) {
 		const bool bHadLoadError = static_cast<bool>(loadError);
-		const FString loadErrorMessage = bHadLoadError ? loadError.GetMessage() : FString();
 
-		AsyncTask(ENamedThreads::GameThread, [weakThis, weakCandidate, requestId, bZoomWhenLoaded, bHadLoadError, loadErrorMessage, source]() {
+		AsyncTask(ENamedThreads::GameThread, [weakThis, weakCandidate, requestId, bZoomWhenLoaded, bHadLoadError]() {
 			auto* controller = weakThis.Get();
 			auto* loadedLayer = weakCandidate.Get();
 
@@ -1814,8 +1690,6 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 				}
 
 				controller->SetLayerLoadStatus(false);
-				UE_LOG(LogTemp, Warning, TEXT("Failed to load point cloud layer from '%s': %s"), *source,
-					   loadErrorMessage.IsEmpty() ? TEXT("Unknown load error") : *loadErrorMessage);
 				return;
 			}
 
@@ -1836,7 +1710,6 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 			controller->PointCloudLayer = loadedLayer;
 			controller->SetLayerLoadStatus(true);
-			UE_LOG(LogTemp, Display, TEXT("Loaded point cloud layer from '%s'."), *source);
 			controller->RefreshAvailablePointCloudAttributes();
 			controller->UpdateRendererCheckBoxes();
 			controller->ApplyPointCloudVisualization();
@@ -1856,14 +1729,6 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 						controller->MapComponent->SetOriginPosition(extentCenter);
 						controller->SpatialReference = extentCenter->GetSpatialReference();
 					}
-					else
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Point cloud layer loaded, but its extent has no center for updating the origin."));
-					}
-				}
-				else
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Point cloud layer loaded, but it has no extent for updating the origin."));
 				}
 
 				APlayerController* playerController = UGameplayStatics::GetPlayerController(controller->GetWorld(), 0);
@@ -1879,9 +1744,9 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 					viewCharacter->GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 				}
 
-				if (!viewActor || !controller->MapComponent->ZoomToExtent(viewActor, layerExtent))
+				if (viewActor)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Point cloud layer loaded, but zoom to layer failed."));
+					controller->MapComponent->ZoomToExtent(viewActor, layerExtent);
 				}
 			}
 		});
@@ -1892,12 +1757,6 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 void APCLController::ApplyPointCloudVisualization()
 {
-
-	if (!PointCloudLayer)
-	{
-		return;
-	}
-
 	if (!PointCloudLayer || !PointCloudLayer->APIObject)
 	{
 		return;
@@ -2405,7 +2264,6 @@ void APCLController::BuildLegendUI()
 
 	if (!rootCanvas)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UI_PCL legend binding failed: root widget is not a canvas panel."));
 		return;
 	}
 
