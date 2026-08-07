@@ -298,6 +298,9 @@ private:
 	void OnInfoButtonClicked();
 
 	void SetAllFilterOptionsChecked(const TArray<TObjectPtr<UCheckBox>>& filterCheckBoxes, bool bIsChecked);
+	void InitializePCLUI();
+	void ShutdownPCLUI();
+	void UpdatePCLUI();
 	void CreatePointCloudLayer(const FString& source, bool bZoomWhenLoaded);
 	void BuildDataLoaderUI();
 	void DeferPointCloudLayerLoad(const FString& source, bool bZoomWhenLoaded);
