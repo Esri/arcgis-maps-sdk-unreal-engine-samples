@@ -771,10 +771,18 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 	}
 
 	bPCLUICollapsed = bCollapsed;
+
+	if (bPCLUICollapsed)
+	{
+		FBoolProperty* isHiddenProperty = FindFProperty<FBoolProperty>(UIWidget->GetClass(), TEXT("isHidden"));
+
+		if (isHiddenProperty)
+		{
+			isHiddenProperty->SetPropertyValue_InContainer(UIWidget, true);
+		}
+	}
+
 	PCLUIPrivate::ApplyPCLCollapseToggleVisibility(UIWidget, bPCLUICollapsed);
-	// UI_PCL.isHidden belongs to the Instructions animation state. The gear toggle only changes
-	// temporary widget visibility, so changing isHidden here would make the next Info click play
-	// the animation in the wrong direction.
 }
 
 void APCLController::TogglePCLUICollapse()
