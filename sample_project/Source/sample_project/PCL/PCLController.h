@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
@@ -24,6 +23,7 @@
 #include "Components/PanelWidget.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
+#include "CoreMinimal.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
@@ -68,16 +68,13 @@ class SAMPLE_PROJECT_API APCLController : public AActor
 	GENERATED_BODY()
 
 public:
-
 	APCLController();
 
 protected:
-
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type endPlayReason) override;
 
 public:
-
 	virtual void Tick(float deltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "PCL|Visualize")

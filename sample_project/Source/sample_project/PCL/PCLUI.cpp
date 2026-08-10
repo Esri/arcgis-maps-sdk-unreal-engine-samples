@@ -37,13 +37,11 @@ constexpr float PCLTabUIScale = 2.0f / 3.0f;
 constexpr float CustomizeTabHeightOffset = 88.0f;
 constexpr float VisualizeTabHeightOffset = 194.0f;
 constexpr float FilterTabHeightOffset = 430.0f;
-const FString PointCloudLayerSource =
-	TEXT("https://tiles.arcgis.com/tiles/V6ZHFr6zdgNZuVG0/arcgis/rest/services/BARNEGAT_BAY_LiDAR_UTM/SceneServer");
-const FName ExpandableTabWidgetNames[] = {TEXT("Background"),
-										  TEXT("Switcher_PCLTabs"),
-										  TEXT("Panel_VisualizeContent")};
+const FString PointCloudLayerSource = TEXT("https://tiles.arcgis.com/tiles/V6ZHFr6zdgNZuVG0/arcgis/rest/services/BARNEGAT_BAY_LiDAR_UTM/SceneServer");
+const FName ExpandableTabWidgetNames[] = {TEXT("Background"), TEXT("Switcher_PCLTabs"), TEXT("Panel_VisualizeContent")};
 const FName PCLRootCanvasWidgetName(TEXT("CanvasPanel_37"));
 const FName PCLMainPanelWidgetName(TEXT("Panel_PCLMain"));
+const FName PCLInstructionPanelWidgetName(TEXT("InstructionPanel"));
 const FName PCLCollapseButtonWidgetName(TEXT("Button_Collapse"));
 const FName PCLGearIconWidgetName(TEXT("Button_Gear"));
 const FName PCLGearRuntimeIconWidgetName(TEXT("PCL_GearIcon_Runtime"));
@@ -61,11 +59,10 @@ struct FRendererWidgetNames
 	FName Row;
 };
 
-const FRendererWidgetNames RendererWidgetNames[] = {
-	{EPCLRendererChoice::RGB, TEXT("Row_Checkbox_Renderer_RGB")},
-	{EPCLRendererChoice::Class, TEXT("Row_Checkbox_Renderer_Class")},
-	{EPCLRendererChoice::Elevation, TEXT("Row_Checkbox_Renderer_Elevation")},
-	{EPCLRendererChoice::Intensity, TEXT("Row_Checkbox_Renderer_Intensity")}};
+const FRendererWidgetNames RendererWidgetNames[] = {{EPCLRendererChoice::RGB, TEXT("Row_Checkbox_Renderer_RGB")},
+													{EPCLRendererChoice::Class, TEXT("Row_Checkbox_Renderer_Class")},
+													{EPCLRendererChoice::Elevation, TEXT("Row_Checkbox_Renderer_Elevation")},
+													{EPCLRendererChoice::Intensity, TEXT("Row_Checkbox_Renderer_Intensity")}};
 
 struct FGradientLegendInfo
 {
@@ -74,14 +71,11 @@ struct FGradientLegendInfo
 	TArray<FLinearColor> Colors;
 };
 
-const FGradientLegendInfo ElevationLegendInfo = {
-	TEXT("Elevation"),
-	{TEXT("> 3.5"), TEXT("1.5"), TEXT("< -1.5")},
-	{FLinearColor(0.95f, 0.12f, 0.08f),
-	 FLinearColor(1.0f, 0.9f, 0.2f),
-	 FLinearColor(0.35f, 0.95f, 0.48f),
-	 FLinearColor(0.25f, 0.82f, 1.0f),
-	 FLinearColor(0.22f, 0.12f, 1.0f)}};
+const FGradientLegendInfo ElevationLegendInfo = {TEXT("Elevation"),
+												 {TEXT("> 3.5"), TEXT("1.5"), TEXT("< -1.5")},
+												 {FLinearColor(0.95f, 0.12f, 0.08f), FLinearColor(1.0f, 0.9f, 0.2f),
+												  FLinearColor(0.35f, 0.95f, 0.48f), FLinearColor(0.25f, 0.82f, 1.0f),
+												  FLinearColor(0.22f, 0.12f, 1.0f)}};
 const FGradientLegendInfo IntensityLegendInfo = {
 	TEXT("Intensity"),
 	{TEXT("> 65,680"), TEXT("38,032"), TEXT("< 10,385")},
@@ -90,10 +84,8 @@ const int32 VisibleLegendClassCodes[] = {1, 2, 3, 5, 6, 7, 9};
 
 const FRendererWidgetNames* FindRendererWidgetNames(EPCLRendererChoice rendererChoice)
 {
-
 	for (const FRendererWidgetNames& names : RendererWidgetNames)
 	{
-
 		if (names.RendererChoice == rendererChoice)
 		{
 			return &names;
@@ -121,30 +113,13 @@ struct FStandardClassColor
 	uint8 Blue;
 };
 
-const FStandardClassColor StandardClassColors[] = {
-	{128, 128, 128},
-	{190, 137, 12},
-	{219, 255, 104},
-	{246, 44, 28},
-	{244, 102, 32},
-	{199, 24, 255},
-	{255, 255, 112},
-	{152, 152, 152},
-	{255, 186, 87},
-	{246, 244, 22},
-	{209, 98, 224},
-	{218, 218, 218},
-	{84, 167, 255},
-	{255, 121, 198},
-	{255, 160, 67},
-	{255, 92, 92},
-	{136, 255, 218},
-	{141, 108, 255},
-	{80, 80, 80}};
+const FStandardClassColor StandardClassColors[] = {{128, 128, 128}, {190, 137, 12},	 {219, 255, 104}, {246, 44, 28},   {244, 102, 32},
+												   {199, 24, 255},	{255, 255, 112}, {152, 152, 152}, {255, 186, 87},  {246, 244, 22},
+												   {209, 98, 224},	{218, 218, 218}, {84, 167, 255},  {255, 121, 198}, {255, 160, 67},
+												   {255, 92, 92},	{136, 255, 218}, {141, 108, 255}, {80, 80, 80}};
 
 FStandardClassColor GetStandardClassColor(int32 classValue)
 {
-
 	if (classValue >= 0 && classValue < UE_ARRAY_COUNT(StandardClassColors))
 	{
 		return StandardClassColors[classValue];
@@ -171,7 +146,6 @@ UTexture2D* CreateLegendCircleTexture(UObject* outer, const FLinearColor& color)
 
 	for (int32 y = 0; y < textureSize; ++y)
 	{
-
 		for (int32 x = 0; x < textureSize; ++x)
 		{
 			const float dx = x - center;
@@ -187,7 +161,6 @@ UTexture2D* CreateLegendCircleTexture(UObject* outer, const FLinearColor& color)
 
 FLinearColor EvaluateGradientColor(const TArray<FLinearColor>& colors, float t)
 {
-
 	if (colors.IsEmpty())
 	{
 		return FLinearColor::White;
@@ -236,10 +209,8 @@ UTexture2D* CreateLegendGradientTexture(UObject* outer, const TArray<FLinearColo
 
 bool AreAllCheckBoxesChecked(const TArray<TObjectPtr<UCheckBox>>& checkBoxes)
 {
-
 	for (const TObjectPtr<UCheckBox>& checkBox : checkBoxes)
 	{
-
 		if (!checkBox || !checkBox->IsChecked())
 		{
 			return false;
@@ -251,10 +222,8 @@ bool AreAllCheckBoxesChecked(const TArray<TObjectPtr<UCheckBox>>& checkBoxes)
 
 void SetCheckBoxesChecked(const TArray<TObjectPtr<UCheckBox>>& checkBoxes, bool bChecked)
 {
-
 	for (const TObjectPtr<UCheckBox>& checkBox : checkBoxes)
 	{
-
 		if (checkBox)
 		{
 			checkBox->SetIsChecked(bChecked);
@@ -293,7 +262,6 @@ UWidget* FindPCLNamedWidget(UUserWidget* widget, const FName& widgetName)
 
 bool IsPCLCollapsePersistentWidget(const UWidget* widget)
 {
-
 	if (!widget)
 	{
 		return false;
@@ -305,7 +273,6 @@ bool IsPCLCollapsePersistentWidget(const UWidget* widget)
 
 bool IsWidgetUnderCursor(const UWidget* widget)
 {
-
 	if (!widget || !widget->IsVisible() || !FSlateApplication::IsInitialized())
 	{
 		return false;
@@ -372,14 +339,11 @@ void ConfigurePCLCollapseToggleAppearance(UUserWidget* uiWidget, UButton* collap
 
 void ApplyPCLCollapseToggleVisibility(UUserWidget* uiWidget, bool bCollapsed)
 {
-	FindPCLNamedWidget(uiWidget, PCLCollapseButtonWidgetName)
-		->SetVisibility(bCollapsed ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
-	FindPCLNamedWidget(uiWidget, PCLGearIconWidgetName)
-		->SetVisibility(bCollapsed ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	FindPCLNamedWidget(uiWidget, PCLCollapseButtonWidgetName)->SetVisibility(bCollapsed ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+	FindPCLNamedWidget(uiWidget, PCLGearIconWidgetName)->SetVisibility(bCollapsed ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }
 
-}
-
+} // namespace PCLUIPrivate
 
 void APCLController::InitializePCLUI()
 {
@@ -410,8 +374,7 @@ void APCLController::InitializePCLUI()
 		PointsPerInchSlider = PCLUIPrivate::FindNamedWidget<USlider>(UIWidget, TEXT("Slider_PointsPerInch"));
 		PointSizeValueText = PCLUIPrivate::FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_PointSizeValue"));
 		PointsPerInchValueText = PCLUIPrivate::FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_PointsPerInchValue"));
-		UCheckBox* colorModulationCheckBox =
-			PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_ColorModulation"));
+		UCheckBox* colorModulationCheckBox = PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_ColorModulation"));
 		RGBRendererCheckBox = PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_Renderer_RGB"));
 		ClassRendererCheckBox = PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_Renderer_Class"));
 		ElevationRendererCheckBox = PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_Renderer_Elevation"));
@@ -429,8 +392,7 @@ void APCLController::InitializePCLUI()
 		UUserWidget* infoWidget = Cast<UUserWidget>(PCLUIPrivate::FindPCLNamedWidget(UIWidget, PCLUIPrivate::PCLInfoWidgetName));
 		UUserWidget* infoButtonWidget =
 			infoWidget ? Cast<UUserWidget>(infoWidget->GetWidgetFromName(PCLUIPrivate::PCLInfoButtonWidgetName)) : nullptr;
-		UButton* infoButton =
-			infoButtonWidget ? Cast<UButton>(infoButtonWidget->GetWidgetFromName(PCLUIPrivate::PCLInfoButtonControlName)) : nullptr;
+		UButton* infoButton = infoButtonWidget ? Cast<UButton>(infoButtonWidget->GetWidgetFromName(PCLUIPrivate::PCLInfoButtonControlName)) : nullptr;
 		PCLUIPrivate::ConfigurePCLCollapseToggleAppearance(UIWidget, collapseButton, gearButton);
 		LayerLoadStatusText = PCLUIPrivate::FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LayerLoadStatus"));
 		UIInteractionPanel = PCLUIPrivate::FindNamedWidget<UWidget>(UIWidget, TEXT("Background"));
@@ -440,14 +402,11 @@ void APCLController::InitializePCLUI()
 		PointSizeSlider->SetMinValue(PCLUIPrivate::MinPointSize);
 		PointSizeSlider->SetMaxValue(PCLUIPrivate::MaxPointSize);
 		PointSizeSlider->SetStepSize(1.0f / static_cast<float>(PCLUIPrivate::MaxPointSize - PCLUIPrivate::MinPointSize));
-		PointSizeSlider->SetValue(FMath::Clamp(
-			PointSizeSlider->GetValue(),
-			static_cast<float>(PCLUIPrivate::MinPointSize),
-			static_cast<float>(PCLUIPrivate::MaxPointSize)));
+		PointSizeSlider->SetValue(FMath::Clamp(PointSizeSlider->GetValue(), static_cast<float>(PCLUIPrivate::MinPointSize),
+											   static_cast<float>(PCLUIPrivate::MaxPointSize)));
 		PointSizeSlider->OnValueChanged.AddDynamic(this, &APCLController::OnPointSizeChanged);
 		PointsPerInchSlider->SetMinValue(PCLUIPrivate::MinPointsPerInch);
-		PointsPerInchSlider->SetValue(
-			FMath::Max(PointsPerInchSlider->GetValue(), static_cast<float>(PCLUIPrivate::MinPointsPerInch)));
+		PointsPerInchSlider->SetValue(FMath::Max(PointsPerInchSlider->GetValue(), static_cast<float>(PCLUIPrivate::MinPointsPerInch)));
 		PointsPerInchSlider->OnValueChanged.AddDynamic(this, &APCLController::OnPointsPerInchChanged);
 		colorModulationCheckBox->SetIsChecked(bColorModulationEnabled);
 
@@ -463,15 +422,14 @@ void APCLController::InitializePCLUI()
 			PCLUIPrivate::BindCheckStateChanged(binding.Key, this, binding.Value);
 		}
 
-		const TPair<UButton*, FName> buttonBindings[] = {
-			{customizeTabButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnCustomizeTabClicked)},
-			{filterTabButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnFilterTabClicked)},
-			{visualizeTabButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnVisualizeTabClicked)},
-			{resetFiltersButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnResetFiltersClicked)},
-			{LoadLayerButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnLoadPointCloudLayerClicked)},
-			{collapseButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnCollapseButtonClicked)},
-			{gearButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnCollapseButtonClicked)},
-			{infoButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnInfoButtonClicked)}};
+		const TPair<UButton*, FName> buttonBindings[] = {{customizeTabButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnCustomizeTabClicked)},
+														 {filterTabButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnFilterTabClicked)},
+														 {visualizeTabButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnVisualizeTabClicked)},
+														 {resetFiltersButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnResetFiltersClicked)},
+														 {LoadLayerButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnLoadPointCloudLayerClicked)},
+														 {collapseButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnCollapseButtonClicked)},
+														 {gearButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnCollapseButtonClicked)},
+														 {infoButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnInfoButtonClicked)}};
 
 		for (const TPair<UButton*, FName>& binding : buttonBindings)
 		{
@@ -504,7 +462,6 @@ void APCLController::UpdatePCLUI()
 
 void APCLController::SyncLegendVisibilityWithMainPanel() const
 {
-
 	if (!UIWidget || !LegendPanel)
 	{
 		return;
@@ -517,8 +474,7 @@ void APCLController::SyncLegendVisibilityWithMainPanel() const
 		return;
 	}
 
-	const bool bShouldShowLegend =
-		CurrentTabLayout == EPCLTabLayout::Visualize && !bPCLUICollapsed && mainPanel->IsVisible();
+	const bool bShouldShowLegend = CurrentTabLayout == EPCLTabLayout::Visualize && !bPCLUICollapsed && mainPanel->IsVisible();
 	const ESlateVisibility legendVisibility = bShouldShowLegend ? ESlateVisibility::Visible : ESlateVisibility::Hidden;
 
 	if (LegendPanel->GetVisibility() != legendVisibility)
@@ -551,7 +507,6 @@ void APCLController::UpdateMapInputForUIHover()
 
 void APCLController::SetMapInputBlockedByUI(bool bBlocked)
 {
-
 	if (bMapInputBlockedByUI == bBlocked)
 	{
 		return;
@@ -616,7 +571,6 @@ void APCLController::OnIntensityRendererCheckStateChanged(bool bIsChecked)
 
 void APCLController::HandleRendererCheckStateChanged(bool bIsChecked, EPCLRendererChoice rendererChoice)
 {
-
 	if (bUpdatingRendererCheckBoxes)
 	{
 		return;
@@ -651,7 +605,6 @@ void APCLController::OnVisualizeTabClicked()
 
 void APCLController::OnFilterCheckStateChanged(bool bIsChecked)
 {
-
 	if (bUpdatingFilterCheckBoxes)
 	{
 		return;
@@ -684,7 +637,6 @@ void APCLController::OnReturnsAllFilterCheckStateChanged(bool bIsChecked)
 
 void APCLController::SetAllFilterOptionsChecked(const TArray<TObjectPtr<UCheckBox>>& filterCheckBoxes, bool bIsChecked)
 {
-
 	if (bUpdatingFilterCheckBoxes)
 	{
 		return;
@@ -729,6 +681,14 @@ void APCLController::OnCollapseButtonClicked()
 
 void APCLController::OnInfoButtonClicked()
 {
+	// The gear toggle can temporarily collapse InstructionPanel outside of its Blueprint animation.
+	// Restore Slate visibility so the existing HideInstructions animation can show or hide it again.
+
+	if (UWidget* instructionPanel = PCLUIPrivate::FindPCLNamedWidget(UIWidget, PCLUIPrivate::PCLInstructionPanelWidgetName))
+	{
+		instructionPanel->SetVisibility(ESlateVisibility::Visible);
+	}
+
 	PCLUIPrivate::FindPCLNamedWidget(UIWidget, PCLUIPrivate::PCLMainPanelWidgetName)->SetVisibility(ESlateVisibility::Hidden);
 
 	if (LegendPanel)
@@ -736,8 +696,7 @@ void APCLController::OnInfoButtonClicked()
 		LegendPanel->SetVisibility(ESlateVisibility::Hidden);
 	}
 
-	FBoolProperty* isMenuHiddenProperty =
-		FindFProperty<FBoolProperty>(UIWidget->GetClass(), PCLUIPrivate::PCLMenuHiddenPropertyName);
+	FBoolProperty* isMenuHiddenProperty = FindFProperty<FBoolProperty>(UIWidget->GetClass(), PCLUIPrivate::PCLMenuHiddenPropertyName);
 	isMenuHiddenProperty->SetPropertyValue_InContainer(UIWidget, true);
 }
 
@@ -750,7 +709,6 @@ void APCLController::ConfigurePCLCollapseInitialState()
 
 void APCLController::SetPCLUICollapsed(bool bCollapsed)
 {
-
 	if (!UIWidget)
 	{
 		return;
@@ -771,10 +729,8 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 
 		if (child && child->GetFName() == PCLUIPrivate::PCLMainPanelWidgetName)
 		{
-
 			if (const UPanelWidget* mainPanel = Cast<UPanelWidget>(child))
 			{
-
 				for (int32 mainChildIndex = 0; mainChildIndex < mainPanel->GetChildrenCount(); ++mainChildIndex)
 				{
 					collapsibleWidgets.Add(mainPanel->GetChildAt(mainChildIndex));
@@ -793,7 +749,6 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 
 	for (UWidget* child : collapsibleWidgets)
 	{
-
 		if (!child || PCLUIPrivate::IsPCLCollapsePersistentWidget(child))
 		{
 			continue;
@@ -817,6 +772,9 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 
 	bPCLUICollapsed = bCollapsed;
 	PCLUIPrivate::ApplyPCLCollapseToggleVisibility(UIWidget, bPCLUICollapsed);
+	// UI_PCL.isHidden belongs to the Instructions animation state. The gear toggle only changes
+	// temporary widget visibility, so changing isHidden here would make the next Info click play
+	// the animation in the wrong direction.
 }
 
 void APCLController::TogglePCLUICollapse()
@@ -874,11 +832,10 @@ void APCLController::UpdateRendererCheckBoxes()
 		}
 	}
 
-	const TPair<UCheckBox*, EPCLRendererChoice> rendererCheckBoxes[] = {
-		{RGBRendererCheckBox, EPCLRendererChoice::RGB},
-		{ClassRendererCheckBox, EPCLRendererChoice::Class},
-		{ElevationRendererCheckBox, EPCLRendererChoice::Elevation},
-		{IntensityRendererCheckBox, EPCLRendererChoice::Intensity}};
+	const TPair<UCheckBox*, EPCLRendererChoice> rendererCheckBoxes[] = {{RGBRendererCheckBox, EPCLRendererChoice::RGB},
+																		{ClassRendererCheckBox, EPCLRendererChoice::Class},
+																		{ElevationRendererCheckBox, EPCLRendererChoice::Elevation},
+																		{IntensityRendererCheckBox, EPCLRendererChoice::Intensity}};
 
 	for (const TPair<UCheckBox*, EPCLRendererChoice>& rendererCheckBox : rendererCheckBoxes)
 	{
@@ -924,8 +881,7 @@ void APCLController::BuildFilterTabUI()
 	UIWidget->GetWidgetFromName(TEXT("Panel_FilterClassSection"))
 		->SetVisibility(bHasClassCodeFilter ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	UIWidget->GetWidgetFromName(TEXT("SizeBox_FilterSectionDivider"))
-		->SetVisibility(
-			bHasClassCodeFilter && bHasReturnsFilter ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+		->SetVisibility(bHasClassCodeFilter && bHasReturnsFilter ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	UIWidget->GetWidgetFromName(TEXT("Panel_FilterReturnsSection"))
 		->SetVisibility(bHasReturnsFilter ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 
@@ -937,17 +893,13 @@ void APCLController::BuildFilterTabUI()
 
 	if (bHasClassCodeFilter)
 	{
-		ClassAllCheckBox =
-			PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_FilterClassAll"));
-		PCLUIPrivate::BindCheckStateChanged(
-			ClassAllCheckBox, this, GET_FUNCTION_NAME_CHECKED(APCLController, OnClassAllFilterCheckStateChanged));
+		ClassAllCheckBox = PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_FilterClassAll"));
+		PCLUIPrivate::BindCheckStateChanged(ClassAllCheckBox, this, GET_FUNCTION_NAME_CHECKED(APCLController, OnClassAllFilterCheckStateChanged));
 
 		for (int32 classCode = 0; classCode <= 18; ++classCode)
 		{
-			UCheckBox* checkBox = Cast<UCheckBox>(
-				UIWidget->GetWidgetFromName(FName(*FString::Printf(TEXT("Checkbox_FilterClass_%d"), classCode))));
-			PCLUIPrivate::BindCheckStateChanged(
-				checkBox, this, GET_FUNCTION_NAME_CHECKED(APCLController, OnFilterCheckStateChanged));
+			UCheckBox* checkBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(FName(*FString::Printf(TEXT("Checkbox_FilterClass_%d"), classCode))));
+			PCLUIPrivate::BindCheckStateChanged(checkBox, this, GET_FUNCTION_NAME_CHECKED(APCLController, OnFilterCheckStateChanged));
 			ClassFilterCheckBoxes.Add(checkBox);
 			ClassFilterValues.Add(classCode);
 		}
@@ -955,17 +907,13 @@ void APCLController::BuildFilterTabUI()
 
 	if (bHasReturnsFilter)
 	{
-		ReturnsAllCheckBox =
-			PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_FilterReturnsAll"));
-		PCLUIPrivate::BindCheckStateChanged(
-			ReturnsAllCheckBox, this, GET_FUNCTION_NAME_CHECKED(APCLController, OnReturnsAllFilterCheckStateChanged));
+		ReturnsAllCheckBox = PCLUIPrivate::FindNamedWidget<UCheckBox>(UIWidget, TEXT("Checkbox_FilterReturnsAll"));
+		PCLUIPrivate::BindCheckStateChanged(ReturnsAllCheckBox, this, GET_FUNCTION_NAME_CHECKED(APCLController, OnReturnsAllFilterCheckStateChanged));
 
 		for (int32 index = 0; index < PCLUIPrivate::FilterReturnOptionCount; ++index)
 		{
-			UCheckBox* checkBox = Cast<UCheckBox>(
-				UIWidget->GetWidgetFromName(FName(*FString::Printf(TEXT("Checkbox_FilterReturn_%d"), index))));
-			PCLUIPrivate::BindCheckStateChanged(
-				checkBox, this, GET_FUNCTION_NAME_CHECKED(APCLController, OnFilterCheckStateChanged));
+			UCheckBox* checkBox = Cast<UCheckBox>(UIWidget->GetWidgetFromName(FName(*FString::Printf(TEXT("Checkbox_FilterReturn_%d"), index))));
+			PCLUIPrivate::BindCheckStateChanged(checkBox, this, GET_FUNCTION_NAME_CHECKED(APCLController, OnFilterCheckStateChanged));
 			ReturnsFilterCheckBoxes.Add(checkBox);
 		}
 	}
@@ -982,10 +930,8 @@ void APCLController::BuildLegendUI()
 	}
 
 	const bool bCompact = CurrentRendererChoice == EPCLRendererChoice::RGB;
-	UIWidget->GetWidgetFromName(TEXT("Panel_LegendCompact"))
-		->SetVisibility(bCompact ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-	UIWidget->GetWidgetFromName(TEXT("Panel_LegendExpanded"))
-		->SetVisibility(bCompact ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+	UIWidget->GetWidgetFromName(TEXT("Panel_LegendCompact"))->SetVisibility(bCompact ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	UIWidget->GetWidgetFromName(TEXT("Panel_LegendExpanded"))->SetVisibility(bCompact ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
 
 	if (LegendTextures.Num() != UE_ARRAY_COUNT(PCLUIPrivate::VisibleLegendClassCodes) + 2)
 	{
@@ -993,24 +939,17 @@ void APCLController::BuildLegendUI()
 
 		for (int32 classCode : PCLUIPrivate::VisibleLegendClassCodes)
 		{
-			const PCLUIPrivate::FStandardClassColor classColorComponents =
-				PCLUIPrivate::GetStandardClassColor(classCode);
-			const FLinearColor classColor(
-				classColorComponents.Red / 255.0f,
-				classColorComponents.Green / 255.0f,
-				classColorComponents.Blue / 255.0f,
-				1.0f);
+			const PCLUIPrivate::FStandardClassColor classColorComponents = PCLUIPrivate::GetStandardClassColor(classCode);
+			const FLinearColor classColor(classColorComponents.Red / 255.0f, classColorComponents.Green / 255.0f, classColorComponents.Blue / 255.0f,
+										  1.0f);
 			UTexture2D* circleTexture = PCLUIPrivate::CreateLegendCircleTexture(UIWidget, classColor);
 			LegendTextures.Add(circleTexture);
-			UImage* swatch = Cast<UImage>(
-				UIWidget->GetWidgetFromName(FName(*FString::Printf(TEXT("Image_LegendClassSwatch_%d"), classCode))));
+			UImage* swatch = Cast<UImage>(UIWidget->GetWidgetFromName(FName(*FString::Printf(TEXT("Image_LegendClassSwatch_%d"), classCode))));
 			swatch->SetBrushFromTexture(circleTexture, true);
 		}
 
-		LegendTextures.Add(
-			PCLUIPrivate::CreateLegendGradientTexture(UIWidget, PCLUIPrivate::ElevationLegendInfo.Colors));
-		LegendTextures.Add(
-			PCLUIPrivate::CreateLegendGradientTexture(UIWidget, PCLUIPrivate::IntensityLegendInfo.Colors));
+		LegendTextures.Add(PCLUIPrivate::CreateLegendGradientTexture(UIWidget, PCLUIPrivate::ElevationLegendInfo.Colors));
+		LegendTextures.Add(PCLUIPrivate::CreateLegendGradientTexture(UIWidget, PCLUIPrivate::IntensityLegendInfo.Colors));
 	}
 
 	if (bCompact)
@@ -1026,31 +965,25 @@ void APCLController::BuildLegendUI()
 		legendTitle = TEXT("Point cloud layer");
 	}
 
-	PCLUIPrivate::FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LegendTitle"))
-		->SetText(FText::FromString(legendTitle));
+	PCLUIPrivate::FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LegendTitle"))->SetText(FText::FromString(legendTitle));
 	const bool bClassLegend = CurrentRendererChoice == EPCLRendererChoice::Class;
-	UIWidget->GetWidgetFromName(TEXT("Panel_LegendClass"))
-		->SetVisibility(bClassLegend ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-	UIWidget->GetWidgetFromName(TEXT("Panel_LegendGradient"))
-		->SetVisibility(bClassLegend ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+	UIWidget->GetWidgetFromName(TEXT("Panel_LegendClass"))->SetVisibility(bClassLegend ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	UIWidget->GetWidgetFromName(TEXT("Panel_LegendGradient"))->SetVisibility(bClassLegend ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
 
 	if (!bClassLegend)
 	{
 		const bool bElevationLegend = CurrentRendererChoice == EPCLRendererChoice::Elevation;
 		const PCLUIPrivate::FGradientLegendInfo& legendInfo =
 			bElevationLegend ? PCLUIPrivate::ElevationLegendInfo : PCLUIPrivate::IntensityLegendInfo;
-		PCLUIPrivate::FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LegendGradientHeading"))
-			->SetText(FText::FromString(legendInfo.Heading));
+		PCLUIPrivate::FindNamedWidget<UTextBlock>(UIWidget, TEXT("Text_LegendGradientHeading"))->SetText(FText::FromString(legendInfo.Heading));
 
 		for (int32 index = 0; index < UE_ARRAY_COUNT(legendInfo.Labels); ++index)
 		{
-			UTextBlock* label = Cast<UTextBlock>(
-				UIWidget->GetWidgetFromName(FName(*FString::Printf(TEXT("Text_LegendGradientLabel_%d"), index))));
+			UTextBlock* label = Cast<UTextBlock>(UIWidget->GetWidgetFromName(FName(*FString::Printf(TEXT("Text_LegendGradientLabel_%d"), index))));
 			label->SetText(FText::FromString(legendInfo.Labels[index]));
 		}
 
-		const int32 gradientTextureIndex =
-			UE_ARRAY_COUNT(PCLUIPrivate::VisibleLegendClassCodes) + (bElevationLegend ? 0 : 1);
+		const int32 gradientTextureIndex = UE_ARRAY_COUNT(PCLUIPrivate::VisibleLegendClassCodes) + (bElevationLegend ? 0 : 1);
 		PCLUIPrivate::FindNamedWidget<UImage>(UIWidget, TEXT("Image_LegendGradient"))
 			->SetBrushFromTexture(LegendTextures[gradientTextureIndex], true);
 	}

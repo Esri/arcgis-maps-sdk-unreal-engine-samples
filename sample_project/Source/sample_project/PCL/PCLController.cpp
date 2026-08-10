@@ -55,8 +55,7 @@ constexpr double IntensityMid = 38032.0;
 constexpr double IntensityHigh = 65680.0;
 constexpr float PointCloudLayerLoadRetryInterval = 0.25f;
 constexpr int32 MaxPointCloudLayerLoadRetries = 40;
-const FString PointCloudLayerSource =
-	TEXT("https://tiles.arcgis.com/tiles/V6ZHFr6zdgNZuVG0/arcgis/rest/services/BARNEGAT_BAY_LiDAR_UTM/SceneServer");
+const FString PointCloudLayerSource = TEXT("https://tiles.arcgis.com/tiles/V6ZHFr6zdgNZuVG0/arcgis/rest/services/BARNEGAT_BAY_LiDAR_UTM/SceneServer");
 const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType FilterReturnValues[] = {
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::FirstOfMany,
 	Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType::Last,
@@ -91,7 +90,6 @@ bool IsRGBAttribute(const Esri::GameEngine::Layers::PointCloud::ArcGISPointCloud
 
 Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer GetLoadedRenderer(UArcGISPointCloudLayer* pointCloudLayer)
 {
-
 	if (!pointCloudLayer || !pointCloudLayer->APIObject)
 	{
 		return Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudRenderer(nullptr);
@@ -213,7 +211,6 @@ int32 CountSelectedOptions(const TArray<TObjectPtr<UCheckBox>>& checkBoxes)
 
 	for (const TObjectPtr<UCheckBox>& checkBox : checkBoxes)
 	{
-
 		if (checkBox && checkBox->IsChecked())
 		{
 			++selectedOptionCount;
@@ -237,7 +234,6 @@ void AddSelectedPointCloudFilter(const TArray<TObjectPtr<UCheckBox>>& checkBoxes
 
 	for (int32 index = 0; index < optionLimit; ++index)
 	{
-
 		if (checkBoxes[index] && checkBoxes[index]->IsChecked())
 		{
 			activeValues->Add(getValue(index));
@@ -250,8 +246,7 @@ void AddSelectedPointCloudFilter(const TArray<TObjectPtr<UCheckBox>>& checkBoxes
 	baseFilter.SetHandle(nullptr);
 }
 
-}
-
+} // namespace PCLControllerPrivate
 
 APCLController::APCLController()
 {
@@ -324,7 +319,8 @@ void APCLController::OnPointSizeChanged(float value)
 	if (renderer)
 	{
 		Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFixedSizeAlgorithm sizeAlgorithm(
-			FMath::Clamp(static_cast<double>(value), PCLControllerPrivate::MinPointSize, PCLControllerPrivate::MaxPointSize), Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
+			FMath::Clamp(static_cast<double>(value), PCLControllerPrivate::MinPointSize, PCLControllerPrivate::MaxPointSize),
+			Esri::GameEngine::Map::Symbology::ArcGISSymbolSizeUnits::DIPs);
 		renderer.SetSizeAlgorithm(sizeAlgorithm);
 	}
 }
@@ -343,7 +339,6 @@ void APCLController::OnPointsPerInchChanged(float value)
 
 void APCLController::SetColorModulationEnabled(bool bEnabled)
 {
-
 	if (bColorModulationEnabled == bEnabled)
 	{
 		return;
@@ -422,7 +417,6 @@ void APCLController::DeferPointCloudLayerLoad(const FString& source, bool bZoomW
 
 void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhenLoaded)
 {
-
 	if (!PCLControllerPrivate::IsValidURL(source))
 	{
 		SetLayerLoadStatus(false);
@@ -472,7 +466,6 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 		for (int64 index = mapLayers->GetSize() - 1; index >= 0; --index)
 		{
-
 			if (UArcGISLayer* existingLayer = mapLayers->At(index); existingLayer && existingLayer->GetInstanceId() == pendingLayerId)
 			{
 				mapLayers->Remove(index);
@@ -515,8 +508,7 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 	TWeakObjectPtr<APCLController> weakThis(this);
 	TWeakObjectPtr<UArcGISPointCloudLayer> weakCandidate(candidateLayer);
-	candidateLayer->APIObject->SetDoneLoading([weakThis, weakCandidate, requestId,
-											   bZoomWhenLoaded](Esri::Unreal::ArcGISException& loadError) {
+	candidateLayer->APIObject->SetDoneLoading([weakThis, weakCandidate, requestId, bZoomWhenLoaded](Esri::Unreal::ArcGISException& loadError) {
 		const bool bHadLoadError = static_cast<bool>(loadError);
 
 		AsyncTask(ENamedThreads::GameThread, [weakThis, weakCandidate, requestId, bZoomWhenLoaded, bHadLoadError]() {
@@ -543,14 +535,12 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 			if (!bLoaded)
 			{
-
 				if (currentLayers)
 				{
 					const int64 loadedLayerId = loadedLayer->GetInstanceId();
 
 					for (int64 index = currentLayers->GetSize() - 1; index >= 0; --index)
 					{
-
 						if (UArcGISLayer* existingLayer = currentLayers->At(index); existingLayer && existingLayer->GetInstanceId() == loadedLayerId)
 						{
 							currentLayers->Remove(index);
@@ -569,7 +559,6 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 				for (int64 index = currentLayers->GetSize() - 1; index >= 0; --index)
 				{
-
 					if (auto* existingPointCloudLayer = Cast<UArcGISPointCloudLayer>(currentLayers->At(index));
 						existingPointCloudLayer && existingPointCloudLayer->GetInstanceId() != loadedLayerId)
 					{
@@ -593,7 +582,6 @@ void APCLController::CreatePointCloudLayer(const FString& source, bool bZoomWhen
 
 				if (layerExtent)
 				{
-
 					if (UArcGISPoint* extentCenter = layerExtent->GetCenter())
 					{
 						controller->MapComponent->SetOriginPosition(extentCenter);
@@ -646,10 +634,11 @@ void APCLController::ApplyPointCloudVisualization()
 
 	RefreshAvailablePointCloudAttributes();
 
-	const double pointSize =
-		FMath::Clamp(PointSizeSlider ? static_cast<double>(PointSizeSlider->GetValue()) : PCLControllerPrivate::DefaultPointSize, PCLControllerPrivate::MinPointSize, PCLControllerPrivate::MaxPointSize);
+	const double pointSize = FMath::Clamp(PointSizeSlider ? static_cast<double>(PointSizeSlider->GetValue()) : PCLControllerPrivate::DefaultPointSize,
+										  PCLControllerPrivate::MinPointSize, PCLControllerPrivate::MaxPointSize);
 	const double pointsPerInch =
-		FMath::Max(PointsPerInchSlider ? static_cast<double>(PointsPerInchSlider->GetValue()) : PCLControllerPrivate::DefaultPointsPerInch, PCLControllerPrivate::MinPointsPerInch);
+		FMath::Max(PointsPerInchSlider ? static_cast<double>(PointsPerInchSlider->GetValue()) : PCLControllerPrivate::DefaultPointsPerInch,
+				   PCLControllerPrivate::MinPointsPerInch);
 
 	EnsureAvailableRendererSelected();
 
@@ -730,7 +719,6 @@ void APCLController::ApplyPointCloudVisualization()
 
 void APCLController::ApplyPointCloudFilters()
 {
-
 	if (!PointCloudLayer || !PointCloudLayer->APIObject)
 	{
 		return;
@@ -752,45 +740,36 @@ void APCLController::ApplyPointCloudFilters()
 	ActiveReturnsFilter.Reset();
 
 	const int32 selectedClassOptionCount = PCLControllerPrivate::CountSelectedOptions(ClassFilterCheckBoxes);
-	const bool bUseClassFilter = !ClassAttributeName.IsEmpty() && selectedClassOptionCount > 0 &&
-								 selectedClassOptionCount < ClassFilterCheckBoxes.Num();
+	const bool bUseClassFilter =
+		!ClassAttributeName.IsEmpty() && selectedClassOptionCount > 0 && selectedClassOptionCount < ClassFilterCheckBoxes.Num();
 
 	if (bUseClassFilter)
 	{
 		PCLControllerPrivate::AddSelectedPointCloudFilter(
-			ClassFilterCheckBoxes,
-			ClassFilterValues.Num(),
-			ActiveClassCodeValues,
-			ActiveClassCodeFilter,
-			*ActiveFilterCollection,
-			[this](int32 index) { return static_cast<double>(ClassFilterValues[index]); },
-			[this](const Esri::Unreal::ArcGISCollection<double>& selectedValues)
-			{
+			ClassFilterCheckBoxes, ClassFilterValues.Num(), ActiveClassCodeValues, ActiveClassCodeFilter, *ActiveFilterCollection,
+			[this](int32 index) {
+				return static_cast<double>(ClassFilterValues[index]);
+			},
+			[this](const Esri::Unreal::ArcGISCollection<double>& selectedValues) {
 				return MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilter>(
-					ClassAttributeName,
-					selectedValues,
-					Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilterMode::Include);
+					ClassAttributeName, selectedValues, Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilterMode::Include);
 			});
 	}
 
 	const int32 selectedReturnsOptionCount = PCLControllerPrivate::CountSelectedOptions(ReturnsFilterCheckBoxes);
-	const bool bUseReturnsFilter = !ReturnsAttributeName.IsEmpty() && selectedReturnsOptionCount > 0 &&
-								   selectedReturnsOptionCount < ReturnsFilterCheckBoxes.Num();
+	const bool bUseReturnsFilter =
+		!ReturnsAttributeName.IsEmpty() && selectedReturnsOptionCount > 0 && selectedReturnsOptionCount < ReturnsFilterCheckBoxes.Num();
 
 	if (bUseReturnsFilter)
 	{
 		PCLControllerPrivate::AddSelectedPointCloudFilter(
-			ReturnsFilterCheckBoxes,
-			static_cast<int32>(UE_ARRAY_COUNT(PCLControllerPrivate::FilterReturnValues)),
-			ActiveReturnsValues,
-			ActiveReturnsFilter,
-			*ActiveFilterCollection,
-			[](int32 index) { return PCLControllerPrivate::FilterReturnValues[index]; },
-			[this](
-				const Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType>& selectedValues)
-			{
-				return MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter>(
-					ReturnsAttributeName, selectedValues);
+			ReturnsFilterCheckBoxes, static_cast<int32>(UE_ARRAY_COUNT(PCLControllerPrivate::FilterReturnValues)), ActiveReturnsValues,
+			ActiveReturnsFilter, *ActiveFilterCollection,
+			[](int32 index) {
+				return PCLControllerPrivate::FilterReturnValues[index];
+			},
+			[this](const Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType>& selectedValues) {
+				return MakeUnique<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter>(ReturnsAttributeName, selectedValues);
 			});
 	}
 
@@ -841,15 +820,16 @@ void APCLController::RefreshAvailablePointCloudAttributes()
 			RGBAttributeName = name;
 		}
 
-		if (ClassAttributeName.IsEmpty() &&
-			(PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("CLASSCODE")) || PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("CLASSIFICATION")) ||
-			 PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("CLASS"))))
+		if (ClassAttributeName.IsEmpty() && (PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("CLASSCODE")) ||
+											 PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("CLASSIFICATION")) ||
+											 PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("CLASS"))))
 		{
 			ClassAttributeName = name;
 		}
 
-		if (ElevationAttributeName.IsEmpty() && (PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("ELEVATION")) ||
-												 PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("HEIGHT")) || normalizedName == TEXT("Z")))
+		if (ElevationAttributeName.IsEmpty() &&
+			(PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("ELEVATION")) ||
+			 PCLControllerPrivate::MatchesAttributeName(normalizedName, TEXT("HEIGHT")) || normalizedName == TEXT("Z")))
 		{
 			ElevationAttributeName = name;
 		}
@@ -885,7 +865,6 @@ bool APCLController::IsRendererAvailableFromCachedAttributes(EPCLRendererChoice 
 
 EPCLRendererChoice APCLController::GetFallbackRendererChoice() const
 {
-
 	if (IsRendererAvailableFromCachedAttributes(EPCLRendererChoice::RGB))
 	{
 		return EPCLRendererChoice::RGB;
@@ -911,7 +890,6 @@ EPCLRendererChoice APCLController::GetFallbackRendererChoice() const
 
 void APCLController::EnsureAvailableRendererSelected()
 {
-
 	if (!IsRendererAvailableFromCachedAttributes(CurrentRendererChoice))
 	{
 		CurrentRendererChoice = GetFallbackRendererChoice();
@@ -920,10 +898,8 @@ void APCLController::EnsureAvailableRendererSelected()
 
 void APCLController::ClearActiveFilters()
 {
-
 	if (PointCloudLayer && PointCloudLayer->APIObject)
 	{
-
 		if (auto layerApi = StaticCastSharedPtr<Esri::GameEngine::Layers::ArcGISPointCloudLayer>(PointCloudLayer->APIObject))
 		{
 			ActiveFilterCollection = MakeUnique<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter>>();
