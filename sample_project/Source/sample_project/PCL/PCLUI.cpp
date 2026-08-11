@@ -268,7 +268,8 @@ bool IsPCLCollapsePersistentWidget(const UWidget* widget)
 	}
 
 	const FName widgetName = widget->GetFName();
-	return widgetName == PCLCollapseButtonWidgetName || widgetName == PCLGearIconWidgetName || widgetName == PCLInfoWidgetName;
+	return widgetName == PCLCollapseButtonWidgetName || widgetName == PCLGearIconWidgetName || widgetName == PCLInfoWidgetName ||
+		   widgetName == PCLInstructionPanelWidgetName;
 }
 
 bool IsWidgetUnderCursor(const UWidget* widget)
@@ -777,16 +778,6 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 	}
 
 	bPCLUICollapsed = bCollapsed;
-
-	if (bPCLUICollapsed)
-	{
-		FBoolProperty* isHiddenProperty = FindFProperty<FBoolProperty>(UIWidget->GetClass(), TEXT("isHidden"));
-
-		if (isHiddenProperty)
-		{
-			isHiddenProperty->SetPropertyValue_InContainer(UIWidget, true);
-		}
-	}
 
 	PCLUIPrivate::ApplyPCLCollapseToggleVisibility(UIWidget, bPCLUICollapsed);
 }
