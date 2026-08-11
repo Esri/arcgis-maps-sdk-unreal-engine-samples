@@ -681,15 +681,21 @@ void APCLController::OnCollapseButtonClicked()
 
 void APCLController::OnInfoButtonClicked()
 {
-	// The gear toggle can temporarily collapse InstructionPanel outside of its Blueprint animation.
+	// Use the standard collapsed state so Button_Gear remains available to restore the menu.
+	// Do not run it again when the menu is already collapsed: that would overwrite the
+	// visibility cache that the gear button needs when expanding the UI.
+	if (!bPCLUICollapsed)
+	{
+		SetPCLUICollapsed(true);
+	}
+
+	// The collapse toggle can temporarily collapse InstructionPanel outside of its Blueprint animation.
 	// Restore Slate visibility so the existing HideInstructions animation can show or hide it again.
 
 	if (UWidget* instructionPanel = PCLUIPrivate::FindPCLNamedWidget(UIWidget, PCLUIPrivate::PCLInstructionPanelWidgetName))
 	{
 		instructionPanel->SetVisibility(ESlateVisibility::Visible);
 	}
-
-	PCLUIPrivate::FindPCLNamedWidget(UIWidget, PCLUIPrivate::PCLMainPanelWidgetName)->SetVisibility(ESlateVisibility::Hidden);
 
 	if (LegendPanel)
 	{
