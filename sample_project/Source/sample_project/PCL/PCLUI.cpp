@@ -1,4 +1,4 @@
-/* Copyright 2026 Esri
+﻿/* Copyright 2026 Esri
  *
  * Licensed under the Apache License Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,63 +29,79 @@
 
 namespace PCLUIPrivate
 {
-constexpr double MaxPointSize = 16.0;
-constexpr double MinPointSize = 2.0;
-constexpr double MinPointsPerInch = 1.0;
-constexpr int32 FilterReturnOptionCount = 4;
-constexpr float PCLTabUIScale = 2.0f / 3.0f;
-constexpr float CustomizeTabHeightOffset = 88.0f;
-constexpr float VisualizeTabHeightOffset = 194.0f;
-constexpr float FilterTabHeightOffset = 430.0f;
-const FString PointCloudLayerSource = TEXT("https://tiles.arcgis.com/tiles/V6ZHFr6zdgNZuVG0/arcgis/rest/services/BARNEGAT_BAY_LiDAR_UTM/SceneServer");
-const FName ExpandableTabWidgetNames[] = {TEXT("Background"), TEXT("Switcher_PCLTabs"), TEXT("Panel_VisualizeContent")};
-const FName PCLRootCanvasWidgetName(TEXT("CanvasPanel_37"));
-const FName PCLMainPanelWidgetName(TEXT("Panel_PCLMain"));
-const FName PCLInstructionPanelWidgetName(TEXT("InstructionPanel"));
-const FName PCLCollapseButtonWidgetName(TEXT("Button_Collapse"));
-const FName PCLGearIconWidgetName(TEXT("Button_Gear"));
-const FName PCLGearRuntimeIconWidgetName(TEXT("PCL_GearIcon_Runtime"));
-const FName PCLInfoWidgetName(TEXT("wbp_Info"));
-const FName PCLInfoButtonWidgetName(TEXT("wbp_InfoButton"));
-const FName PCLInfoButtonControlName(TEXT("Button_21"));
-const FName PCLMenuHiddenPropertyName(TEXT("IsMenuHidden"));
-const FVector2D PCLGearButtonSize(48.0f, 48.0f);
-const FVector2D PCLGearIconSize(34.0f, 34.0f);
-const FLinearColor PCLGearPurple(0.309f, 0.063f, 1.0f, 1.0f);
+struct FGradientLegendInfo
+{
+public:
+	TArray<FLinearColor> Colors;
+	const TCHAR* Heading;
+	const TCHAR* Labels[3];
+};
 
 struct FRendererWidgetNames
 {
+public:
 	EPCLRendererChoice RendererChoice;
 	FName Row;
 };
 
+struct FStandardClassColor
+{
+public:
+	uint8 Blue;
+	uint8 Green;
+	uint8 Red;
+
+	FStandardClassColor(uint8 red, uint8 green, uint8 blue) : Blue(blue), Green(green), Red(red) {}
+};
+
+constexpr float CustomizeTabHeightOffset = 88.0f;
+const FGradientLegendInfo ElevationLegendInfo = {{FLinearColor(0.95f, 0.12f, 0.08f), FLinearColor(1.0f, 0.9f, 0.2f),
+													 FLinearColor(0.35f, 0.95f, 0.48f), FLinearColor(0.25f, 0.82f, 1.0f),
+													 FLinearColor(0.22f, 0.12f, 1.0f)},
+													 TEXT("Elevation"),
+													 {TEXT("> 3.5"), TEXT("1.5"), TEXT("< -1.5")}};
+const FName ExpandableTabWidgetNames[] = {TEXT("Background"), TEXT("Switcher_PCLTabs"), TEXT("Panel_VisualizeContent")};
+constexpr int32 FilterReturnOptionCount = 4;
+constexpr float FilterTabHeightOffset = 430.0f;
+const FGradientLegendInfo IntensityLegendInfo = {
+	{FLinearColor::White, FLinearColor(0.65f, 0.65f, 0.65f), FLinearColor(0.16f, 0.16f, 0.16f), FLinearColor::Black},
+	TEXT("Intensity"),
+	{TEXT("> 65,680"), TEXT("38,032"), TEXT("< 10,385")}};
+constexpr double MaxPointSize = 16.0;
+constexpr double MinPointSize = 2.0;
+constexpr double MinPointsPerInch = 1.0;
+const FName PCLCollapseButtonWidgetName(TEXT("Button_Collapse"));
+const FVector2D PCLGearButtonSize(48.0f, 48.0f);
+const FVector2D PCLGearIconSize(34.0f, 34.0f);
+const FName PCLGearIconWidgetName(TEXT("Button_Gear"));
+const FLinearColor PCLGearPurple(0.309f, 0.063f, 1.0f, 1.0f);
+const FName PCLGearRuntimeIconWidgetName(TEXT("PCL_GearIcon_Runtime"));
+const FName PCLInfoButtonControlName(TEXT("Button_21"));
+const FName PCLInfoButtonWidgetName(TEXT("wbp_InfoButton"));
+const FName PCLInfoWidgetName(TEXT("wbp_Info"));
+const FName PCLInstructionPanelWidgetName(TEXT("InstructionPanel"));
+const FName PCLMainPanelWidgetName(TEXT("Panel_PCLMain"));
+const FName PCLMenuHiddenPropertyName(TEXT("IsMenuHidden"));
+const FName PCLRootCanvasWidgetName(TEXT("CanvasPanel_37"));
+constexpr float PCLTabUIScale = 2.0f / 3.0f;
+const FString PointCloudLayerSource = TEXT("https://tiles.arcgis.com/tiles/V6ZHFr6zdgNZuVG0/arcgis/rest/services/BARNEGAT_BAY_LiDAR_UTM/SceneServer");
 const FRendererWidgetNames RendererWidgetNames[] = {{EPCLRendererChoice::RGB, TEXT("Row_Checkbox_Renderer_RGB")},
 													{EPCLRendererChoice::Class, TEXT("Row_Checkbox_Renderer_Class")},
 													{EPCLRendererChoice::Elevation, TEXT("Row_Checkbox_Renderer_Elevation")},
 													{EPCLRendererChoice::Intensity, TEXT("Row_Checkbox_Renderer_Intensity")}};
-
-struct FGradientLegendInfo
-{
-	const TCHAR* Heading;
-	const TCHAR* Labels[3];
-	TArray<FLinearColor> Colors;
-};
-
-const FGradientLegendInfo ElevationLegendInfo = {TEXT("Elevation"),
-												 {TEXT("> 3.5"), TEXT("1.5"), TEXT("< -1.5")},
-												 {FLinearColor(0.95f, 0.12f, 0.08f), FLinearColor(1.0f, 0.9f, 0.2f),
-												  FLinearColor(0.35f, 0.95f, 0.48f), FLinearColor(0.25f, 0.82f, 1.0f),
-												  FLinearColor(0.22f, 0.12f, 1.0f)}};
-const FGradientLegendInfo IntensityLegendInfo = {
-	TEXT("Intensity"),
-	{TEXT("> 65,680"), TEXT("38,032"), TEXT("< 10,385")},
-	{FLinearColor::White, FLinearColor(0.65f, 0.65f, 0.65f), FLinearColor(0.16f, 0.16f, 0.16f), FLinearColor::Black}};
+const FStandardClassColor StandardClassColors[] = {{128, 128, 128}, {190, 137, 12},	 {219, 255, 104}, {246, 44, 28},   {244, 102, 32},
+													  {199, 24, 255},	{255, 255, 112}, {152, 152, 152}, {255, 186, 87},  {246, 244, 22},
+													  {209, 98, 224},	{218, 218, 218}, {84, 167, 255},  {255, 121, 198}, {255, 160, 67},
+													  {255, 92, 92},	{136, 255, 218}, {141, 108, 255}, {80, 80, 80}};
 const int32 VisibleLegendClassCodes[] = {1, 2, 3, 5, 6, 7, 9};
+constexpr float VisualizeTabHeightOffset = 194.0f;
 
 const FRendererWidgetNames* FindRendererWidgetNames(EPCLRendererChoice rendererChoice)
 {
+
 	for (const FRendererWidgetNames& names : RendererWidgetNames)
 	{
+
 		if (names.RendererChoice == rendererChoice)
 		{
 			return &names;
@@ -106,20 +122,9 @@ bool IsValidURL(const FString& source)
 		   (source.StartsWith(TEXT("https://"), ESearchCase::IgnoreCase) || source.StartsWith(TEXT("http://"), ESearchCase::IgnoreCase));
 }
 
-struct FStandardClassColor
-{
-	uint8 Red;
-	uint8 Green;
-	uint8 Blue;
-};
-
-const FStandardClassColor StandardClassColors[] = {{128, 128, 128}, {190, 137, 12},	 {219, 255, 104}, {246, 44, 28},   {244, 102, 32},
-												   {199, 24, 255},	{255, 255, 112}, {152, 152, 152}, {255, 186, 87},  {246, 244, 22},
-												   {209, 98, 224},	{218, 218, 218}, {84, 167, 255},  {255, 121, 198}, {255, 160, 67},
-												   {255, 92, 92},	{136, 255, 218}, {141, 108, 255}, {80, 80, 80}};
-
 FStandardClassColor GetStandardClassColor(int32 classValue)
 {
+
 	if (classValue >= 0 && classValue < UE_ARRAY_COUNT(StandardClassColors))
 	{
 		return StandardClassColors[classValue];
@@ -138,7 +143,6 @@ UTexture2D* CreateLegendCircleTexture(UObject* outer, const FLinearColor& color)
 	texture->SRGB = true;
 	texture->CompressionSettings = TC_VectorDisplacementmap;
 	texture->MipGenSettings = TMGS_NoMipmaps;
-
 	FTexture2DMipMap& mip = texture->GetPlatformData()->Mips[0];
 	void* data = mip.BulkData.Lock(LOCK_READ_WRITE);
 	FColor* pixels = static_cast<FColor*>(data);
@@ -146,6 +150,7 @@ UTexture2D* CreateLegendCircleTexture(UObject* outer, const FLinearColor& color)
 
 	for (int32 y = 0; y < textureSize; ++y)
 	{
+
 		for (int32 x = 0; x < textureSize; ++x)
 		{
 			const float dx = x - center;
@@ -161,6 +166,7 @@ UTexture2D* CreateLegendCircleTexture(UObject* outer, const FLinearColor& color)
 
 FLinearColor EvaluateGradientColor(const TArray<FLinearColor>& colors, float t)
 {
+
 	if (colors.IsEmpty())
 	{
 		return FLinearColor::White;
@@ -209,8 +215,10 @@ UTexture2D* CreateLegendGradientTexture(UObject* outer, const TArray<FLinearColo
 
 bool AreAllCheckBoxesChecked(const TArray<TObjectPtr<UCheckBox>>& checkBoxes)
 {
+
 	for (const TObjectPtr<UCheckBox>& checkBox : checkBoxes)
 	{
+
 		if (!checkBox || !checkBox->IsChecked())
 		{
 			return false;
@@ -222,8 +230,10 @@ bool AreAllCheckBoxesChecked(const TArray<TObjectPtr<UCheckBox>>& checkBoxes)
 
 void SetCheckBoxesChecked(const TArray<TObjectPtr<UCheckBox>>& checkBoxes, bool bChecked)
 {
+
 	for (const TObjectPtr<UCheckBox>& checkBox : checkBoxes)
 	{
+
 		if (checkBox)
 		{
 			checkBox->SetIsChecked(bChecked);
@@ -262,6 +272,7 @@ UWidget* FindPCLNamedWidget(UUserWidget* widget, const FName& widgetName)
 
 bool IsPCLCollapsePersistentWidget(const UWidget* widget)
 {
+
 	if (!widget)
 	{
 		return false;
@@ -274,6 +285,7 @@ bool IsPCLCollapsePersistentWidget(const UWidget* widget)
 
 bool IsWidgetUnderCursor(const UWidget* widget)
 {
+
 	if (!widget || !widget->IsVisible() || !FSlateApplication::IsInitialized())
 	{
 		return false;
@@ -344,7 +356,7 @@ void ApplyPCLCollapseToggleVisibility(UUserWidget* uiWidget, bool bCollapsed)
 	FindPCLNamedWidget(uiWidget, PCLGearIconWidgetName)->SetVisibility(bCollapsed ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }
 
-} // namespace PCLUIPrivate
+} 
 
 void APCLController::InitializePCLUI()
 {
@@ -428,8 +440,8 @@ void APCLController::InitializePCLUI()
 														 {visualizeTabButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnVisualizeTabClicked)},
 														 {resetFiltersButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnResetFiltersClicked)},
 														 {LoadLayerButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnLoadPointCloudLayerClicked)},
-														 {collapseButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnCollapseButtonClicked)},
-														 {gearButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnCollapseButtonClicked)},
+														 {collapseButton, GET_FUNCTION_NAME_CHECKED(APCLController, TogglePCLUICollapse)},
+														 {gearButton, GET_FUNCTION_NAME_CHECKED(APCLController, TogglePCLUICollapse)},
 														 {infoButton, GET_FUNCTION_NAME_CHECKED(APCLController, OnInfoButtonClicked)}};
 
 		for (const TPair<UButton*, FName>& binding : buttonBindings)
@@ -463,6 +475,7 @@ void APCLController::UpdatePCLUI()
 
 void APCLController::SyncLegendVisibilityWithMainPanel() const
 {
+
 	if (!UIWidget || !LegendPanel)
 	{
 		return;
@@ -508,6 +521,7 @@ void APCLController::UpdateMapInputForUIHover()
 
 void APCLController::SetMapInputBlockedByUI(bool bBlocked)
 {
+
 	if (bMapInputBlockedByUI == bBlocked)
 	{
 		return;
@@ -572,6 +586,7 @@ void APCLController::OnIntensityRendererCheckStateChanged(bool bIsChecked)
 
 void APCLController::HandleRendererCheckStateChanged(bool bIsChecked, EPCLRendererChoice rendererChoice)
 {
+
 	if (bUpdatingRendererCheckBoxes)
 	{
 		return;
@@ -606,6 +621,7 @@ void APCLController::OnVisualizeTabClicked()
 
 void APCLController::OnFilterCheckStateChanged(bool bIsChecked)
 {
+
 	if (bUpdatingFilterCheckBoxes)
 	{
 		return;
@@ -638,6 +654,7 @@ void APCLController::OnReturnsAllFilterCheckStateChanged(bool bIsChecked)
 
 void APCLController::SetAllFilterOptionsChecked(const TArray<TObjectPtr<UCheckBox>>& filterCheckBoxes, bool bIsChecked)
 {
+
 	if (bUpdatingFilterCheckBoxes)
 	{
 		return;
@@ -645,7 +662,6 @@ void APCLController::SetAllFilterOptionsChecked(const TArray<TObjectPtr<UCheckBo
 
 	TGuardValue<bool> updatingGuard(bUpdatingFilterCheckBoxes, true);
 	PCLUIPrivate::SetCheckBoxesChecked(filterCheckBoxes, bIsChecked);
-
 	ApplyPointCloudFilters();
 }
 
@@ -675,23 +691,12 @@ void APCLController::OnLoadPointCloudLayerClicked()
 	CreatePointCloudLayer(source, true);
 }
 
-void APCLController::OnCollapseButtonClicked()
-{
-	TogglePCLUICollapse();
-}
-
 void APCLController::OnInfoButtonClicked()
 {
-	// Use the standard collapsed state so Button_Gear remains available to restore the menu.
-	// Do not run it again when the menu is already collapsed: that would overwrite the
-	// visibility cache that the gear button needs when expanding the UI.
 	if (!bPCLUICollapsed)
 	{
 		SetPCLUICollapsed(true);
 	}
-
-	// The collapse toggle can temporarily collapse InstructionPanel outside of its Blueprint animation.
-	// Restore Slate visibility so the existing HideInstructions animation can show or hide it again.
 
 	if (UWidget* instructionPanel = PCLUIPrivate::FindPCLNamedWidget(UIWidget, PCLUIPrivate::PCLInstructionPanelWidgetName))
 	{
@@ -716,6 +721,7 @@ void APCLController::ConfigurePCLCollapseInitialState()
 
 void APCLController::SetPCLUICollapsed(bool bCollapsed)
 {
+
 	if (!UIWidget)
 	{
 		return;
@@ -736,8 +742,10 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 
 		if (child && child->GetFName() == PCLUIPrivate::PCLMainPanelWidgetName)
 		{
+
 			if (const UPanelWidget* mainPanel = Cast<UPanelWidget>(child))
 			{
+
 				for (int32 mainChildIndex = 0; mainChildIndex < mainPanel->GetChildrenCount(); ++mainChildIndex)
 				{
 					collapsibleWidgets.Add(mainPanel->GetChildAt(mainChildIndex));
@@ -756,6 +764,7 @@ void APCLController::SetPCLUICollapsed(bool bCollapsed)
 
 	for (UWidget* child : collapsibleWidgets)
 	{
+
 		if (!child || PCLUIPrivate::IsPCLCollapsePersistentWidget(child))
 		{
 			continue;
@@ -928,6 +937,7 @@ void APCLController::BuildFilterTabUI()
 
 void APCLController::BuildLegendUI()
 {
+
 	if (CurrentTabLayout != EPCLTabLayout::Visualize)
 	{
 		LegendPanel->SetVisibility(ESlateVisibility::Hidden);
@@ -1023,7 +1033,6 @@ void APCLController::ResetFilterSelections(bool bApplyFilters)
 void APCLController::SetTabLayout(EPCLTabLayout layout)
 {
 	CurrentTabLayout = layout;
-
 	float heightOffset = PCLUIPrivate::CustomizeTabHeightOffset;
 
 	if (layout == EPCLTabLayout::Visualize)

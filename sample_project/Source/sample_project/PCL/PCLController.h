@@ -1,4 +1,4 @@
-/* Copyright 2026 Esri
+﻿/* Copyright 2026 Esri
  *
  * Licensed under the Apache License Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,12 +69,6 @@ class SAMPLE_PROJECT_API APCLController : public AActor
 
 public:
 	APCLController();
-
-protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type endPlayReason) override;
-
-public:
 	virtual void Tick(float deltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "PCL|Visualize")
@@ -86,36 +80,64 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PCL|Visualize")
 	bool IsPointCloudRendererAvailable(EPCLRendererChoice rendererChoice);
 
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type endPlayReason) override;
+
 private:
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
-	TObjectPtr<UUserWidget> UIWidget;
+	TUniquePtr<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilter> ActiveClassCodeFilter;
+	TUniquePtr<Esri::Unreal::ArcGISCollection<double>> ActiveClassCodeValues;
+	TUniquePtr<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter>> ActiveFilterCollection;
+	TUniquePtr<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter> ActiveReturnsFilter;
+	TUniquePtr<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType>> ActiveReturnsValues;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
-	TSubclassOf<UUserWidget> UIWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PCL|Visualize", meta = (AllowPrivateAccess))
+	bool bColorModulationEnabled = false;
+
+	bool bDeferredZoomWhenLoaded = false;
+	bool bMapInputBlockedByUI = false;
+	bool bPCLUICollapsed = false;
+	bool bUpdatingFilterCheckBoxes = false;
+	bool bUpdatingRendererCheckBoxes = false;
+
+	TMap<FName, ESlateVisibility> CachedPCLRootChildVisibilities;
+	TMap<FName, FVector2D> CachedTabWidgetSizes;
 
 	UPROPERTY()
-	TObjectPtr<USlider> PointSizeSlider;
+	TObjectPtr<UCheckBox> ClassAllCheckBox;
+
+	FString ClassAttributeName;
 
 	UPROPERTY()
-	TObjectPtr<USlider> PointsPerInchSlider;
+	TArray<TObjectPtr<UCheckBox>> ClassFilterCheckBoxes;
 
-	UPROPERTY()
-	TObjectPtr<UTextBlock> PointSizeValueText;
-
-	UPROPERTY()
-	TObjectPtr<UTextBlock> PointsPerInchValueText;
-
-	UPROPERTY()
-	TObjectPtr<UCheckBox> RGBRendererCheckBox;
+	TArray<int32> ClassFilterValues;
 
 	UPROPERTY()
 	TObjectPtr<UCheckBox> ClassRendererCheckBox;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PCL|Visualize", meta = (AllowPrivateAccess))
+	EPCLRendererChoice CurrentRendererChoice = EPCLRendererChoice::RGB;
+
+	EPCLTabLayout CurrentTabLayout = EPCLTabLayout::Default;
+
+	float DeferredPointCloudLayerRetrySeconds = 0.0f;
+	FString DeferredPointCloudLayerSource;
+
+	FString ElevationAttributeName;
+
 	UPROPERTY()
 	TObjectPtr<UCheckBox> ElevationRendererCheckBox;
 
+	FString IntensityAttributeName;
+
 	UPROPERTY()
 	TObjectPtr<UCheckBox> IntensityRendererCheckBox;
+
+	uint64 LayerLoadRequestId = 0;
+
+	UPROPERTY()
+	TObjectPtr<UTextBlock> LayerLoadStatusText;
 
 	UPROPERTY()
 	TObjectPtr<UCanvasPanel> LegendPanel;
@@ -124,31 +146,10 @@ private:
 	TArray<TObjectPtr<UTexture2D>> LegendTextures;
 
 	UPROPERTY()
-	TObjectPtr<UCheckBox> ClassAllCheckBox;
-
-	UPROPERTY()
-	TArray<TObjectPtr<UCheckBox>> ClassFilterCheckBoxes;
-
-	UPROPERTY()
-	TObjectPtr<UCheckBox> ReturnsAllCheckBox;
-
-	UPROPERTY()
-	TArray<TObjectPtr<UCheckBox>> ReturnsFilterCheckBoxes;
-
-	UPROPERTY()
-	TObjectPtr<UEditableTextBox> SourceUrlTextBox;
-
-	UPROPERTY()
 	TObjectPtr<UButton> LoadLayerButton;
 
 	UPROPERTY()
-	TObjectPtr<UTextBlock> LayerLoadStatusText;
-
-	UPROPERTY()
 	TObjectPtr<UTextBlock> LoadLayerButtonText;
-
-	UPROPERTY()
-	TObjectPtr<UWidget> UIInteractionPanel;
 
 	UPROPERTY(meta = (AllowPrivateAccess))
 	TObjectPtr<AArcGISMapActor> MapActor;
@@ -157,48 +158,52 @@ private:
 	TObjectPtr<UArcGISMapComponent> MapComponent;
 
 	UPROPERTY()
-	TObjectPtr<class UArcGISPointCloudLayer> PointCloudLayer;
-
-	UPROPERTY()
 	TObjectPtr<class UArcGISPointCloudLayer> PendingPointCloudLayer;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PCL|Visualize", meta = (AllowPrivateAccess))
-	EPCLRendererChoice CurrentRendererChoice = EPCLRendererChoice::RGB;
+	UPROPERTY()
+	TObjectPtr<class UArcGISPointCloudLayer> PointCloudLayer;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PCL|Visualize", meta = (AllowPrivateAccess))
-	bool bColorModulationEnabled = false;
+	int32 PointCloudLayerLoadRetryCount = 0;
 
-	EPCLTabLayout CurrentTabLayout = EPCLTabLayout::Default;
+	UPROPERTY()
+	TObjectPtr<USlider> PointSizeSlider;
 
-	bool bUpdatingRendererCheckBoxes = false;
+	UPROPERTY()
+	TObjectPtr<UTextBlock> PointSizeValueText;
 
-	FString RGBAttributeName;
-	FString ClassAttributeName;
-	FString ElevationAttributeName;
-	FString IntensityAttributeName;
+	UPROPERTY()
+	TObjectPtr<USlider> PointsPerInchSlider;
+
+	UPROPERTY()
+	TObjectPtr<UTextBlock> PointsPerInchValueText;
+
+	UPROPERTY()
+	TObjectPtr<UCheckBox> ReturnsAllCheckBox;
+
 	FString ReturnsAttributeName;
 
-	TMap<FName, FVector2D> CachedTabWidgetSizes;
-	TArray<int32> ClassFilterValues;
+	UPROPERTY()
+	TArray<TObjectPtr<UCheckBox>> ReturnsFilterCheckBoxes;
 
-	TUniquePtr<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudFilter>> ActiveFilterCollection;
-	TUniquePtr<Esri::Unreal::ArcGISCollection<double>> ActiveClassCodeValues;
-	TUniquePtr<Esri::Unreal::ArcGISCollection<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnType>> ActiveReturnsValues;
-	TUniquePtr<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudValueFilter> ActiveClassCodeFilter;
-	TUniquePtr<Esri::GameEngine::Layers::PointCloud::ArcGISPointCloudReturnFilter> ActiveReturnsFilter;
+	FString RGBAttributeName;
 
-	bool bUpdatingFilterCheckBoxes = false;
-	bool bMapInputBlockedByUI = false;
-	bool bPCLUICollapsed = false;
-	uint64 LayerLoadRequestId = 0;
-	FString DeferredPointCloudLayerSource;
-	float DeferredPointCloudLayerRetrySeconds = 0.0f;
-	int32 PointCloudLayerLoadRetryCount = 0;
-	bool bDeferredZoomWhenLoaded = false;
-	TMap<FName, ESlateVisibility> CachedPCLRootChildVisibilities;
+	UPROPERTY()
+	TObjectPtr<UCheckBox> RGBRendererCheckBox;
+
+	UPROPERTY()
+	TObjectPtr<UEditableTextBox> SourceUrlTextBox;
 
 	UPROPERTY()
 	TObjectPtr<UArcGISSpatialReference> SpatialReference;
+
+	UPROPERTY()
+	TObjectPtr<UWidget> UIInteractionPanel;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess))
+	TObjectPtr<UUserWidget> UIWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
+	TSubclassOf<UUserWidget> UIWidgetClass;
 
 	UFUNCTION()
 	void OnPointSizeChanged(float value);
@@ -244,9 +249,6 @@ private:
 
 	UFUNCTION()
 	void OnLoadPointCloudLayerClicked();
-
-	UFUNCTION()
-	void OnCollapseButtonClicked();
 
 	UFUNCTION()
 	void OnInfoButtonClicked();
