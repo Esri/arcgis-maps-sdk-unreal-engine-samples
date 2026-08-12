@@ -278,7 +278,10 @@ private:
 	void BuildFilterTabUI();
 	void BuildLegendUI();
 	void ConfigurePCLCollapseInitialState();
+
+	UFUNCTION()
 	void TogglePCLUICollapse();
+
 	void SetPCLUICollapsed(bool bCollapsed);
 	bool IsPCLCollapseToggleUnderCursor() const;
 	void ClearActiveFilters();
