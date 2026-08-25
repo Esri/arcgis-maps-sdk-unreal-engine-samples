@@ -47,25 +47,28 @@ void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 					//create a new feature object to store the data received associated with this feature iteration
 					FWeatherData WeatherData;
 					auto feature = WeatherStat->AsObject();
-					if (feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("COUNTRY")).Contains(TEXT("United States Of America")))
+					FString country;
+					feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("COUNTRY"), country);
+					
+					if (country.Contains(TEXT("United States Of America")))
 					{
 						//outfield can be set in the scene on bp_feature
 						//this loop will take each outfield set in the scene and check to see if the outfield exists
 						//if it does exist, it will return the result of the outfield associated with this feature
 						//if it does not exist, it will return and error message in the scene
-						WeatherData.StationName = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("STATION_NAME"));
-						WeatherData.Country = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("COUNTRY"));	
-						WeatherData.SkyCondition = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("SKY_CONDTN"));
-						WeatherData.Tempurature = feature->GetObjectField(TEXT("properties"))->GetNumberField(TEXT("TEMP"));
-						WeatherData.Weather = feature->GetObjectField(TEXT("properties"))->GetStringField(TEXT("WEATHER"));
+						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("STATION_NAME"), WeatherData.StationName);
+						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("COUNTRY"), WeatherData.Country);	
+						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("SKY_CONDTN"), WeatherData.SkyCondition);
+						feature->GetObjectField(TEXT("properties"))->TryGetNumberField(TEXT("TEMP"), WeatherData.Tempurature);
+						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("WEATHER"), WeatherData.Weather);
 						
 						//this will get the geometry or coordinates of the feature
 						auto coordinates = feature->GetObjectField(TEXT("geometry"))->GetArrayField(TEXT("coordinates"));
 						//To avoid crashes, this checks to see if the type of feature is Point, if so it will get the geometry
 						//if not, it will return an error
 						//current the only type of data supported by this sample is Point Layers, but more will be added in the future.
-						WeatherData.Coordinates.Longitude = coordinates[0]->AsNumber();
-						WeatherData.Coordinates.Latitude = coordinates[1]->AsNumber();
+						coordinates[0]->TryGetNumber(WeatherData.Coordinates.Longitude);
+						coordinates[1]->TryGetNumber(WeatherData.Coordinates.Latitude);
 						//Add the data recieved into the object and load the object into an array for use later.
 						Weather.Add(WeatherData);
 					}
