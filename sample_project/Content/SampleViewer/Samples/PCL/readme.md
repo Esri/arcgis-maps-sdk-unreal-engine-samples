@@ -2,6 +2,8 @@
 
 Load a point cloud scene layer and explore different renderers, display settings, and attribute filters.
 
+![Point Cloud Layer Sample](pointcloud.png)
+
 ## How to use the sample (SampleViewer)
 
 1. Open the **SampleViewer** level if it is not already open.
