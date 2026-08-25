@@ -59,7 +59,7 @@ void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("STATION_NAME"), WeatherData.StationName);
 						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("COUNTRY"), WeatherData.Country);	
 						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("SKY_CONDTN"), WeatherData.SkyCondition);
-						feature->GetObjectField(TEXT("properties"))->TryGetNumberField(TEXT("TEMP"), WeatherData.Tempurature);
+						feature->GetObjectField(TEXT("properties"))->TryGetNumberField(TEXT("TEMP"), WeatherData.Temperature);
 						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("WEATHER"), WeatherData.Weather);
 						
 						//this will get the geometry or coordinates of the feature

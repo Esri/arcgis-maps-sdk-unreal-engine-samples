@@ -48,7 +48,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString StationName = TEXT("");
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float Tempurature = 0;
+	float Temperature = 0;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString Weather = TEXT("");
 };
