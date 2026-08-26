@@ -29,9 +29,9 @@ struct SAMPLE_PROJECT_API FCoordinates
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float Longitude;
+	float Longitude = 0;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float Latitude;
+	float Latitude = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -42,15 +42,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FCoordinates Coordinates;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString Country;
+	FString Country = TEXT("");
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString SkyCondition;
+	FString SkyCondition = TEXT("");
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString StationName;
+	FString StationName = TEXT("");
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float Tempurature;
+	float Temperature = 0;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString Weather;
+	FString Weather = TEXT("");
 };
 
 UCLASS()
