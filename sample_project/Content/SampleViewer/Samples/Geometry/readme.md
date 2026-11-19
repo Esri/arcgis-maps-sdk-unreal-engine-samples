@@ -10,6 +10,8 @@ Draw polylines, polygons and envelopes on the map and get their lengths or areas
 2. Set your API Key.
 3. While holding shift, click to place points to create polylines and polygons; drag to create envelopes. Switch between tabs to switch between different types of geometries.
 
+The tabs and unit buttons work in both the C++ and Blueprint samples. Switching geometry types clears the previous drawing and result, and resets the units to miles or square miles.
+
 ## How it works
 
 This sample uses the [geometry API](https://developers.arcgis.com/unreal-engine/api-reference/gameengine/geometry/arcgisgeometry/) for creating polygons, envelopes and calculate areas. It uses Unreal Engine's [USplineMeshComponent](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/Components/USplineMeshComponent) to render lines, and use the geometry API to calculate distance and areas. The distance calculated is geodetic distance, also called geodesic distance. The area calculated is geodetic area. 
