@@ -6,9 +6,9 @@ Query Weather Data from the Weather Stations feature layer provided in order to 
 
 ## How to setup (Weather Sample Level)
 
-1. Open the **RealTimeWeather** level.
-2. Click on the **ArcGISMapActor** in the Outliner panel.
-3. Set your API key under the Authentication section in the Details panel.
+1. Open the **WeatherQuery** (C++) or **WeatherQuery_BP** (Blueprints) level.
+2. Open **Project Settings** and find the **ArcGIS Maps SDK** settings.
+3. Set your **API Key** there. The map actor inherits the project key when its actor-specific API key field is empty. If you use an actor-specific key instead, configure **ArcGISMapActor** under **Authentication** in the Details panel.
 4. Click Play and select a city from the list.
 
 ## How to setup (Sample Viewer)
