@@ -7,8 +7,8 @@ Control the Time of Day manually, simulate it at a given speed, or animate it fr
 ## How to setup (Time of Day Sample Level)
 
 1. Open the **TimeOfDay** level.
-2. Click on the **ArcGISMapActor** in the Outliner panel.
-3. Set your API key under the Authentication section in the Details panel.
+2. Open **Project Settings** and find the **ArcGIS Maps SDK** settings.
+3. Set your **API Key** there. The map actor inherits the project key when its actor-specific API key field is empty. If you use an actor-specific key instead, configure **ArcGISMapActor** under **Authentication** in the Details panel.
 4. Click Play and change the time of day using the settings panel.
 
 ## How to setup (Sample Viewer)
