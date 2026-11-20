@@ -67,7 +67,7 @@ void AGeocoder::Tick(float DeltaTime)
 
 FString AGeocoder::GetAPIKey()
 {
-	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), UArcGISMapComponent::StaticClass());
+	const auto mapComponentActor = UGameplayStatics::GetActorOfClass(GetWorld(), AArcGISMapActor::StaticClass());
 	const auto mapComponent = mapComponentActor ? mapComponentActor->GetComponentByClass<UArcGISMapComponent>() : nullptr;
 	auto apiKey = mapComponent ? mapComponent->GetAPIKey() : "";  
 
