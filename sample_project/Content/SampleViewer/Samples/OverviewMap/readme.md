@@ -39,6 +39,8 @@ Note: You can use `UE_LOG` to print log messages in the **Output Log** window an
 
 The shared overview widget uses `M_ImageMask` and `CircleMask` to display a circular map. The material uses the sample's `OverviewMapRenderTarget` as its default texture; at runtime, the Retainer Box overrides `TargetTexture` with the rendered widget content.
 
+The N/S/E/W labels remain visible in both rotation modes. With rotation enabled, they rotate with the map; with rotation disabled, they return to their north-up cardinal positions.
+
 ## About the data
 
 Building models for San Francisco are loaded from a [3D object scene layer](https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/SanFrancisco_Bldgs/SceneServer) hosted by Esri.
