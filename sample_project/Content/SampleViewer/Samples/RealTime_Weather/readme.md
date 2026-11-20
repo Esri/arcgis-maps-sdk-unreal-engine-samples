@@ -7,8 +7,8 @@ Query Weather Data from the Weather Stations feature layer provided in order to 
 ## How to setup (Weather Sample Level)
 
 1. Open the **WeatherQuery** (C++) or **WeatherQuery_BP** (Blueprints) level.
-2. Open **Project Settings** and find the **ArcGIS Maps SDK** settings.
-3. Set your **API Key** there. The map actor inherits the project key when its actor-specific API key field is empty. If you use an actor-specific key instead, configure **ArcGISMapActor** under **Authentication** in the Details panel.
+2. Click on the **ArcGISMapActor** in the Outliner panel.
+3. Set your API key under the Authentication section in the Details panel.
 4. Click Play and select a city from the list.
 
 ## How to setup (Sample Viewer)
@@ -43,8 +43,6 @@ Note: You can use `UE_LOG` to print log messages in the **Output Log** window an
 Note: You can use `UE_LOG` to print log messages in the **Output Log** window and see if you are gathering the data properly from the feature service.
 
 ## About the data
-
-Selecting a station places the camera 3,000 metres above its reported ground elevation (`ELEVATION`, in metres), so high-elevation stations do not place the camera underground. Stations without a valid elevation are skipped and reported in the Output Log. Camera navigation remains unrestricted after selecting a station.
 
 Data for Current Weather in the United States is fetched from a [Feature Layer](https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0) hosted by Esri.
 Elevation data is loaded from the [Terrain 3D elevation layer](https://www.arcgis.com/home/item.html?id=7029fb60158543ad845c7e1527af11e4) hosted by Esri.
