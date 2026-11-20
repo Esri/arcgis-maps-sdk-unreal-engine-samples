@@ -17,6 +17,7 @@
 
 #include "CoreMinimal.h"
 #include "Http.h"
+#include "JsonObjectWrapper.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
 #include "sample_project/Feature Layer/ArcGISFeatureLayerQuery.h"
@@ -51,6 +52,8 @@ public:
 	float Temperature = 0;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString Weather = TEXT("");
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float Elevation = 0;
 };
 
 UCLASS()
@@ -62,6 +65,9 @@ public:
 	// Sets default values for this actor's properties
 	AWeatherQuery();
 	virtual void ProcessWebRequest() override;	
+
+	UFUNCTION(BlueprintCallable, Category = "Weather")
+	static bool TryGetStationElevation(const FJsonObjectWrapper& Properties, float& Elevation);
 	
 	UFUNCTION(BlueprintCallable)
 	void SendCityQuery(float X, float Y);
