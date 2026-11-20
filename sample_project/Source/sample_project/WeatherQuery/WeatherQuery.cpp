@@ -26,6 +26,25 @@ AWeatherQuery::AWeatherQuery()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+bool AWeatherQuery::TryGetStationElevation(const FJsonObjectWrapper& Properties, float& Elevation)
+{
+	Elevation = 0;
+	if (Properties.JsonObject.IsValid() &&
+		Properties.JsonObject->TryGetNumberField(TEXT("ELEVATION"), Elevation) &&
+		FMath::IsFinite(Elevation))
+	{
+		return true;
+	}
+
+	FString StationName;
+	if (Properties.JsonObject.IsValid())
+	{
+		Properties.JsonObject->TryGetStringField(TEXT("STATION_NAME"), StationName);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Skipping weather station '%s': missing or invalid elevation."), *StationName);
+	return false;
+}
+
 void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSucessfully)
 {
 	if (bConnectedSucessfully)
@@ -61,6 +80,12 @@ void AWeatherQuery::OnResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr
 						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("SKY_CONDTN"), WeatherData.SkyCondition);
 						feature->GetObjectField(TEXT("properties"))->TryGetNumberField(TEXT("TEMP"), WeatherData.Temperature);
 						feature->GetObjectField(TEXT("properties"))->TryGetStringField(TEXT("WEATHER"), WeatherData.Weather);
+						FJsonObjectWrapper Properties;
+						Properties.JsonObject = feature->GetObjectField(TEXT("properties"));
+						if (!TryGetStationElevation(Properties, WeatherData.Elevation))
+						{
+							continue;
+						}
 						
 						//this will get the geometry or coordinates of the feature
 						auto coordinates = feature->GetObjectField(TEXT("geometry"))->GetArrayField(TEXT("coordinates"));
