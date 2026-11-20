@@ -9,8 +9,8 @@ Find the location for an address or find the address of a selected location usin
 This sample demonstrates the capability of the [Geocoding service](https://developers.arcgis.com/rest/geocode/api-reference/overview-world-geocoding-service.htm) inside Unreal Engine. You can make two kinds of operations with this sample, find a place and find an address. 
 
 1. Open the **Geocoding** level.
-2. Set an API key with Geocoding privileges in **Project Settings > ArcGIS Maps SDK**.
-3. To override the project key, select **ArcGISMapActor** in the **Outliner** and set its API key under **Authentication** in the **Details** panel. Leave this field empty to inherit the project key.
+2. Click on the **ArcGISMap Actor** in the **Outliner**.
+3. Set your API key in the **Details** panel.
 4. Click play.
 5. Use the search bar to find a place by name or address. For information about the type of locations that are supported by the Geocoding service, see the [ArcGIS REST APIs documentation](https://developers.arcgis.com/rest/geocode/api-reference/geocoding-find-address-candidates.htm).
 6. To find a place's address, drop the marker on your point of interest by clicking in the viewport while holding Shift. The address will be displayed above the marker.
