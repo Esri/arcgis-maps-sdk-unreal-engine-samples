@@ -1,6 +1,11 @@
 # Visual Studio 2015 user specific files
 .vs/
 
+# Local Visual Studio Code settings and generated project files
+.vscode/
+*.code-workspace
+compile_commands.json
+
 # Compiled Object files
 *.slo
 *.lo

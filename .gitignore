@@ -1,4 +1,0 @@
-# Local Visual Studio Code settings and generated project files
-.vscode/
-*.code-workspace
-compile_commands.json
