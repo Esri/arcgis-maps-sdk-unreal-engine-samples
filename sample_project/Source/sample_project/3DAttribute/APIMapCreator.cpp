@@ -7,6 +7,7 @@
 #include "APIMapCreator.h"
 
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "ArcGISMapsSDK/API/GameEngine/Elevation/Base/ArcGISElevationSource.h"
@@ -210,6 +211,13 @@ void AAPIMapCreator::BeginPlay()
 		if (UIWidget)
 		{
 			UIWidget->AddToViewport();
+			if (APlayerController* PlayerController = UIWidget->GetOwningPlayer())
+			{
+				FInputModeGameAndUI InputMode;
+				InputMode.SetHideCursorDuringCapture(false);
+				PlayerController->SetInputMode(InputMode);
+				PlayerController->SetShowMouseCursor(true);
+			}
 			HideInstructions = UIWidget->FindFunction(FName("PlayAnim"));
 		}
 	}

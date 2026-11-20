@@ -27,6 +27,8 @@ Apply shaders to 3D Object Scene layer based on different attributes.
 4. Attach the **SampleAttributesComponent** script to the **APIMapCreator** Actor.
 5. Enter your **APIKey** in the **APIMapCreator**.
 5. Select your filter type in the **AttributesComponent** and watch the materials applied to the buildings change.
+6. Configure Game and UI input with the mouse cursor visible during capture so you can navigate the map and select attribute filters.
+7. Keep `GetVertexClippingMask` connected to the materials' opacity mask and use the SDK's `DefaultWhite` fallback texture so both custom materials compile and respect the map extent.
 
 ## About the data
 
